@@ -1,0 +1,84 @@
+{
+  "loading": "Ladataan...",
+  "none": "Ei mitään",
+  "noSearchResults": "Ei hakutuloksia.",
+  "action": {
+    "submit": "Lähetä",
+    "save": "Tallenna",
+    "create": "Luo",
+    "addFilter": "Rajaa hakua",
+    "createNew": "Luo uusi",
+    "cancel": "Peruuta",
+    "edit": "Muokkaa",
+    "add": "Lisää",
+    "delete": "Poista",
+    "invite": "Kutsu",
+    "backToList": "Takaisin",
+    "returnHome": "Palaa etusivulle",
+    "set": "Aseta",
+    "goBack": "Takaisin",
+    "open": "Avaa",
+    "copy": "Kopioi",
+    "changeStatus": "Muuta statusta",
+    "copiedToClipboard": "Asiakirjan sisältö kopioitu leikepöydälle",
+    "openMenu": "Avaa valikko",
+    "upload": "Lataa"
+  },
+  "label": {
+    "name": "Nimi",
+    "next": "Seuraava",
+    "previous": "Edellinen",
+    "paragraph": "Leipäteksti",
+    "h1": "Otsikko 1",
+    "h2": "Otsikko 2",
+    "h3": "Otsikko 3",
+    "createdBy": "Luonut",
+    "timeCreated": "Luontiaika",
+    "properties": "Ominaisuudet"
+  },
+  "language": {
+    "toggle": "Vaihda kieltä"
+  },
+  "theme": {
+    "toggle": "Vaihda teemaa",
+    "light": "Vaalea",
+    "dark": "Tumma",
+    "system": "Järjestelmä"
+  },
+  "weekdays": {
+    "monday": "Maanantai",
+    "tuesday": "Tiistai",
+    "wednesday": "Keskiviikko",
+    "thursday": "Torstai",
+    "friday": "Perjantai",
+    "saturday": "Lauantai",
+    "sunday": "Sunnuntai"
+  },
+  "toast": {
+    "success": {
+      "update": "Muutokset on tallennettu"
+    },
+    "error": {
+      "update": "Muutoksia ei pystytty tallentamaan",
+      "somethingWentWrong": "Jotain meni pieleen",
+      "invalidFileType": "Virheellinen tiedostomuoto"
+    }
+  },
+  "time": {
+    "ago": "{{time}} sitten",
+    "now": "juuri nyt",
+    "minute": "{{count}} minuutti",
+    "minute_plural": "{{count}} minuuttia",
+    "hour": "{{count}} tunti",
+    "hour_plural": "{{count}} tuntia",
+    "day": "{{count}} päivä",
+    "day_plural": "{{count}} päivää",
+    "month": "{{count}} kuukausi",
+    "month_plural": "{{count}} kuukautta",
+    "year": "{{count}} vuosi",
+    "year_plural": "{{count}} vuotta"
+  },
+  "placeholder": {
+    "search": "Etsi..."
+  }
+}

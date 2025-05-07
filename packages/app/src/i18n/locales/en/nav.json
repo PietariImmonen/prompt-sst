@@ -1,0 +1,51 @@
+{
+  "goBack": "Go Back",
+  "appointments": "Appointments",
+  "signOut": "Sign Out",
+  "contact": "Contact us",
+  "helpCenter": "Help center",
+  "support": "Support",
+  "workspaces": "My workspaces",
+  "sessions": "Visits",
+  "workspace": "Workspace",
+  "documents": "Documents",
+  "documentTemplates": "Templates",
+  "careInstructions": "Care Instructions",
+  "analytics": "Analytics",
+  "invite": "Invite members",
+  "commandMenu": {
+    "placeholder": "Search in the app...",
+    "noResults": "No search results."
+  },
+  "description": {
+    "toggleMenu": "Toggle navigation menu",
+    "toggleAccountMenu": "Toggle account navigation menu"
+  },
+  "settings": {
+    "title": "Settings",
+    "workspace": "Workspace",
+    "account": "Account",
+    "members": "Members",
+    "preferences": "Preferences",
+    "profile": "Profile",
+    "billing": "Billing"
+  },
+  "onboarding": {
+    "title": "Getting Started",
+    "document": {
+      "title": "Create your first document",
+      "description": "Set up a new session for a client and create your first document"
+    },
+    "template": {
+      "title": "Create a custom template",
+      "description": "Design your own document template"
+    },
+    "careInstruction": {
+      "title": "Create a care instruction",
+      "description": "Add instructions for your clients"
+    },
+    "action": "Go to task",
+    "completion": "All tasks completed! 🎉",
+    "hide": "Hide this widget"
+  }
+}

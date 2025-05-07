@@ -1,0 +1,46 @@
+{
+  "name": "@sst-replicache-template/core",
+  "version": "0.0.0",
+  "scripts": {
+    "db:check": "sst shell drizzle-kit check",
+    "db:drop": "sst shell drizzle-kit drop",
+    "db:generate": "sst shell drizzle-kit generate",
+    "db:migrate": "sst shell drizzle-kit migrate",
+    "db:push": "sst shell drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    "./*": [
+      "./src/*/index.ts",
+      "./src/*.ts"
+    ]
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.3.0",
+    "@types/node": "^22",
+    "drizzle-kit": "^0.30.1"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.743.0",
+    "@aws-sdk/client-iot-data-plane": "^3.714.0",
+    "@aws-sdk/client-sesv2": "^3.712.0",
+    "@deepgram/sdk": "^3.9.0",
+    "@jsx-email/render": "^3.0.1",
+    "@paralleldrive/cuid2": "^2.2.2",
+    "@types/bun": "^1.1.14",
+    "assemblyai": "^4.8.0",
+    "dayjs": "^1.11.13",
+    "drizzle-orm": "^0.38.3",
+    "drizzle-zod": "^0.6.0",
+    "fuse.js": "^7.1.0",
+    "groq-sdk": "^0.15.0",
+    "postgres": "^3.4.5",
+    "sst": "^3.9.2",
+    
+    "zod": "^3.24.1"
+  }
+}
