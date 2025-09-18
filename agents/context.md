@@ -398,30 +398,59 @@ interface TrayMenu {
 
 ```
 src/
-├── main/                 # Electron main process
-│   ├── main.ts
-│   ├── prompt-detector.ts
-│   ├── global-shortcuts.ts
-│   └── system-tray.ts
-├── renderer/            # React application
-│   ├── components/
-│   ├── pages/
-│   ├── hooks/
-│   ├── services/
-│   └── utils/
-├── shared/              # Shared types and utilities
-│   ├── types/
-│   └── constants/
-└── preload/             # Preload scripts
-    └── preload.ts
+├── main/                           # Electron main process
+│   ├── index.ts                   # Main entry point
+│   └── services/                  # Main process services
+│       ├── prompt-detector/       # Automatic prompt detection
+│       ├── shortcuts/             # Global shortcuts management
+│       └── tray/                  # System tray integration
+├── renderer/                      # React application
+│   ├── index.html                 # HTML entry point
+│   └── src/
+│       ├── App.tsx                # Main app component
+│       ├── main.tsx               # React entry point
+│       ├── components/            # UI components
+│       │   ├── auth/             # Authentication components
+│       │   ├── layout/           # Layout components
+│       │   ├── prompts/          # Prompt-related components
+│       │   ├── shared/           # Shared/reusable components
+│       │   └── ui/               # ShadCN UI components
+│       ├── pages/                # Page components
+│       │   ├── dashboard/        # Dashboard page
+│       │   ├── library/          # Prompt library page
+│       │   ├── public-browse/    # Public prompts browsing
+│       │   └── settings/         # Settings page
+│       ├── hooks/                # Custom React hooks
+│       ├── services/             # API and external services
+│       │   ├── api/              # API service layers
+│       │   ├── auth/             # Authentication services
+│       │   └── supabase/         # Supabase client and config
+│       ├── store/                # Zustand state stores
+│       ├── types/                # TypeScript type definitions
+│       ├── utils/                # Utility functions
+│       ├── constants/            # App constants
+│       ├── lib/                  # Utility libraries
+│       └── assets/               # Static assets
+├── shared/                       # Cross-process shared code
+│   ├── types/                    # Shared TypeScript types
+│   ├── constants/                # Shared constants
+│   └── utils/                    # Shared utility functions
+└── preload/                      # Preload scripts
+    ├── index.ts                  # Preload entry point
+    └── index.d.ts                # Preload type definitions
 ```
 
 ### 5.2 State Management
 
-- **React Context**: Global app state
-- **React Query**: Server state and caching
-- **Zustand**: Client state management
-- **Supabase Realtime**: Live updates
+- **Zustand**: Primary state management for auth, prompts, and app state
+  - `useAuthStore`: Authentication state and actions
+  - `usePromptsStore`: Prompts data and operations
+  - `useAppStore`: App settings and UI state
+- **Supabase Realtime**: Live updates for collaborative features
+- **Custom Hooks**: Abstraction layer over Zustand stores
+  - `useAuth()`: Authentication hook
+  - `usePrompts()`: Prompts management hook
+  - `useApp()`: App state hook
 
 ### 5.3 Security Considerations
 
