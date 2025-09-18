@@ -1,130 +1,43 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User, Session } from '../types'
+import type { AuthSession, AuthState, AuthUser, OAuthProvider } from '../types'
 import { AuthService } from '../services/auth'
 
-interface AuthStore {
-  // State
-  user: User | null
-  session: Session | null
+interface AuthStoreState {
+  user: AuthUser | null
+  session: AuthSession | null
   loading: boolean
-  _isInitializing?: boolean
-  _isInitialized?: boolean
-
-  // Actions
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string) => Promise<void>
-  signInWithOAuth: (provider: 'google' | 'github') => Promise<void>
-  signOut: () => Promise<void>
-  refreshSession: () => Promise<void>
-  resetPassword: (email: string) => Promise<void>
-  updatePassword: (newPassword: string) => Promise<void>
-  initialize: () => Promise<void>
-  setLoading: (loading: boolean) => void
-  setUser: (user: User | null) => void
-  setSession: (session: Session | null) => void
+  error: string | null
+  initialized: boolean
 }
+
+interface AuthStoreActions {
+  initialize: () => Promise<void>
+  signInWithOAuth: (provider: OAuthProvider) => Promise<void>
+  signOut: () => Promise<void>
+  setAuthState: (state: AuthState) => void
+  setLoading: (loading: boolean) => void
+  setError: (message: string | null) => void
+}
+
+export type AuthStore = AuthStoreState & AuthStoreActions
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
-      // Initial state
       user: null,
       session: null,
       loading: true,
-      _isInitializing: false,
-      _isInitialized: false,
-
-      // Actions
-      signIn: async (email: string, password: string) => {
-        set({ loading: true })
-        try {
-          const authState = await AuthService.signIn(email, password)
-          set({
-            user: authState.user,
-            session: authState.session,
-            loading: false
-          })
-        } catch (error) {
-          set({ loading: false })
-          throw error
-        }
-      },
-
-      signUp: async (email: string, password: string) => {
-        set({ loading: true })
-        try {
-          const authState = await AuthService.signUp(email, password)
-          set({
-            user: authState.user,
-            session: authState.session,
-            loading: false
-          })
-        } catch (error) {
-          set({ loading: false })
-          throw error
-        }
-      },
-
-      signInWithOAuth: async (provider: 'google' | 'github') => {
-        set({ loading: true })
-        try {
-          await AuthService.signInWithOAuth(provider)
-          // OAuth will redirect, so we don't need to set state here
-        } catch (error) {
-          set({ loading: false })
-          throw error
-        }
-      },
-
-      signOut: async () => {
-        set({ loading: true })
-        try {
-          await AuthService.signOut()
-          set({
-            user: null,
-            session: null,
-            loading: false
-          })
-        } catch (error) {
-          set({ loading: false })
-          throw error
-        }
-      },
-
-      refreshSession: async () => {
-        try {
-          const authState = await AuthService.refreshSession()
-          set({
-            user: authState.user,
-            session: authState.session,
-            loading: false
-          })
-        } catch (error) {
-          set({
-            user: null,
-            session: null,
-            loading: false
-          })
-        }
-      },
-
-      resetPassword: async (email: string) => {
-        await AuthService.resetPassword(email)
-      },
-
-      updatePassword: async (newPassword: string) => {
-        await AuthService.updatePassword(newPassword)
-      },
+      error: null,
+      initialized: false,
 
       initialize: async () => {
-        // Prevent multiple initialization calls
-        const currentState = get()
-        if (currentState._isInitializing || currentState._isInitialized) {
+        const { initialized } = get()
+        if (initialized) {
           return
         }
 
-        set({ loading: true, _isInitializing: true })
+        set({ loading: true })
 
         try {
           const authState = await AuthService.getSession()
@@ -132,47 +45,59 @@ export const useAuthStore = create<AuthStore>()(
             user: authState.user,
             session: authState.session,
             loading: false,
-            _isInitializing: false,
-            _isInitialized: true
+            initialized: true
           })
 
-          // Subscribe to auth state changes only once
-          AuthService.onAuthStateChange((newAuthState) => {
+          AuthService.onAuthStateChange((state) => {
             set({
-              user: newAuthState.user,
-              session: newAuthState.session,
-              loading: false
+              user: state.user,
+              session: state.session,
+              loading: state.loading,
+              error: null
             })
           })
         } catch (error) {
-          set({
-            user: null,
-            session: null,
-            loading: false,
-            _isInitializing: false,
-            _isInitialized: true
-          })
+          console.error('Failed to initialize auth store', error)
+          set({ loading: false, initialized: true, user: null, session: null })
         }
       },
 
-      setLoading: (loading: boolean) => {
-        set({ loading })
+      signInWithOAuth: async (provider: OAuthProvider) => {
+        set({ loading: true, error: null })
+        try {
+          await AuthService.signInWithOAuth(provider)
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unable to sign in'
+          set({ loading: false, error: message })
+          throw error
+        }
       },
 
-      setUser: (user: User | null) => {
-        set({ user })
+      signOut: async () => {
+        set({ loading: true, error: null })
+        try {
+          await AuthService.signOut()
+          set({ user: null, session: null, loading: false })
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unable to sign out'
+          set({ loading: false, error: message })
+          throw error
+        }
       },
 
-      setSession: (session: Session | null) => {
-        set({ session })
-      }
+      setAuthState: (state: AuthState) => {
+        set({ user: state.user, session: state.session, loading: state.loading })
+      },
+
+      setLoading: (loading: boolean) => set({ loading }),
+
+      setError: (message: string | null) => set({ error: message })
     }),
     {
       name: 'auth-store',
       partialize: (state) => ({
         user: state.user,
         session: state.session
-        // Exclude internal flags from persistence
       })
     }
   )

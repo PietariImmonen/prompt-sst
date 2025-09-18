@@ -63,6 +63,14 @@ const { data, error } = await supabase.auth.signInWithOAuth({
 })
 ```
 
+#### 3.1.4 Current Implementation Snapshot
+
+- **Preload Bridge**: `src/preload/index.ts` exposes a typed `window.auth` bridge backed by Supabase, validating payloads with Zod schemas before data crosses to the renderer.
+- **Shared Modules**: `src/shared/config/supabase.ts` centralizes environment access, `src/shared/supabase/client.ts` instantiates the client, and `src/shared/schemas/auth.ts` constrains user/session payloads.
+- **Renderer Integration**: `src/renderer/src/services/auth/` delegates to the bridge, while `src/renderer/src/store/auth.ts` (Zustand) tracks session, errors, and initialization.
+- **UI Surface**: `src/renderer/src/pages/auth/` contains `components/auth-layout/` and `components/provider-button/` folders built with Shadcn primitives for a Linear-style sign-in. `src/renderer/src/App.tsx` routes authenticated users to `pages/dashboard/`.
+- **Session Persistence**: Supabase auto-refresh handles token lifecycle; the store rehydrates on boot via `AuthService.getSession()` and the preload `onAuthStateChange` subscription.
+
 ### 3.2 Manual Prompt Saving (Priority: P0)
 
 #### 3.2.1 Requirements

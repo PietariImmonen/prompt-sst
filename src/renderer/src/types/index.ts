@@ -1,7 +1,7 @@
 // Re-export shared types for easier imports
 export type {
-  User,
-  Session,
+  AuthUser,
+  AuthSession,
   AuthState,
   Prompt,
   PromptCategory,
@@ -12,5 +12,6 @@ export type {
   TrayMenu,
   PromptMenuItem,
   CategoryMenuItem,
-  IpcChannels
+  IpcChannels,
+  OAuthProvider
 } from '../../../shared/types'

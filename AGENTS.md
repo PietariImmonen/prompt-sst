@@ -4,7 +4,7 @@
 - `src/main` owns the Electron main process, window lifecycle, and auto-update wiring.
 - `src/preload` exposes typed context bridges; keep the API surface minimal and audited.
 - `src/renderer/src` houses the React app with feature folders (`pages/`, `components/`, `store/`, `services/`, `hooks/`, `lib/`, `types/`, `utils/`, `constants/`, `assets/`). Page folders must include a `components/` subdirectory with one folder per component (e.g., `components/profile-card/{profile-card.tsx,index.tsx}`).
-- `src/shared` centralizes cross-process utilities, IPC contracts, and shared constants typed with Zod.
+- `src/shared` centralizes cross-process utilities, IPC contracts, shared Supabase config (`config/`), and typed schemas (`schemas/`).
 - `resources/` stores packaging assets; build artifacts land in `build/` (intermediate) and `out/` (distributables).
 - `agents/context.md` mirrors the latest product scope and canonical directory layout; update it whenever architecture or flows change.
 - `agents/features/` tracks feature TODOs—create or update a markdown checklist per feature describing goal, owner, blockers, and acceptance notes.
@@ -15,6 +15,7 @@
 - `pnpm dev` launches Electron + Vite with hot reload across main, preload, and renderer.
 - `pnpm start` runs the built preview for production validation.
 - `pnpm build` performs full type checks and emits bundles into `out/`.
+- Ensure `.env` defines `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_SUPABASE_REDIRECT_URL` before running dev builds.
 - `pnpm lint`, `pnpm format`, and `pnpm typecheck` enforce ESLint, Prettier, and TypeScript standards; run them before each commit.
 
 ## Coding Style & Naming Conventions

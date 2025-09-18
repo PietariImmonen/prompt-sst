@@ -1,24 +1,11 @@
-// Shared types between main and renderer processes
+// Shared types between main, preload, and renderer processes
 
-export interface User {
-  id: string
-  email: string
-  created_at: string
-  updated_at: string
-}
+import type { AuthSession, AuthState, AuthUser } from '../schemas/auth'
 
-export interface Session {
-  access_token: string
-  refresh_token: string
-  expires_at: number
-  user: User
-}
+export type { AuthSession, AuthState, AuthUser }
+export type { AuthBridge } from './bridge'
 
-export interface AuthState {
-  user: User | null
-  session: Session | null
-  loading: boolean
-}
+export type OAuthProvider = 'google' | 'github'
 
 export interface Prompt {
   id: string
@@ -106,9 +93,10 @@ export interface IpcChannels {
   'app:ready': () => void
   'prompt:save': (payload: SavePromptPayload) => void
   'prompt:get-all': () => Prompt[]
-  'auth:sign-in': (email: string, password: string) => AuthState
-  'auth:sign-out': () => void
-  'auth:get-session': () => AuthState
+  'auth:get-session': () => Promise<AuthState>
+  'auth:sign-out': () => Promise<void>
+  'auth:sign-in-oauth': (provider: OAuthProvider) => Promise<void>
+  'auth:on-state-change': (callbackId: string) => void
   'window:show': () => void
   'window:hide': () => void
   'tray:update': (menu: TrayMenu) => void
