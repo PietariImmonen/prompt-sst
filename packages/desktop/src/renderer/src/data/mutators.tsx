@@ -39,12 +39,15 @@ export const mutators = new Client<ServerType>()
     const workspace = workspaceStore.get();
     if (!workspace?.id) return;
     const now = new Date().toISOString();
+    const content = (input.content ?? "").trim();
+    if (!content) return;
+    const title = (input.title ?? "").trim() || content.slice(0, 120) || "Untitled prompt";
     const prompt = {
       id: input.id ?? createId(),
       workspaceID: workspace.id,
       userID: "",
-      title: input.title,
-      content: input.content,
+      title,
+      content,
       source: input.source ?? "other",
       categoryPath: input.categoryPath ?? `inbox/${input.source ?? "other"}`,
       visibility: input.visibility ?? "private",

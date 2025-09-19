@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Home, MessageSquare, Settings } from 'lucide-react'
+import { MessageSquare, Settings } from 'lucide-react'
 
 import {
   Sidebar,
@@ -13,20 +13,14 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger
+  SidebarProvider
 } from '@/components/ui/sidebar'
 
 // Menu items for the desktop app
 const menuItems = [
   {
-    title: 'Dashboard',
-    url: '/sessions',
-    icon: Home
-  },
-  {
     title: 'Prompts',
-    url: '/prompts',
+    url: '/sessions',
     icon: MessageSquare
   },
   {

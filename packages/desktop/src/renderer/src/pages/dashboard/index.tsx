@@ -16,7 +16,6 @@ import { useWorkspace } from '@/hooks/use-workspace'
 import { UserStore } from '@/data/user-store'
 import { WorkspaceStore } from '@/data/workspace-store'
 import { PromptStore } from '@/data/prompt-store'
-import { usePromptCapture } from '@/hooks/use-prompt-capture'
 
 import type { Workspace } from '@sst-replicache-template/core/models/Workspace'
 import type { Prompt } from '@sst-replicache-template/core/models/Prompt'
@@ -38,7 +37,6 @@ export default function DashboardPage(props: DashboardPageProps) {
     default: [] as Prompt[]
   }) ?? []) as Prompt[]
 
-  usePromptCapture()
 
   return (
     <div className="flex min-h-screen flex-col gap-6 bg-[#0E111A] px-6 py-8 text-white">

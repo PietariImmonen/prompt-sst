@@ -10,10 +10,11 @@ import { AuthProvider } from '@/providers/auth-provider'
 import { ThemeProvider } from '@/providers/theme-provider'
 
 import AuthPage from '@/pages/auth'
-import DashboardPage from '@/pages/dashboard'
 import PromptsPage from '@/pages/prompts'
 import SettingsPage from '@/pages/settings'
 import SidebarLayout from '@/components/layout/sidebar-layout'
+import { Toaster } from '@/components/ui/sonner'
+import { PromptCaptureProvider } from '@/providers/prompt-capture-provider'
 
 const SplashScreen = () => {
   return (
@@ -74,23 +75,14 @@ const AuthenticatedApp = () => {
         email={activeAccount.email}
       >
         <WorkspaceProvider workspace={workspace}>
-          <Routes>
-            <Route path="/" element={<SidebarLayout />}>
-              <Route
-                path="/sessions"
-                index
-                element={
-                  <DashboardPage
-                    workspaces={activeAccount.workspaces}
-                    activeWorkspaceID={workspaceID}
-                    onWorkspaceChange={setWorkspaceID}
-                  />
-                }
-              />
-              <Route path="/prompts" element={<PromptsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Route>
-          </Routes>
+          <PromptCaptureProvider>
+            <Routes>
+              <Route path="/" element={<SidebarLayout />}>
+                <Route path="/sessions" element={<PromptsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
+            </Routes>
+          </PromptCaptureProvider>
         </WorkspaceProvider>
       </ReplicacheProvider>
     </RealtimeProvider>
@@ -117,6 +109,7 @@ function App(): JSX.Element {
     <BrowserRouter>
       <ThemeProvider defaultTheme="system" storageKey="prompt-desktop-theme">
         <AuthProvider>
+          <Toaster richColors position="top-right" />
           <Content />
         </AuthProvider>
       </ThemeProvider>
