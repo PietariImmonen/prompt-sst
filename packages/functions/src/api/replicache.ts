@@ -10,6 +10,7 @@ import {
   replicache_cvr,
 } from "@sst-replicache-template/core/domain/replicache/replicache.sql";
 import { userSettings } from "@sst-replicache-template/core/domain/user-settings/user-settings.sql";
+import { prompt } from "@sst-replicache-template/core/domain/prompt/prompt.sql";
 import { user } from "@sst-replicache-template/core/domain/user/user.sql";
 import { workspace } from "@sst-replicache-template/core/domain/workspace/workspace.sql";
 import { db } from "@sst-replicache-template/core/drizzle";
@@ -33,6 +34,7 @@ export namespace ReplicacheApi {
     workspace,
     user,
     userSettings,
+    prompt,
   };
 
   export const JOIN_TABLES = {};

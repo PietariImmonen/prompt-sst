@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Workspace } from "@sst-replicache-template/core/models/Workspace";
 
-import { WorkspaceContext } from "./workspace-context";
+import { WorkspaceContext, workspaceStore } from "./workspace-context";
 
 interface WorkspaceProviderProps {
   workspace: Workspace;
@@ -13,6 +13,13 @@ export function WorkspaceProvider({
   workspace,
   children,
 }: WorkspaceProviderProps) {
+  React.useEffect(() => {
+    workspaceStore.set(workspace);
+    return () => {
+      workspaceStore.remove();
+    };
+  }, [workspace]);
+
   return (
     <WorkspaceContext.Provider value={workspace}>
       {children}

@@ -7,13 +7,21 @@ export function createReplicache(input: {
   token: string;
   workspaceId: string;
 }) {
+  const apiRoot = import.meta.env.VITE_API_URL;
+  if (!apiRoot) {
+    throw new Error("VITE_API_URL is not defined. Cannot configure Replicache endpoints.");
+  }
+  const baseURL = apiRoot.replace(/\/+$/, "");
+  const pullURL = `${baseURL}/sync/pull`;
+  const pushURL = `${baseURL}/sync/push`;
+
   const rep = new Replicache({
     // logLevel: "debug",
     name: input.workspaceId,
     auth: `Bearer ${input.token}`,
     licenseKey: "lc928cd833dcd43d98d2f3de98f59969f",
-    pullURL: import.meta.env.VITE_API_URL + "/sync/pull",
-    pushURL: import.meta.env.VITE_API_URL + "/sync/push",
+    pullURL,
+    pushURL,
     // we don't want to pull in the background as it interrupts with forms leading to overriding the content
     // we have implemented poke which can be used to trigger a pull
     pullInterval: null,
@@ -23,7 +31,7 @@ export function createReplicache(input: {
   });
 
   rep.puller = async (req) => {
-    const result = await fetch(rep.pullURL, {
+    const result = await fetch(pullURL, {
       headers: {
         "x-sst-replicache-template-workspace": input.workspaceId,
         authorization: `Bearer ${input.token}`,
@@ -42,7 +50,7 @@ export function createReplicache(input: {
   };
 
   rep.pusher = async (req) => {
-    const result = await fetch(rep.pushURL, {
+    const result = await fetch(pushURL, {
       headers: {
         "x-sst-replicache-template-workspace": input.workspaceId,
         authorization: `Bearer ${input.token}`,

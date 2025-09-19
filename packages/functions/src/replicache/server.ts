@@ -2,6 +2,7 @@ import { useWorkspaceID } from "@sst-replicache-template/core/actor";
 import { User } from "@sst-replicache-template/core/domain/user";
 import { UserSettings } from "@sst-replicache-template/core/domain/user-settings";
 import { Workspace } from "@sst-replicache-template/core/domain/workspace";
+import { Prompt } from "@sst-replicache-template/core/domain/prompt";
 
 import { Server } from "./framework";
 
@@ -26,6 +27,10 @@ export const server = new Server()
     await User.remove(input);
   })
   .expose("workspace_update", Workspace.update)
-  .expose("user_settings_update", UserSettings.update);
+  .expose("user_settings_update", UserSettings.update)
+  .expose("prompt_create", Prompt.create)
+  .expose("prompt_update", Prompt.update)
+  .expose("prompt_toggle_favorite", Prompt.setFavorite)
+  .expose("prompt_set_visibility", Prompt.setVisibility);
 
 export type ServerType = typeof server;

@@ -8,6 +8,13 @@
       "when": 1744454150161,
       "tag": "0000_wet_sir_ram",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1758270491733,
+      "tag": "0001_prompt_capture",
+      "breakpoints": true
     }
   ]
 }

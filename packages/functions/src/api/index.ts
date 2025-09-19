@@ -10,6 +10,7 @@ import { AccountApi } from "./account";
 import { auth } from "./auth";
 import { ReplicacheApi } from "./replicache";
 import { WorkspaceApi } from "./workspace";
+import { PromptApi } from "./prompt";
 
 const app = new OpenAPIHono();
 
@@ -67,6 +68,7 @@ app.openAPIRegistry.registerComponent("securitySchemes", "Bearer", {
 const routes = app
   .route("/account", AccountApi.route)
   .route("/sync", ReplicacheApi.route)
+  .route("/prompt", PromptApi.route)
   .route("/workspace", WorkspaceApi.route)
   .onError((error, c) => {
     if (error instanceof VisibleError) {
