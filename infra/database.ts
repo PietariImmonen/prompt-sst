@@ -4,9 +4,9 @@ import { secret } from "./secret";
 sst.Linkable.wrap(supabase.Project, function (item) {
   return {
     properties: {
-      user: $interpolate`postgres.${item.id}`,
+      user: "postgres",
       password: secret.SupabaseDBPassword.value,
-      host: $interpolate`aws-0-${item.region}.pooler.supabase.com`,
+      host: $interpolate`db.${item.id}.supabase.co`,
       port: 5432,
       database: "postgres",
     },
