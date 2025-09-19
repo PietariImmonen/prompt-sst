@@ -4,8 +4,6 @@ import mqtt, { MqttClient } from 'mqtt'
 
 import { useAuth } from '@/hooks/use-auth'
 import { bus } from './bus'
-import { WorkspaceSchema } from '@sst-replicache-template/core/models/Workspace'
-import { z } from 'zod'
 
 export function RealtimeProvider(props: { children: React.ReactElement }) {
   const auth = useAuth()
@@ -30,15 +28,13 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
         const url = new URL(`wss://${endpoint}/mqtt`)
         url.searchParams.set('x-amz-customauthorizer-name', authorizer)
 
-        console.log(endpoint)
-
         const workspaces: any = auth.current.workspaces
 
         if (workspaces.length > 10) {
           console.log('too many workspaces to allow realtime updates')
           return
         }
-        console.log(auth.current.token)
+
         const connection = mqtt.connect(url.toString(), {
           protocolVersion: 5,
           manualConnect: true,

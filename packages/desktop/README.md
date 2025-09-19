@@ -19,6 +19,7 @@ Electron client for the Prompt SST stack. The renderer is a custom React app tha
    The renderer runs on the Vite dev server used by `electron-vite`; OAuth redirects back into that window.
 
 Create `packages/desktop/.env` with the same values used by the web app:
+
 ```ini
 VITE_APP_URL=http://localhost:5173
 VITE_API_URL=http://localhost:13557
@@ -30,13 +31,13 @@ VITE_AUTH_URL=https://your-auth.example.com
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `bun run --filter @sst-replicache-template/desktop dev` | Start Electron + Vite with HMR |
-| `bun run --filter @sst-replicache-template/desktop build` | Type-check and bundle main/preload/renderer |
+| Command                                                       | Description                                                      |
+| ------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `bun run --filter @sst-replicache-template/desktop dev`       | Start Electron + Vite with HMR                                   |
+| `bun run --filter @sst-replicache-template/desktop build`     | Type-check and bundle main/preload/renderer                      |
 | `bun run --filter @sst-replicache-template/desktop build:mac` | Build macOS distributable (see also `build:win` / `build:linux`) |
-| `bun run --filter @sst-replicache-template/desktop lint` | Run ESLint over main + renderer |
-| `bun run --filter @sst-replicache-template/desktop typecheck` | Type-check Node (main/preload) and renderer projects |
+| `bun run --filter @sst-replicache-template/desktop lint`      | Run ESLint over main + renderer                                  |
+| `bun run --filter @sst-replicache-template/desktop typecheck` | Type-check Node (main/preload) and renderer projects             |
 
 ## Architecture Notes
 

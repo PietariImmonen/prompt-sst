@@ -33,7 +33,7 @@ const Content = () => {
     }
 
     if (!workspaceID) {
-      setWorkspaceID(activeAccount.workspaces[0].id)
+      setWorkspaceID(activeAccount.workspaces[0].id as string)
     }
   }, [activeAccount, workspaceID])
 
@@ -58,7 +58,7 @@ const Content = () => {
     )
   }
 
-  const workspace = activeAccount.workspaces.find((w) => w.id === workspaceID)
+  const workspace = activeAccount.workspaces.find((w: any) => w.id === workspaceID)
   if (!workspace) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0E111A] text-white">
