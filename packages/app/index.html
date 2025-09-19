@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- the change below disabled mobile users from zooming the application. if it has downsides, this original meta tag can be commented in instead of the extended one -->
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0" /> -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0"
+    />
+    <script>
+      (function () {
+        const theme = localStorage.getItem("sst-replicache-template.theme") || "system";
+        const root = document.documentElement;
+
+        if (theme === "dark") {
+          root.classList.add("dark");
+        } else if (theme === "system") {
+          if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            root.classList.add("dark");
+          }
+        }
+      })();
+    </script>
+    <title>SST Template Replicache</title>
+  </head>
+  <body class="font-sans antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

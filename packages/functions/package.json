@@ -1,0 +1,22 @@
+{
+  "name": "@sst-replicache-template/functions",
+  "version": "0.0.0",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.730.0",
+    "@aws-sdk/s3-request-presigner": "^3.730.0",
+    "@hono/zod-openapi": "^0.18.3",
+    "@openauthjs/openauth": "^0.4.3",
+    "@sst-replicache-template/core": "*",
+    "hono": "^4.6.16",
+    "remeda": "^2.18.0",
+    "sst": "^3.9.2",
+    "valibot": "0.30.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.137"
+  }
+}

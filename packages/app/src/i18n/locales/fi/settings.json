@@ -1,0 +1,105 @@
+{
+  "members": {
+    "label": {
+      "noResults": "Ei jäseniä",
+      "admin": "Admin",
+      "member": "Jäsen",
+      "role": "Rooli",
+      "invited": "Kutsuttu"
+    },
+    "dialog": {
+      "create": {
+        "title": "Kutsu käyttäjä työtilaan",
+        "emailLabel": "Sähköposti",
+        "emailPlaceholder": "matti.meikalainen@example.com",
+        "submit": "Kutsu",
+        "duplicate": "Käyttäjä annetulla sähköpostilla on jo työtilassa",
+        "success": "Käyttäjä kutsuttu työtilaan"
+      },
+      "delete": {
+        "title": "Poista käyttäjä työtilasta",
+        "description": "Oletko varma, että haluat poistaa käyttäjän työtilasta?",
+        "cancel": "Peruuta",
+        "action": "Poista"
+      }
+    },
+    "action": {
+      "delete": "Poista käyttäjä"
+    },
+    "toast": {
+      "roleUpdated": "Käyttäjän rooli päivitetty",
+      "userRemoved": "Käyttäjä poistettu työtilasta"
+    }
+  },
+  "profile": {
+    "label": {
+      "name": "Nimi",
+      "email": "Sähköposti"
+    },
+    "toast": {
+      "nameUpdated": "Nimi päivitetty uuteen"
+    }
+  },
+  "workspace": {
+    "label": {
+      "name": "Nimi",
+      "subscription": "Tilaus"
+    },
+    "toast": {
+      "nameUpdated": "Nimi päivitetty uuteen",
+      "subscriptionCancelled": "Tilaus peruttu"
+    }
+  },
+  "preferences": {
+    "label": {
+      "language": "Sovelluksen kieli",
+      "theme": "Sovelluksen teema"
+    }
+  },
+  "plan": {
+    "label": {
+      "overdue": "Tilaus erääntynyt",
+      "monthly": "Kuukausittain",
+      "yearly": "Vuosittain",
+      "free": "Free",
+      "pro": "Pro",
+      "inMonth": "kuukaudessa",
+      "perUser": "käyttäjä",
+      "includes": "Sisältää",
+      "documents": "asiakirjaa",
+      "unlimitedDocuments": "Rajaton määrä asiakirjoja",
+      "current": "Nykyinen tilaus",
+      "updateSubscription": "Hanki Pro-tilaus",
+      "cancelProSubscription": "Peru Pro-tilaus",
+      "manageSubscription": "Hallinnoi tilausta",
+      "subscriptionWillEnd": "Tilaus päättyy",
+      "billedAnnually": "laskutetaan vuosittain",
+      "customTemplates": "mukautettua pohjaa",
+      "careInstructions": "hoito-ohjetta",
+      "unlimitedCareInstructions": "Rajaton määrä hoito-ohjeita",
+      "unlimitedCustomTemplates": "Rajaton määrä mukautettuja pohjia"
+    },
+    "description": {
+      "free": "Kokeilukäyttöön.",
+      "pro": "Täydet ominaisuudet ja rajaton määrä asiakirjoja."
+    }
+  },
+  "userSettings": {
+    "heading": "Asiakirjat",
+    "label": {
+      "defaultTemplate": "Oletuspohja",
+      "fullSentences": "Täydet lauseet",
+      "language": "Kieli",
+      "none": "Ei mitään"
+    },
+    "description": {
+      "defaultTemplate": "Käytämme tätä pohjaa automaattisesti luomaan asiakirjan.",
+      "language": "Käytämme tätä kieltä automaattisesti luomaan asiakirjan."
+    },
+    "toast": {
+      "defaultTemplateUpdated": "Oletuspohja päivitetty",
+      "fullSentencesUpdated": "Täydet lauseet päivitetty",
+      "languageUpdated": "Kieli päivitetty"
+    }
+  }
+}
