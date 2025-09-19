@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import { useAuth } from '@/hooks/use-auth'
 import { WorkspaceProvider } from '@/providers/workspace-provider'
@@ -10,6 +11,9 @@ import { ThemeProvider } from '@/providers/theme-provider'
 
 import AuthPage from '@/pages/auth'
 import DashboardPage from '@/pages/dashboard'
+import PromptsPage from '@/pages/prompts'
+import SettingsPage from '@/pages/settings'
+import SidebarLayout from '@/components/layout/sidebar-layout'
 
 const SplashScreen = () => {
   return (
@@ -22,7 +26,7 @@ const SplashScreen = () => {
   )
 }
 
-const Content = () => {
+const AuthenticatedApp = () => {
   const auth = useAuth()
   const activeAccount = auth.current
   const [workspaceID, setWorkspaceID] = useState<string | null>(null)
@@ -36,14 +40,6 @@ const Content = () => {
       setWorkspaceID(activeAccount.workspaces[0].id as string)
     }
   }, [activeAccount, workspaceID])
-
-  if (!auth.isReady) {
-    return <SplashScreen />
-  }
-
-  if (!activeAccount) {
-    return <AuthPage />
-  }
 
   if (!workspaceID) {
     return (
@@ -78,24 +74,53 @@ const Content = () => {
         email={activeAccount.email}
       >
         <WorkspaceProvider workspace={workspace}>
-          <DashboardPage
-            workspaces={activeAccount.workspaces}
-            activeWorkspaceID={workspaceID}
-            onWorkspaceChange={setWorkspaceID}
-          />
+          <Routes>
+            <Route path="/" element={<SidebarLayout />}>
+              <Route
+                path="/sessions"
+                index
+                element={
+                  <DashboardPage
+                    workspaces={activeAccount.workspaces}
+                    activeWorkspaceID={workspaceID}
+                    onWorkspaceChange={setWorkspaceID}
+                  />
+                }
+              />
+              <Route path="/prompts" element={<PromptsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
+          </Routes>
         </WorkspaceProvider>
       </ReplicacheProvider>
     </RealtimeProvider>
   )
 }
 
+const Content = () => {
+  const auth = useAuth()
+  const activeAccount = auth.current
+
+  if (!auth.isReady) {
+    return <SplashScreen />
+  }
+
+  if (!activeAccount) {
+    return <AuthPage />
+  }
+
+  return <AuthenticatedApp />
+}
+
 function App(): JSX.Element {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="prompt-desktop-theme">
-      <AuthProvider>
-        <Content />
-      </AuthProvider>
-    </ThemeProvider>
+    <BrowserRouter>
+      <ThemeProvider defaultTheme="system" storageKey="prompt-desktop-theme">
+        <AuthProvider>
+          <Content />
+        </AuthProvider>
+      </ThemeProvider>
+    </BrowserRouter>
   )
 }
 

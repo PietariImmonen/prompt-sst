@@ -1,50 +1,44 @@
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from 'date-fns'
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { useReplicache } from "@/hooks/use-replicache";
-import { useSubscribe } from "@/hooks/use-replicache";
-import { useWorkspace } from "@/hooks/use-workspace";
-import { UserStore } from "@/data/user-store";
-import { WorkspaceStore } from "@/data/workspace-store";
-import { PromptStore } from "@/data/prompt-store";
-import { usePromptCapture } from "@/hooks/use-prompt-capture";
+  SelectValue
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { useReplicache } from '@/hooks/use-replicache'
+import { useSubscribe } from '@/hooks/use-replicache'
+import { useWorkspace } from '@/hooks/use-workspace'
+import { UserStore } from '@/data/user-store'
+import { WorkspaceStore } from '@/data/workspace-store'
+import { PromptStore } from '@/data/prompt-store'
+import { usePromptCapture } from '@/hooks/use-prompt-capture'
 
-import type { Workspace } from "@sst-replicache-template/core/models/Workspace";
-import type { Prompt } from "@sst-replicache-template/core/models/Prompt";
+import type { Workspace } from '@sst-replicache-template/core/models/Workspace'
+import type { Prompt } from '@sst-replicache-template/core/models/Prompt'
 
 type DashboardPageProps = {
-  workspaces: Workspace[];
-  activeWorkspaceID: string;
-  onWorkspaceChange: (workspaceID: string) => void;
-};
+  workspaces: Workspace[]
+  activeWorkspaceID: string
+  onWorkspaceChange: (workspaceID: string) => void
+}
 
 export default function DashboardPage(props: DashboardPageProps) {
-  const { workspaces, activeWorkspaceID, onWorkspaceChange } = props;
-  const workspace = useWorkspace();
-  const replicache = useReplicache();
+  const { workspaces, activeWorkspaceID, onWorkspaceChange } = props
+  const workspace = useWorkspace()
+  const replicache = useReplicache()
 
-  const members = useSubscribe(UserStore.list(), { default: [] });
-  const allWorkspaces = useSubscribe(WorkspaceStore.list(), { default: workspaces });
+  const members = useSubscribe(UserStore.list(), { default: [] })
+  const allWorkspaces = useSubscribe(WorkspaceStore.list(), { default: workspaces })
   const prompts = (useSubscribe(PromptStore.list(), {
-    default: [] as Prompt[],
-  }) ?? []) as Prompt[];
+    default: [] as Prompt[]
+  }) ?? []) as Prompt[]
 
-  usePromptCapture();
+  usePromptCapture()
 
   return (
     <div className="flex min-h-screen flex-col gap-6 bg-[#0E111A] px-6 py-8 text-white">
@@ -97,15 +91,15 @@ export default function DashboardPage(props: DashboardPageProps) {
                 <span>
                   {workspace.timeUpdated
                     ? formatDistanceToNow(new Date(workspace.timeUpdated), {
-                        addSuffix: true,
+                        addSuffix: true
                       })
-                    : "n/a"}
+                    : 'n/a'}
                 </span>
               </div>
               <Separator className="bg-white/10" />
               <p className="text-xs text-white/60">
-                Mutations authored here replicate through the same push/pull endpoints as the web client. Use the
-                shortcut Cmd/Ctrl + Shift + P to capture prompts from anywhere.
+                Mutations authored here replicate through the same push/pull endpoints as the web
+                client. Use the shortcut Cmd/Ctrl + Shift + P to capture prompts from anywhere.
               </p>
             </CardContent>
           </Card>
@@ -119,7 +113,9 @@ export default function DashboardPage(props: DashboardPageProps) {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-white/80">
               {prompts.length === 0 ? (
-                <p className="text-white/60">No prompts captured yet. Highlight text and press Cmd/Ctrl + Shift + P.</p>
+                <p className="text-white/60">
+                  No prompts captured yet. Highlight text and press Cmd/Ctrl + Shift + P.
+                </p>
               ) : (
                 <ul className="space-y-3">
                   {prompts.slice(0, 5).map((prompt) => (
@@ -140,7 +136,9 @@ export default function DashboardPage(props: DashboardPageProps) {
                           <p className="uppercase tracking-wide">{prompt.source}</p>
                           <p>
                             {prompt.timeCreated
-                              ? formatDistanceToNow(new Date(prompt.timeCreated), { addSuffix: true })
+                              ? formatDistanceToNow(new Date(prompt.timeCreated), {
+                                  addSuffix: true
+                                })
                               : 'syncing…'}
                           </p>
                         </div>
@@ -148,7 +146,9 @@ export default function DashboardPage(props: DashboardPageProps) {
                     </li>
                   ))}
                   {prompts.length > 5 ? (
-                    <li className="text-xs text-white/60">Showing latest 5 of {prompts.length} prompts.</li>
+                    <li className="text-xs text-white/60">
+                      Showing latest 5 of {prompts.length} prompts.
+                    </li>
                   ) : null}
                 </ul>
               )}
@@ -159,7 +159,9 @@ export default function DashboardPage(props: DashboardPageProps) {
         <Card className="border-white/10 bg-white/5">
           <CardHeader>
             <CardTitle>Members</CardTitle>
-            <CardDescription className="text-white/60">Live list backed by Replicache.</CardDescription>
+            <CardDescription className="text-white/60">
+              Live list backed by Replicache.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {members.length === 0 ? (
@@ -181,5 +183,5 @@ export default function DashboardPage(props: DashboardPageProps) {
         </Card>
       </main>
     </div>
-  );
+  )
 }
