@@ -3,6 +3,10 @@
   "compilerOptions": {
     "module": "esnext",
     "moduleResolution": "bundler",
-    "jsx": "react-jsx"
-  }
+    "jsx": "react-jsx",
+    "composite": true,
+    "declaration": true,
+    "outDir": "dist"
+  },
+  "include": ["src"]
 }

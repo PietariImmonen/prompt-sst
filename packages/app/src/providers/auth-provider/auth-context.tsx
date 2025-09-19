@@ -1,7 +1,6 @@
 import * as React from "react";
-import { z } from "zod";
-
 import { WorkspaceSchema } from "@sst-replicache-template/core/models/Workspace";
+import { z } from "zod";
 
 export type Account = {
   [x: string]: unknown;
@@ -32,7 +31,10 @@ export const authStore = {
     return JSON.parse(raw) as AuthStorage;
   },
   set(input: AuthStorage) {
-    return localStorage.setItem("sst-replicache-template.auth", JSON.stringify(input));
+    return localStorage.setItem(
+      "sst-replicache-template.auth",
+      JSON.stringify(input),
+    );
   },
   remove() {
     return localStorage.removeItem("sst-replicache-template.auth");

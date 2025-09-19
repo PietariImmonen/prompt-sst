@@ -11,4 +11,5 @@
       "@sst-replicache-template/functions/*": ["../functions/src/*"]
     }
   }
+  
 }
