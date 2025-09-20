@@ -1,6 +1,5 @@
-import { Plus, Upload, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
@@ -8,13 +7,11 @@ type PromptsPageHeaderProps = {
   className?: string
   activeScope?: 'mine' | 'all'
   onScopeChange?: (scope: 'mine' | 'all') => void
-  onNewPrompt?: () => void
-  onImport?: () => void
   onSearch?: (value: string) => void
 }
 
 export function PromptsPageHeader(props: PromptsPageHeaderProps) {
-  const { className, activeScope = 'all', onScopeChange, onNewPrompt, onImport, onSearch } = props
+  const { className, onSearch } = props
 
   return (
     <div

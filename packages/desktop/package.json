@@ -10,8 +10,11 @@
     "typecheck:node": "bunx tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "bunx tsc --noEmit -p tsconfig.web.json",
     "typecheck": "bun run typecheck:node && bun run typecheck:web",
+    "typecheck:sst": "cd ../.. && sst bind -- bun run --filter @sst-replicache-template/desktop typecheck",
+    "env:generate": "node ../../scripts/generate-desktop-env.mjs",
     "start": "bunx electron-vite preview",
     "dev": "bunx electron-vite dev",
+    "dev:with-env": "bun run env:generate && bun run dev",
     "build": "bun run typecheck && bunx electron-vite build",
     "postinstall": "bunx electron-builder install-app-deps",
     "build:unpack": "bun run build && bunx electron-builder --dir",
@@ -20,6 +23,7 @@
     "build:linux": "bun run build && bunx electron-builder --linux"
   },
   "dependencies": {
+    "@sst-replicache-template/core": "workspace:*",
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
     "@openauthjs/openauth": "^0.4.3",
@@ -65,7 +69,11 @@
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.24.1",
-    "react-hook-form": "^7.62.0"
+    "react-hook-form": "^7.62.0",
+    "i18next": "^23.0.0",
+    "i18next-browser-languagedetector": "^8.0.0",
+    "react-i18next": "^15.0.0",
+    "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",

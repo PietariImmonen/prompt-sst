@@ -1,25 +1,25 @@
-import { useState } from "react";
-import { useMemo } from "react";
-import { createClient } from "@openauthjs/openauth/client";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { useState } from 'react'
+import { useMemo } from 'react'
+import { createClient } from '@openauthjs/openauth/client'
+import { Loader2, ShieldCheck } from 'lucide-react'
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 
-const issuer = import.meta.env.VITE_AUTH_URL;
+const issuer = import.meta.env.VITE_AUTH_URL
 
 const providers = [
   {
-    id: "google" as const,
-    label: "Continue with Google",
+    id: 'google' as const,
+    label: 'Continue with Google'
   },
   {
-    id: "microsoft" as const,
-    label: "Continue with Microsoft",
-  },
-];
+    id: 'microsoft' as const,
+    label: 'Continue with Microsoft'
+  }
+]
 
 export function AuthPage() {
   if (!issuer) {
@@ -29,42 +29,42 @@ export function AuthPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Missing configuration</CardTitle>
             <CardDescription className="text-white/70">
-              Set <code className="font-mono">VITE_AUTH_URL</code> in <code>packages/desktop/.env</code> so the desktop app knows which OpenAuth issuer to use.
+              Set <code className="font-mono">VITE_AUTH_URL</code> in{' '}
+              <code>packages/desktop/.env</code> so the desktop app knows which OpenAuth issuer to
+              use.
             </CardDescription>
           </CardHeader>
         </Card>
       </div>
-    );
+    )
   }
 
   const client = useMemo(
     () =>
       createClient({
-        clientID: "desktop",
-        issuer,
+        clientID: 'desktop',
+        issuer
       }),
-    [issuer],
-  );
+    [issuer]
+  )
 
-  const [loading, setLoading] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleProviderClick = async (provider: "google" | "microsoft") => {
+  const handleProviderClick = async (provider: 'google' | 'microsoft') => {
     try {
-      setError(null);
-      setLoading(provider);
-      const { url } = await client.authorize(
-        `${location.origin}/auth/callback`,
-        "token",
-        { provider },
-      );
-      window.location.href = url;
+      setError(null)
+      setLoading(provider)
+      const { url } = await client.authorize(`${location.origin}/auth/callback`, 'token', {
+        provider
+      })
+      window.location.href = url
     } catch (err) {
-      console.error("Failed to start OAuth flow", err);
-      setError(err instanceof Error ? err.message : "Unable to start sign-in");
-      setLoading(null);
+      console.error('Failed to start OAuth flow', err)
+      setError(err instanceof Error ? err.message : 'Unable to start sign-in')
+      setLoading(null)
     }
-  };
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0E111A] px-4 text-white">
@@ -96,9 +96,7 @@ export function AuthPage() {
                 disabled={loading !== null}
                 onClick={() => handleProviderClick(provider.id)}
               >
-                {loading === provider.id ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
+                {loading === provider.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {provider.label}
               </Button>
             ))}
@@ -107,13 +105,13 @@ export function AuthPage() {
           <Separator className="bg-white/10" />
 
           <p className="text-xs text-white/50">
-            After completing authentication in the browser window, you'll return here automatically. We never store
-            provider passwords or additional scopes.
+            After completing authentication in the browser window, you'll return here automatically.
+            We never store provider passwords or additional scopes.
           </p>
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }
 
-export default AuthPage;
+export default AuthPage

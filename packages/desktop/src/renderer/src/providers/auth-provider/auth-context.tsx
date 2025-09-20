@@ -1,18 +1,14 @@
 import * as React from 'react'
-import { WorkspaceSchema } from '@sst-replicache-template/core/models/Workspace'
-import { z } from 'zod'
+import { Account as CoreAccount } from '@sst-replicache-template/core/models/Account'
+import { Workspace } from '@sst-replicache-template/core/models/Workspace'
 
-export type Account = {
-  [x: string]: unknown
-  id: string
-  email: string
-  name: string
+export type Account = CoreAccount & {
   token: string
-  workspaces: z.infer<typeof WorkspaceSchema>[]
+  workspaces: Workspace[]
 }
 
 export interface AuthContextType {
-  current: Account
+  current: Account | null
   accounts: Record<string, Account>
   logout: () => void
   refresh: () => Promise<void>

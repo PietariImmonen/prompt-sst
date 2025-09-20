@@ -28,7 +28,7 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
         const url = new URL(`wss://${endpoint}/mqtt`)
         url.searchParams.set('x-amz-customauthorizer-name', authorizer)
 
-        const workspaces: any = auth.current.workspaces
+        const workspaces = auth.current?.workspaces || []
 
         if (workspaces.length > 10) {
           console.log('too many workspaces to allow realtime updates')
@@ -39,7 +39,7 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
           protocolVersion: 5,
           manualConnect: true,
           username: '', // this must be empty for the authorizer to work
-          password: auth.current.token,
+          password: auth.current?.token || '',
           clientId: 'client_' + createId()
         })
 

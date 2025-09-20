@@ -1,5 +1,5 @@
 import type { Config } from "drizzle-kit";
-import { Resource } from "sst";
+import { Resource } from "sst/resource";
 
 const connection = {
   user: Resource.Database.user,

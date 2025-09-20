@@ -199,9 +199,7 @@ export namespace Prompt {
       tx
         .select()
         .from(prompt)
-        .where(
-          and(eq(prompt.id, id), eq(prompt.workspaceID, useWorkspaceID())),
-        )
+        .where(and(eq(prompt.id, id), eq(prompt.workspaceID, useWorkspaceID())))
         .execute()
         .then((rows) => rows.at(0)),
     ),
@@ -214,7 +212,10 @@ export namespace Prompt {
         .update(prompt)
         .set({ timeDeleted: sql`CURRENT_TIMESTAMP` })
         .where(
-          and(eq(prompt.id, id), eq(prompt.workspaceID, actor.properties.workspaceID)),
+          and(
+            eq(prompt.id, id),
+            eq(prompt.workspaceID, actor.properties.workspaceID),
+          ),
         )
         .execute();
     }),

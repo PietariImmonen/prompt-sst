@@ -33,12 +33,15 @@ const AuthenticatedApp = () => {
   const [workspaceID, setWorkspaceID] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!activeAccount || !activeAccount.workspaces.length) {
+    if (!activeAccount || !activeAccount.workspaces?.length) {
       return
     }
 
     if (!workspaceID) {
-      setWorkspaceID(activeAccount.workspaces[0].id as string)
+      const firstWorkspace = activeAccount.workspaces[0]
+      if (firstWorkspace && firstWorkspace.id) {
+        setWorkspaceID(firstWorkspace.id)
+      }
     }
   }, [activeAccount, workspaceID])
 
@@ -55,8 +58,8 @@ const AuthenticatedApp = () => {
     )
   }
 
-  const workspace = activeAccount.workspaces.find((w: any) => w.id === workspaceID)
-  if (!workspace) {
+  const workspace = activeAccount?.workspaces?.find((w) => w.id === workspaceID)
+  if (!workspace || !activeAccount) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0E111A] text-white">
         <div className="space-y-2 text-center">

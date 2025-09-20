@@ -17,6 +17,9 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
     const endpoint = import.meta.env.VITE_REALTIME_ENDPOINT;
     const authorizer = import.meta.env.VITE_AUTHORIZER;
 
+    console.log("endpoint", endpoint);
+    console.log("authorizer", authorizer);
+
     async function createConnection() {
       try {
         console.log("creating new connection");

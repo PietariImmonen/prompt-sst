@@ -1,12 +1,11 @@
 import { createClient } from "@openauthjs/openauth/client";
-import type { MiddlewareHandler } from "hono";
-import { HTTPException } from "hono/http-exception";
-import { Resource } from "sst/resource";
-
 import { ActorContext } from "@sst-replicache-template/core/actor";
 import { User } from "@sst-replicache-template/core/domain/user";
 import dayjs from "@sst-replicache-template/core/lib/dayjs";
 import { VisibleError } from "@sst-replicache-template/core/util/error";
+import type { MiddlewareHandler } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { Resource } from "sst/resource";
 
 import { subjects } from "../auth/subjects";
 

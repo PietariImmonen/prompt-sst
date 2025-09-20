@@ -1,18 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, sql } from "drizzle-orm";
-import { bus } from "sst/aws/bus";
-import { Resource } from "sst/resource";
 import { z } from "zod";
 
-import { ActorContext, useWorkspaceID } from "../../actor";
+import { useWorkspaceID } from "../../actor";
 import { db } from "../../drizzle";
 import { defineEvent } from "../../event";
 import { UserSchema } from "../../models/User";
 import { removeTimestamps } from "../../util/sql";
-import {
-  createTransactionEffect,
-  useTransaction,
-} from "../../util/transaction";
+import { useTransaction } from "../../util/transaction";
 import { zod } from "../../util/zod";
 import { user } from "./user.sql";
 
@@ -79,14 +74,14 @@ export namespace User {
           })
           .execute();
 
-        const actor = ActorContext.use();
+        // const actor = ActorContext.use();
 
-        // system actor is used, when user is created together with a workspace
-        if (actor.type !== "system") {
-          await createTransactionEffect(() =>
-            bus.publish(Resource.Bus, Events.UserCreated, { userID: id }),
-          );
-        }
+        // // system actor is used, when user is created together with a workspace
+        // if (actor.type !== "system") {
+        //   await createTransactionEffect(() =>
+        //     bus.publish(Resource.Bus, Events.UserCreated, { userID: id }),
+        //   );
+        // }
 
         return id;
       }),

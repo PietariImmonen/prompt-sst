@@ -1,19 +1,23 @@
 import * as React from 'react'
-import { z } from 'zod'
 
-import { Workspace, WorkspaceSchema } from '@sst-replicache-template/core/models/Workspace'
-
-const CurrentWorkspaceSchema: typeof WorkspaceSchema = WorkspaceSchema
+import { Workspace } from '@sst-replicache-template/core/models/Workspace'
 
 export const workspaceStore = {
-  get() {
+  get(): Workspace | undefined {
     const raw = localStorage.getItem('sst-replicache-template.workspace')
     if (!raw) return undefined
-    // Parse with the base schema
-    return JSON.parse(raw) as z.infer<typeof CurrentWorkspaceSchema>
+    try {
+      const parsed = JSON.parse(raw)
+      // Validate that it has the required properties
+      if (parsed && typeof parsed === 'object' && parsed.id && parsed.name) {
+        return parsed as Workspace
+      }
+      return undefined
+    } catch {
+      return undefined
+    }
   },
-  set(input: z.infer<typeof CurrentWorkspaceSchema>) {
-    // Set using the base schema
+  set(input: Workspace) {
     return localStorage.setItem('sst-replicache-template.workspace', JSON.stringify(input))
   },
   remove() {
@@ -21,10 +25,7 @@ export const workspaceStore = {
   }
 }
 
-export const WorkspaceContext = React.createContext<
-  // Use the base schema type
-  z.infer<typeof CurrentWorkspaceSchema> | undefined
->(undefined)
+export const WorkspaceContext = React.createContext<Workspace | undefined>(undefined)
 
 // Simplify WorkspaceContextType for now
 export type WorkspaceContextType = Workspace

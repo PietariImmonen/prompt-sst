@@ -9,12 +9,8 @@
     "src/types/**/*.d.ts"
   ],
   "exclude": [],
-  "references": [
-    { "path": "../core" }  // 👈 this is key
-  ],
   "compilerOptions": {
-    "composite": true,
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.desktop.tsbuildinfo",
+    "composite": false,
     "jsx": "react-jsx",
     "target": "ES2020",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
@@ -26,6 +22,8 @@
     "moduleDetection": "force",
     "noEmit": true,
     "strict": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,

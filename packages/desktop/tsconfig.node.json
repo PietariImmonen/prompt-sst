@@ -8,7 +8,7 @@
   ],
   "exclude": [],
   "compilerOptions": {
-    "composite": true,
+    "composite": false,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2020",

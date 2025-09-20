@@ -1,4 +1,4 @@
-import { Editor } from "@tiptap/react";
+import { Editor } from '@tiptap/react'
 
 import {
   Select,
@@ -6,23 +6,20 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useLocale } from "@/hooks/use-locale";
+  SelectValue
+} from '@/components/ui/select'
 
 interface FormatTypeProps {
-  editor: Editor;
+  editor: Editor
 }
 
 export function FormatType({ editor }: FormatTypeProps) {
-  const { t } = useLocale();
-
   const value = () => {
-    if (editor.isActive("paragraph")) return "paragraph";
-    if (editor.isActive("heading", { level: 1 })) return "h1";
-    if (editor.isActive("heading", { level: 2 })) return "h2";
-    if (editor.isActive("heading", { level: 3 })) return "h3";
-  };
+    if (editor.isActive('paragraph')) return 'paragraph'
+    if (editor.isActive('heading', { level: 1 })) return 'h1'
+    if (editor.isActive('heading', { level: 2 })) return 'h2'
+    if (editor.isActive('heading', { level: 3 })) return 'h3'
+  }
 
   // const onChange = (value: string) => {
   //   // switch (value) {
@@ -48,14 +45,12 @@ export function FormatType({ editor }: FormatTypeProps) {
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectItem value="paragraph">
-            {t("common:label.paragraph")}
-          </SelectItem>
-          <SelectItem value="h1">{t("common:label.h1")}</SelectItem>
-          <SelectItem value="h2">{t("common:label.h2")}</SelectItem>
-          <SelectItem value="h3">{t("common:label.h3")}</SelectItem>
+          <SelectItem value="paragraph">Paragraph</SelectItem>
+          <SelectItem value="h1">H1</SelectItem>
+          <SelectItem value="h2">H2</SelectItem>
+          <SelectItem value="h3">H3</SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>
-  );
+  )
 }
