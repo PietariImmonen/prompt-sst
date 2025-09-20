@@ -77,6 +77,10 @@ export function AuthProvider(props: AuthProviderProps) {
             const prevStore = authStore.get()!
             authStore.set({ ...prevStore, current: token })
             window.location.hash = ''
+            // Redirect to main app after successful authentication
+            if (window.location.pathname === '/auth/callback') {
+              window.location.href = '/sessions'
+            }
           }
         })
       all.push(prom)

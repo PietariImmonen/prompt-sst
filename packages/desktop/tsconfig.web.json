@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "include": [
+    "sst-env.d.ts",
+    "../../sst-env.d.ts",
     "src/renderer/src",
     "src/renderer/src/**/*.ts",
     "src/renderer/src/**/*.tsx",

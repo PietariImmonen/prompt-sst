@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 import { useAuth } from '@/hooks/use-auth'
 import { WorkspaceProvider } from '@/providers/workspace-provider'
@@ -15,6 +15,7 @@ import SettingsPage from '@/pages/settings'
 import SidebarLayout from '@/components/layout/sidebar-layout'
 import { Toaster } from '@/components/ui/sonner'
 import { PromptCaptureProvider } from '@/providers/prompt-capture-provider'
+import { CallbackPage } from '@/routes/auth/callback/callback'
 
 const SplashScreen = () => {
   return (
@@ -81,8 +82,9 @@ const AuthenticatedApp = () => {
           <PromptCaptureProvider>
             <Routes>
               <Route path="/" element={<SidebarLayout />}>
-                <Route path="/sessions" element={<PromptsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route index element={<Navigate to="/sessions" replace />} />
+                <Route path="sessions" element={<PromptsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Routes>
           </PromptCaptureProvider>
@@ -113,7 +115,10 @@ function App(): JSX.Element {
       <ThemeProvider defaultTheme="system" storageKey="prompt-desktop-theme">
         <AuthProvider>
           <Toaster richColors position="top-right" />
-          <Content />
+          <Routes>
+            <Route path="/auth/callback" element={<CallbackPage />} />
+            <Route path="/*" element={<Content />} />
+          </Routes>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

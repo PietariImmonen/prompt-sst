@@ -11,16 +11,21 @@ The desktop app shares infrastructure with the Prompt SST web client (OpenAuth, 
 
 ## 2. Environment Variables
 
-Create `packages/desktop/.env` and copy the values you use for the web client:
+Generate `packages/desktop/.env` (development) from your SST stack so the desktop client hits the correct hosted endpoints when running locally:
 
-```ini
-VITE_APP_URL=http://localhost:5173
-VITE_API_URL=http://localhost:13557
-VITE_STAGE=dev
-VITE_REALTIME_ENDPOINT=localhost:13558
-VITE_AUTHORIZER=local-authorizer
-VITE_AUTH_URL=https://your-auth.example.com
+```bash
+bun run --filter @sst-replicache-template/desktop env:generate
 ```
+
+The script calls `sst outputs` for the current stage (defaults to `dev`). To target another stage use `SST_STAGE` or the `--stage` flag:
+
+```bash
+SST_STAGE=production bun run --filter @sst-replicache-template/desktop env:generate
+# or
+bun run --filter @sst-replicache-template/desktop env:generate -- --stage production
+```
+
+Environment variables can be overridden ad-hoc with `DESKTOP_API_URL`, `DESKTOP_AUTH_URL`, etc. See `scripts/generate-desktop-env.mjs` for the full list. Pass `--mode production` to write `.env.production`, which the packaging step uses automatically. If the script cannot reach SST outputs it leaves the current files untouched so your manually defined values persist.
 
 ## 3. Install Dependencies
 
@@ -48,16 +53,17 @@ The renderer opens in an Electron window. OAuth flows redirect to the same windo
 ## 5. Production Builds
 
 ```bash
+# Builds always regenerate `.env.production` for the selected stage (default production)
 bun run --filter @sst-replicache-template/desktop build
 bun run --filter @sst-replicache-template/desktop build:mac   # or build:win / build:linux
 ```
 
 - Renderer bundles land in `packages/desktop/dist`.
-- Installers are emitted to `packages/desktop/out`.
-- All `build:*` scripts run TypeScript checks before packaging.
+- Installers are emitted to `packages/desktop/out` with names like `prompt-sst-desktop-<version>-<os>-<arch>.<ext>`.
+- All `build:*` scripts regenerate `.env`, run TypeScript checks, and then package the Electron app.
 
 ## 6. Troubleshooting
 
-- **Blank screen after login**: ensure the `.env` values match the SST dev service URLs and that `bun run dev` is still running.
+- **Blank screen after login**: ensure the `.env` values match the SST service URLs for the stage you targeted and that `bun run dev` is still running if you rely on local services.
 - **OAuth window loops**: delete `localStorage` via the devtools console (`localStorage.clear()`) and restart the auth flow. Confirm `VITE_APP_URL` points to the Electron renderer origin (default `http://localhost:5173`).
 - **Replicache not updating**: check the SST terminal for sync API errors, then verify `VITE_REALTIME_ENDPOINT` and `VITE_AUTHORIZER` match the values in your backend stage.
