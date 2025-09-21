@@ -12,37 +12,8 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 
-// Import native modules for global keyboard capture and text injection
-let iohook: any = null
-let robot: any = null
-
-// Temporarily suppress console.error to prevent verbose iohook errors
-const originalConsoleError = console.error
-console.error = (...args: any[]) => {
-  const message = args.join(' ')
-  if (message.includes('iohook') || message.includes('Cannot find module')) {
-    // Suppress iohook-related errors
-    return
-  }
-  originalConsoleError.apply(console, args)
-}
-
-try {
-  iohook = require('iohook')
-  console.log('iohook loaded successfully')
-} catch (error) {
-  console.warn('Failed to load iohook (global keyboard capture will be disabled)')
-} finally {
-  // Restore original console.error
-  console.error = originalConsoleError
-}
-
-try {
-  robot = require('robotjs')
-  console.log('robotjs loaded successfully')
-} catch (error) {
-  console.warn('Failed to load robotjs (text injection will use clipboard fallback)')
-}
+// Removed native module dependencies (iohook, robotjs) to prevent crashes
+// Using simple clipboard-based approach for better stability
 
 const captureAccelerator = process.platform === 'darwin' ? 'Command+Shift+P' : 'Control+Shift+P'
 const paletteAccelerator = process.platform === 'darwin' ? 'Command+Shift+O' : 'Control+Shift+O'
@@ -67,6 +38,18 @@ interface CaptureResult {
 }
 
 type WindowGetter = () => BrowserWindow | null
+
+interface FocusInfo {
+  appName: string
+  windowName: string
+}
+
+// Extend BrowserWindow interface to include focusInfo
+declare module 'electron' {
+  interface BrowserWindow {
+    focusInfo?: FocusInfo | null
+  }
+}
 
 function resolveSource(url?: string): PromptSource {
   if (!url) return 'other'
@@ -185,99 +168,27 @@ export function createCaptureService(getWindow: WindowGetter) {
   let paletteListening = false
   let paletteWindow: BrowserWindow | null = null
 
-  // Global keyboard capture state
+  // Simplified overlay state - no global keyboard capture
   let overlayVisible = false
-  let searchBuffer = ''
-  let selectedPromptText = ''
-  let iohookStarted = false
-  let useGlobalCapture = !!iohook // Determine if we can use global keyboard capture
 
-  function startGlobalKeyboardCapture() {
-    if (!iohook || iohookStarted) {
-      if (!iohook) {
-        console.warn('Global keyboard capture not available - native modules not loaded')
-        useGlobalCapture = false
-      }
-      return
-    }
-
-    console.log('Starting global keyboard capture')
-
-    try {
-      iohook.on('keydown', (event: any) => {
-        if (!overlayVisible) return
-
-        try {
-          // Handle special keys
-          if (event.rawcode === 27) {
-            // Escape
-            hideOverlay()
-            return
-          }
-
-          if (event.rawcode === 13) {
-            // Enter
-            submitSelectedPrompt()
-            return
-          }
-
-          if (event.rawcode === 8) {
-            // Backspace
-            searchBuffer = searchBuffer.slice(0, -1)
-            updateOverlaySearch()
-            return
-          }
-
-          // Handle regular characters
-          if (event.keychar && event.keychar > 0) {
-            const char = String.fromCharCode(event.keychar)
-            if (char.match(/[a-zA-Z0-9\s]/)) {
-              // Only allow alphanumeric and space
-              searchBuffer += char
-              updateOverlaySearch()
-            }
-          }
-        } catch (error) {
-          console.error('Error in global keyboard handler:', error)
-        }
-      })
-
-      iohook.start()
-      iohookStarted = true
-    } catch (error) {
-      console.error('Failed to start global keyboard capture:', error)
-    }
-  }
-
-  function stopGlobalKeyboardCapture() {
-    if (!iohook || !iohookStarted) return
-
-    console.log('Stopping global keyboard capture')
-    try {
-      iohook.stop()
-      iohookStarted = false
-    } catch (error) {
-      console.error('Error stopping iohook:', error)
-    }
-  }
+  // Removed global keyboard capture functions - using standard input handling
 
   function showOverlay() {
     overlayVisible = true
-    searchBuffer = ''
-    selectedPromptText = ''
 
     if (paletteWindow && !paletteWindow.isDestroyed()) {
-      paletteWindow.webContents.send('overlay:show', {
-        searchBuffer,
-        useGlobalCapture
-      })
+      paletteWindow.show()
+      paletteWindow.webContents.send('overlay:show')
+
+      // On Windows/Linux, we might need to focus to receive keyboard events
+      if (process.platform !== 'darwin') {
+        paletteWindow.focus()
+      }
     }
   }
 
   function hideOverlay() {
     overlayVisible = false
-    searchBuffer = ''
-    selectedPromptText = ''
 
     if (paletteWindow && !paletteWindow.isDestroyed()) {
       paletteWindow.hide()
@@ -285,58 +196,102 @@ export function createCaptureService(getWindow: WindowGetter) {
     }
   }
 
-  function updateOverlaySearch() {
-    if (paletteWindow && !paletteWindow.isDestroyed()) {
-      paletteWindow.webContents.send('overlay:search-update', { searchBuffer })
-    }
-  }
+  async function submitSelectedPrompt(promptText: string) {
+    console.log('Submitting selected prompt:', promptText.substring(0, 50) + '...')
 
-  function submitSelectedPrompt() {
-    if (!selectedPromptText) {
+    try {
+      // Get focus info stored on the palette window
+      const focusInfo = paletteWindow?.focusInfo || null
+
+      // Always copy to clipboard first as a reliable fallback
+      clipboard.writeText(promptText)
+
+      // Hide overlay first
       hideOverlay()
-      return
-    }
 
-    console.log('Injecting selected prompt text:', selectedPromptText.substring(0, 50) + '...')
+      // Restore focus to the original application
+      if (focusInfo) {
+        console.log('Restoring focus to:', focusInfo)
+        await restoreFocus(focusInfo)
+      }
 
-    // Hide overlay first
-    hideOverlay()
+      // Additional delay for focus to settle
+      await delay(200)
 
-    // Wait a bit for overlay to hide, then inject text
-    setTimeout(() => {
+      // Try to insert directly by typing the text character by character
+      let insertedDirectly = false
+
       try {
-        // Copy to clipboard
-        clipboard.writeText(selectedPromptText)
+        if (process.platform === 'darwin') {
+          // Type the text directly character by character
+          // This approach maintains focus better than clipboard paste
+          const escapedText = promptText
+            .replace(/\\/g, '\\\\')  // Escape backslashes
+            .replace(/"/g, '\\"')    // Escape quotes
+            .replace(/\n/g, '\\n')   // Handle newlines
+            .replace(/\r/g, '\\r')   // Handle carriage returns
+            .replace(/\t/g, '\\t')   // Handle tabs
 
-        if (robot) {
-          // Use robotjs to simulate paste if available
-          if (process.platform === 'darwin') {
-            robot.keyTap('v', 'command')
-          } else {
-            robot.keyTap('v', 'control')
-          }
+          execSync(
+            `osascript -e 'tell application "System Events" to keystroke "${escapedText}"'`,
+            { stdio: 'ignore', timeout: 5000 }
+          )
+          insertedDirectly = true
+        } else if (process.platform === 'win32') {
+          // On Windows: Use SendKeys to type the text
+          const escapedText = promptText.replace(/"/g, '""').replace(/\r?\n/g, '{ENTER}')
+          execSync(
+            `powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('${escapedText}')"`,
+            { stdio: 'ignore', timeout: 5000 }
+          )
+          insertedDirectly = true
         } else {
-          // Fallback: just copy to clipboard and show notification
-          console.warn('Robotjs not available - text copied to clipboard, please paste manually')
-          notifySystem({
-            success: true,
-            message: 'Prompt copied to clipboard - paste with Cmd+V'
-          })
+          // Linux: Use xdotool to type if available
+          try {
+            execSync(`xdotool type --delay 1 "${promptText.replace(/"/g, '\\"')}"`, { stdio: 'ignore', timeout: 5000 })
+            insertedDirectly = true
+          } catch {
+            // Fallback to clipboard paste
+            execSync('xdotool key ctrl+v', { stdio: 'ignore', timeout: 2000 })
+            insertedDirectly = true
+          }
         }
-      } catch (error) {
-        console.error('Error injecting text:', error)
-        // Fallback: still copy to clipboard
+      } catch (insertError) {
+        console.log('Direct typing failed, falling back to clipboard:', insertError)
+        insertedDirectly = false
+
+        // Try clipboard paste as fallback
         try {
-          clipboard.writeText(selectedPromptText)
-          notifySystem({
-            success: true,
-            message: 'Prompt copied to clipboard - paste with Cmd+V'
-          })
-        } catch (clipboardError) {
-          console.error('Failed to copy to clipboard:', clipboardError)
+          if (process.platform === 'darwin') {
+            execSync('osascript -e "tell application \\"System Events\\" to keystroke \\"v\\" using {command down}"', { stdio: 'ignore', timeout: 2000 })
+            insertedDirectly = true
+          } else if (process.platform === 'win32') {
+            execSync('powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\\"^v\\")"', { stdio: 'ignore', timeout: 2000 })
+            insertedDirectly = true
+          }
+        } catch {
+          insertedDirectly = false
         }
       }
-    }, 100)
+
+      if (insertedDirectly) {
+        notifySystem({
+          success: true,
+          message: 'Prompt inserted successfully'
+        })
+      } else {
+        notifySystem({
+          success: true,
+          message: 'Prompt copied to clipboard - paste with Cmd+V (or Ctrl+V)'
+        })
+      }
+    } catch (error) {
+      console.error('Failed to submit prompt:', error)
+      notifySystem({
+        success: false,
+        message: 'Failed to insert prompt'
+      })
+    }
   }
 
   function createPaletteWindow() {
@@ -351,15 +306,13 @@ export function createCaptureService(getWindow: WindowGetter) {
     const { width, height } = currentDisplay.workAreaSize
     const { x: displayX, y: displayY } = currentDisplay.workArea
 
-    console.log(
-      `Creating non-focusable overlay on display: ${currentDisplay.id}, bounds: ${displayX},${displayY} ${width}x${height}`
-    )
+    console.log(`Creating overlay window on display: ${currentDisplay.id}`)
 
     paletteWindow = new BrowserWindow({
       width: 600,
       height: 400,
       x: displayX + Math.floor((width - 600) / 2),
-      y: displayY + Math.floor((height - 400) / 3), // Position higher on screen
+      y: displayY + Math.floor((height - 400) / 3),
       show: false,
       frame: false,
       transparent: true,
@@ -370,20 +323,21 @@ export function createCaptureService(getWindow: WindowGetter) {
       minimizable: false,
       maximizable: false,
       closable: true,
-      focusable: !useGlobalCapture, // Only focusable if we can't capture globally
+      focusable: true,
       fullscreenable: false,
       hasShadow: true,
-      vibrancy: 'under-window', // macOS vibrancy effect
+      vibrancy: 'under-window',
+      type: process.platform === 'darwin' ? 'panel' : undefined, // Don't steal focus on macOS
       webPreferences: {
         preload: join(__dirname, '../preload/index.mjs'),
         sandbox: false,
         nodeIntegration: false,
         contextIsolation: true,
-        backgroundThrottling: false // Prevent throttling when window is hidden
+        backgroundThrottling: false
       }
     })
 
-    // Load the overlay-specific content
+    // Load the overlay content
     if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
       paletteWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#overlay`)
     } else {
@@ -392,39 +346,23 @@ export function createCaptureService(getWindow: WindowGetter) {
       })
     }
 
-    // Handle window events with debouncing to prevent focus/blur loops
-    let blurTimeout: NodeJS.Timeout | null = null
-
+    // Simple window event handling
     paletteWindow.on('blur', () => {
-      console.log('Overlay window lost focus, scheduling hide')
-      // Debounce the blur event to prevent rapid hide/show cycles
-      if (blurTimeout) clearTimeout(blurTimeout)
-      blurTimeout = setTimeout(() => {
+      console.log('Overlay window lost focus - hiding')
+      setTimeout(() => {
         if (paletteWindow && !paletteWindow.isDestroyed() && !paletteWindow.isFocused()) {
-          console.log('Overlay window hiding after blur timeout')
-          paletteWindow.hide()
+          hideOverlay()
         }
-      }, 200)
-    })
-
-    paletteWindow.on('focus', () => {
-      console.log('Overlay window gained focus')
-      if (blurTimeout) {
-        clearTimeout(blurTimeout)
-        blurTimeout = null
-      }
+      }, 100)
     })
 
     paletteWindow.on('closed', () => {
       console.log('Overlay window closed')
-      if (blurTimeout) {
-        clearTimeout(blurTimeout)
-        blurTimeout = null
-      }
       paletteWindow = null
+      overlayVisible = false
     })
 
-    // Ensure the window stays on top and doesn't interfere with other apps
+    // Keep window on top
     paletteWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
     paletteWindow.setAlwaysOnTop(true, 'screen-saver')
 
@@ -489,10 +427,94 @@ export function createCaptureService(getWindow: WindowGetter) {
     pushStatus(getWindow(), 'listening')
   }
 
+  async function detectFocusedElement(): Promise<FocusInfo | null> {
+    if (process.platform !== 'darwin') {
+      return null // Focus detection is more complex on other platforms
+    }
+
+    try {
+      // Get the current frontmost application and window information
+      const appInfo = execSync(`osascript -e '
+        tell application "System Events"
+          set frontApp to name of first application process whose frontmost is true
+          set appWindows to windows of first application process whose frontmost is true
+          if (count of appWindows) > 0 then
+            set frontWindow to name of first window of first application process whose frontmost is true
+            return frontApp & "|" & frontWindow
+          else
+            return frontApp & "|"
+          end if
+        end tell'`, { encoding: 'utf8', timeout: 1000 }).trim()
+
+      const [appName, windowName] = appInfo.split('|')
+      return { appName, windowName: windowName || '' }
+    } catch (error) {
+      console.log('Failed to detect focused element:', error)
+      return null
+    }
+  }
+
+  async function restoreFocus(focusInfo: FocusInfo | null): Promise<void> {
+    if (!focusInfo || process.platform !== 'darwin') {
+      return
+    }
+
+    try {
+      // Restore focus to the specific application and window
+      if (focusInfo.windowName) {
+        execSync(`osascript -e '
+          tell application "${focusInfo.appName}"
+            activate
+            if exists window "${focusInfo.windowName}" then
+              set index of window "${focusInfo.windowName}" to 1
+            end if
+          end tell'`, { encoding: 'utf8', timeout: 2000 })
+      } else {
+        execSync(`osascript -e 'tell application "${focusInfo.appName}" to activate'`, { encoding: 'utf8', timeout: 2000 })
+      }
+
+      // Small delay to let the app become active
+      await delay(100)
+
+      // For browsers, try to focus back into the input field
+      if (focusInfo.appName.toLowerCase().includes('chrome') ||
+          focusInfo.appName.toLowerCase().includes('firefox') ||
+          focusInfo.appName.toLowerCase().includes('safari') ||
+          focusInfo.appName.toLowerCase().includes('edge')) {
+
+        // Try to focus the address/input field by clicking in the center of the window
+        execSync(`osascript -e '
+          tell application "System Events"
+            # Try Tab key to restore focus to last focused element
+            keystroke tab
+            delay 0.1
+            # If that doesn\'t work, try clicking in the center of the window
+            if not exists (first UI element of first window of application process "${focusInfo.appName}" whose focused is true and role is not "AXWindow") then
+              click at {400, 300}
+            end if
+          end tell'`, { encoding: 'utf8', timeout: 1000 })
+      }
+    } catch (error) {
+      console.log('Failed to restore focus:', error)
+    }
+  }
+
   function registerPaletteShortcut() {
     if (paletteListening) return
-    const success = globalShortcut.register(paletteAccelerator, () => {
+    const success = globalShortcut.register(paletteAccelerator, async () => {
       console.log(`Palette shortcut ${paletteAccelerator} triggered`)
+
+      // Detect the currently focused element before showing overlay
+      const focusInfo = await detectFocusedElement()
+      console.log('Detected focus info:', focusInfo)
+
+      // Store focus info for later restoration
+      if (paletteWindow && !paletteWindow.isDestroyed()) {
+        paletteWindow.focusInfo = focusInfo
+      }
+
+      // Small delay to ensure the current state is captured
+      await delay(50)
 
       // Create the overlay window at the current cursor position
       const overlayWindow = createPaletteWindow()
@@ -501,18 +523,12 @@ export function createCaptureService(getWindow: WindowGetter) {
         return
       }
 
-      // Show the window
-      overlayWindow.once('ready-to-show', () => {
-        if (useGlobalCapture) {
-          console.log('Non-focusable overlay window ready, showing without focus')
-          overlayWindow.showInactive() // Show without focusing when using global capture
-        } else {
-          console.log('Focusable overlay window ready, showing with focus (fallback mode)')
-          overlayWindow.show() // Show with focus when not using global capture
-          overlayWindow.focus()
-        }
+      // Store focus info on the window
+      overlayWindow.focusInfo = focusInfo
 
-        // Initialize the overlay state
+      // Show the window with focus
+      overlayWindow.once('ready-to-show', () => {
+        console.log('Overlay window ready, showing with focus')
         showOverlay()
       })
     })
@@ -594,28 +610,99 @@ export function createCaptureService(getWindow: WindowGetter) {
   // Handle prompt selection from overlay
   ipcMain.on('overlay:select-prompt', (_event, promptText: string) => {
     console.log('Received prompt selection:', promptText.substring(0, 50) + '...')
-    selectedPromptText = promptText
-    submitSelectedPrompt()
+    submitSelectedPrompt(promptText)
   })
 
-  // Initialize global keyboard capture when shortcuts are enabled
+  // Handle prompts data request from overlay
+  ipcMain.handle('overlay:get-prompts', async () => {
+    console.log('Overlay requesting prompts data')
+    const window = getWindow()
+    if (!window) {
+      console.warn('Main window not available for prompts request')
+      return []
+    }
+
+    try {
+      // Request prompts from the main window's renderer process
+      const prompts = await window.webContents.executeJavaScript(`
+        (async () => {
+          try {
+            // Check if we have access to a global replicache instance
+            if (window.__replicacheInstance) {
+              console.log('Found replicache instance, querying prompts...');
+              const rep = window.__replicacheInstance;
+
+              const prompts = await rep.query(async (tx) => {
+                const promptData = await tx.scan({ prefix: "/prompt/" }).toArray();
+                return promptData.filter(prompt => !prompt.timeDeleted);
+              });
+
+              console.log('Found prompts via replicache:', prompts.length);
+              return prompts;
+            }
+
+            // Fallback: return test prompts if no real data available
+            console.log('No replicache instance found, returning test prompts');
+            return [
+              {
+                id: 'main-test-1',
+                title: 'Welcome Message',
+                content: 'Welcome to our platform! We are excited to have you on board.',
+                isFavorite: true,
+                categoryPath: 'general/welcome',
+                visibility: 'private',
+                source: 'other',
+                metadata: {},
+                timeCreated: new Date().toISOString(),
+                timeUpdated: new Date().toISOString(),
+                workspaceID: 'main-test',
+                userID: 'main-test'
+              },
+              {
+                id: 'main-test-2',
+                title: 'Follow-up Email',
+                content: 'Thank you for your interest. I wanted to follow up on our previous conversation.',
+                isFavorite: false,
+                categoryPath: 'work/followup',
+                visibility: 'private',
+                source: 'other',
+                metadata: {},
+                timeCreated: new Date().toISOString(),
+                timeUpdated: new Date().toISOString(),
+                workspaceID: 'main-test',
+                userID: 'main-test'
+              }
+            ];
+          } catch (error) {
+            console.error('Error getting prompts:', error);
+            return [];
+          }
+        })()
+      `)
+
+      console.log('Retrieved prompts for overlay:', prompts?.length || 0)
+      return prompts || []
+    } catch (error) {
+      console.error('Failed to get prompts for overlay:', error)
+      return []
+    }
+  })
+
+  // Enable shortcuts
   ipcMain.handle('prompt:capture:enable', () => {
     registerShortcuts()
-    startGlobalKeyboardCapture()
     return captureListening
   })
 
-  // Stop global keyboard capture when shortcuts are disabled
+  // Disable shortcuts
   ipcMain.handle('prompt:capture:disable', () => {
     unregisterShortcuts()
-    stopGlobalKeyboardCapture()
     return captureListening
   })
 
   return {
     dispose() {
       unregisterShortcuts()
-      stopGlobalKeyboardCapture()
       if (paletteWindow && !paletteWindow.isDestroyed()) {
         paletteWindow.close()
         paletteWindow = null
@@ -623,6 +710,7 @@ export function createCaptureService(getWindow: WindowGetter) {
       ipcMain.removeHandler('prompt:capture:enable')
       ipcMain.removeHandler('prompt:capture:disable')
       ipcMain.removeHandler('prompt:capture:result')
+      ipcMain.removeHandler('overlay:get-prompts')
       ipcMain.removeAllListeners('overlay:hide')
       ipcMain.removeAllListeners('overlay:force-close')
       ipcMain.removeAllListeners('overlay:select-prompt')

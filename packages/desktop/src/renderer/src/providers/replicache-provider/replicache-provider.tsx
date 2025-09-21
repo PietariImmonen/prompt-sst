@@ -20,8 +20,13 @@ export function ReplicacheProvider(props: {
     });
     setReplicache(_replicache);
 
+    // Expose replicache instance globally for overlay access
+    (window as any).__replicacheInstance = _replicache;
+
     return () => {
       _replicache.close();
+      // Clean up global reference
+      (window as any).__replicacheInstance = null;
     };
   }, [props.token, props.workspaceID]);
 

@@ -1,0 +1,41 @@
+$ sst shell -- node scripts/extract-sst-env.mjs && bun run --filter @sst-replicache-template/desktop dev
+🔄 Extracting SST resources from environment...
+✅ Extracted SST resources to environment variables:
+   📁 /Users/pietari/prompt-sst-combined/packages/desktop/.env
+   🔧 VITE_API_URL=https://ze4gwptxdtwwdglycxpmyl5myu0fzjau.lambda-url.eu-north-1.on.aws/
+   🔧 VITE_AUTH_URL=https://7ghwyskj3b2tojl6x3gwjvokvy0werli.lambda-url.eu-north-1.on.aws
+   🔧 VITE_STAGE=pietari
+   🔧 VITE_REALTIME_ENDPOINT=a240fznnnh1h8h-ats.iot.eu-north-1.amazonaws.com
+   🔧 VITE_AUTHORIZER=sst-replicache-template-pietari-RealtimeAuthorizer-bawrxsao
+   🔧 VITE_APP_URL=http://localhost:3000
+   🔧 VITE_PUBLIC_APP_URL=http://localhost:3001
+@sst-replicache-template/desktop dev: vite v5.4.20 building SSR bundle for development...
+@sst-replicache-template/desktop dev: transforming...
+@sst-replicache-template/desktop dev: ✓ 3 modules transformed.
+@sst-replicache-template/desktop dev: rendering chunks...
+@sst-replicache-template/desktop dev: out/main/index.js  20.41 kB
+@sst-replicache-template/desktop dev: ✓ built in 88ms
+@sst-replicache-template/desktop dev: 
+@sst-replicache-template/desktop dev: build the electron main process successfully
+@sst-replicache-template/desktop dev: 
+@sst-replicache-template/desktop dev: -----
+@sst-replicache-template/desktop dev: 
+@sst-replicache-template/desktop dev: vite v5.4.20 building SSR bundle for development...
+@sst-replicache-template/desktop dev: transforming...
+@sst-replicache-template/desktop dev: ✓ 1 modules transformed.
+@sst-replicache-template/desktop dev: rendering chunks...
+@sst-replicache-template/desktop dev: out/preload/index.mjs  2.54 kB
+@sst-replicache-template/desktop dev: ✓ built in 9ms
+@sst-replicache-template/desktop dev: 
+@sst-replicache-template/desktop dev: build the electron preload files successfully
+@sst-replicache-template/desktop dev: 
+@sst-replicache-template/desktop dev: -----
+@sst-replicache-template/desktop dev: 
+@sst-replicache-template/desktop dev: dev server running for the electron renderer process at:
+@sst-replicache-template/desktop dev: 
+@sst-replicache-template/desktop dev:   ➜  Local:   http://localhost:5173/
+@sst-replicache-template/desktop dev:   ➜  Network: use --host to expose
+@sst-replicache-template/desktop dev: 
+@sst-replicache-template/desktop dev: start electron app...
+@sst-replicache-template/desktop dev: 
+@sst-replicache-template/desktop dev: Exited with code 0

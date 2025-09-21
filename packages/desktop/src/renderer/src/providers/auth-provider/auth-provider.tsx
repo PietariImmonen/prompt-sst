@@ -58,62 +58,76 @@ export function AuthProvider(props: AuthProviderProps) {
   }, [])
 
   const refresh = React.useCallback(async () => {
-    const all = []
-    if (!authStore.get()) return
-    for (const token of [...Object.keys(authStore.get()!.accounts), accessToken]) {
-      if (!token) continue
+    try {
+      const all = []
+      if (!authStore.get()) return
+      for (const token of [...Object.keys(authStore.get()!.accounts), accessToken]) {
+        if (!token) continue
 
-      const prom = api.account.me
-        .$get({}, { headers: { authorization: `Bearer ${token}` } })
-        .then(async (response) => {
-          if (response.ok) {
-            const info = await response.json()
+        const prom = api.account.me
+          .$get({}, { headers: { authorization: `Bearer ${token}` } })
+          .then(async (response) => {
+            if (response.ok) {
+              const info = await response.json()
 
-            if (
-              !accessToken ||
-              !Object.values(authStore.get()!.accounts).find((a) => a.id === info.result.id)
-            ) {
-              const prevStore = authStore.get()!
-              authStore.set({
-                ...prevStore,
-                accounts: {
-                  ...prevStore.accounts,
-                  [token]: {
-                    ...info.result,
-                    token
+              if (
+                !accessToken ||
+                !Object.values(authStore.get()!.accounts).find((a) => a.id === info.result.id)
+              ) {
+                const prevStore = authStore.get()!
+                authStore.set({
+                  ...prevStore,
+                  accounts: {
+                    ...prevStore.accounts,
+                    [token]: {
+                      ...info.result,
+                      token
+                    }
                   }
-                }
-              })
-            }
-          }
-
-          if (!response.ok) {
-            const prevStore = authStore.get()!
-            delete prevStore.accounts[token]
-            authStore.set(prevStore)
-          }
-
-          if (accessToken === token) {
-            const prevStore = authStore.get()!
-            authStore.set({ ...prevStore, current: token })
-
-            const isCallbackRoute =
-              window.location.hash.startsWith('#/auth/callback') ||
-              window.location.pathname === '/auth/callback'
-
-            if (isCallbackRoute) {
-              window.location.hash = '#/sessions'
-            } else {
-              window.location.hash = '#/'
+                })
+              }
             }
 
-            setAccessToken(null)
-          }
-        })
-      all.push(prom)
+            if (!response.ok) {
+              const prevStore = authStore.get()!
+              delete prevStore.accounts[token]
+              authStore.set(prevStore)
+            }
+
+            if (accessToken === token) {
+              const prevStore = authStore.get()!
+              authStore.set({ ...prevStore, current: token })
+
+              const isCallbackRoute =
+                window.location.hash.startsWith('#/auth/callback') ||
+                window.location.pathname === '/auth/callback'
+
+              if (isCallbackRoute) {
+                window.location.hash = '#/sessions'
+              } else {
+                window.location.hash = '#/'
+              }
+
+              setAccessToken(null)
+            }
+          })
+          .catch((error) => {
+            console.warn('Failed to refresh auth token:', error)
+            // If there's a network error, just remove the invalid token
+            if (authStore.get()?.accounts[token]) {
+              const prevStore = authStore.get()!
+              delete prevStore.accounts[token]
+              authStore.set(prevStore)
+            }
+          })
+        all.push(prom)
+      }
+      await Promise.all(all)
+    } catch (error) {
+      console.error('Auth refresh failed:', error)
+    } finally {
+      setIsReady(true)
     }
-    await Promise.all(all)
-    setIsReady(true)
   }, [accessToken])
 
   React.useEffect(() => {
