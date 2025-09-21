@@ -18,6 +18,25 @@ type CaptureStatusPayload = {
   message?: string
 }
 
+type AuthCallbackPayload = {
+  id: string
+  hash: string
+  search: string
+  url: string
+}
+
+type AuthPrepareResult = {
+  id: string
+  callbackUrl: string
+}
+
+interface DesktopAuthAPI {
+  onCallback: (callback: (payload: AuthCallbackPayload) => void) => () => void
+  prepare: () => Promise<AuthPrepareResult>
+  launch: (payload: { id: string; url: string }) => Promise<void>
+  cancel: (payload: { id: string }) => Promise<void>
+}
+
 interface PromptCaptureAPI {
   onCapture: (callback: (payload: PromptCapturePayload) => void) => () => void
   onStatus: (callback: (payload: CaptureStatusPayload) => void) => () => void
@@ -69,10 +88,46 @@ const promptCapture: PromptCaptureAPI = {
   }
 }
 
+const desktopAuth: DesktopAuthAPI = {
+  onCallback(callback) {
+    const listener = (_event: Electron.IpcRendererEvent, payload: AuthCallbackPayload) => {
+      callback(payload)
+    }
+
+    ipcRenderer.on('auth:callback', listener)
+
+    void ipcRenderer
+      .invoke('auth:callback:ready')
+      .then((pending: AuthCallbackPayload[] | undefined) => {
+        if (!pending || !Array.isArray(pending)) return
+        for (const payload of pending) {
+          callback(payload)
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to fetch pending auth callbacks', error)
+      })
+
+    return () => {
+      ipcRenderer.removeListener('auth:callback', listener)
+    }
+  },
+  prepare() {
+    return ipcRenderer.invoke('auth:prepare')
+  },
+  launch(payload) {
+    return ipcRenderer.invoke('auth:launch', payload)
+  },
+  cancel(payload) {
+    return ipcRenderer.invoke('auth:cancel', payload)
+  }
+}
+
 declare global {
   interface Window {
     electron: typeof electronAPI
     promptCapture: PromptCaptureAPI
+    desktopAuth: DesktopAuthAPI
   }
 }
 
@@ -80,6 +135,7 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('promptCapture', promptCapture)
+    contextBridge.exposeInMainWorld('desktopAuth', desktopAuth)
   } catch (error) {
     console.error('Failed to expose preload API', error)
   }
@@ -88,4 +144,6 @@ if (process.contextIsolated) {
   window.electron = electronAPI
   // @ts-expect-error fallback when context isolation disabled
   window.promptCapture = promptCapture
+  // @ts-expect-error fallback when context isolation disabled
+  window.desktopAuth = desktopAuth
 }

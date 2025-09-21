@@ -55,12 +55,22 @@ export function AuthPage() {
     try {
       setError(null)
       setLoading(provider)
-      // Use localhost callback for desktop app instead of file:// protocol
-      const callbackUrl = 'http://localhost:3000/auth/callback'
-      const { url } = await client.authorize(callbackUrl, 'token', {
-        provider
-      })
-      window.location.href = url
+      if (!window.desktopAuth) {
+        throw new Error('Desktop auth bridge is unavailable')
+      }
+
+      const request = await window.desktopAuth.prepare()
+
+      try {
+        const { url } = await client.authorize(request.callbackUrl, 'token', {
+          provider
+        })
+
+        await window.desktopAuth.launch({ id: request.id, url })
+      } catch (error) {
+        await window.desktopAuth.cancel({ id: request.id }).catch(() => undefined)
+        throw error
+      }
     } catch (err) {
       console.error('Failed to start OAuth flow', err)
       setError(err instanceof Error ? err.message : 'Unable to start sign-in')

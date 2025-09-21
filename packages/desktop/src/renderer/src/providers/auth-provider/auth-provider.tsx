@@ -11,14 +11,34 @@ export type AuthProviderProps = {
 export function AuthProvider(props: AuthProviderProps) {
   const [isReady, setIsReady] = React.useState<boolean>(false)
 
-  const accessToken = React.useMemo(
-    () => new URLSearchParams(window.location.hash.substring(1)).get('access_token'),
-    []
-  )
+  const [accessToken, setAccessToken] = React.useState<string | null>(() => {
+    return new URLSearchParams(window.location.hash.substring(1)).get('access_token')
+  })
 
   if (!authStore.get()) {
     authStore.set({ accounts: {} })
   }
+
+  React.useEffect(() => {
+    if (!window.desktopAuth) return
+
+    const unsubscribe = window.desktopAuth.onCallback((payload) => {
+      const hash = payload.hash.startsWith('#') ? payload.hash.slice(1) : payload.hash
+      const search = payload.search.startsWith('?') ? payload.search.slice(1) : payload.search
+
+      const nextSearch = search ? `?${search}` : ''
+      window.location.hash = `#/auth/callback${nextSearch}`
+
+      if (hash) {
+        const token = new URLSearchParams(hash).get('access_token')
+        setAccessToken(token)
+      } else {
+        setAccessToken(null)
+      }
+    })
+
+    return unsubscribe
+  }, [])
 
   React.useEffect(() => {
     if (accessToken) return
@@ -76,11 +96,18 @@ export function AuthProvider(props: AuthProviderProps) {
           if (accessToken === token) {
             const prevStore = authStore.get()!
             authStore.set({ ...prevStore, current: token })
-            window.location.hash = ''
-            // Redirect to main app after successful authentication
-            if (window.location.pathname === '/auth/callback') {
-              window.location.href = '/sessions'
+
+            const isCallbackRoute =
+              window.location.hash.startsWith('#/auth/callback') ||
+              window.location.pathname === '/auth/callback'
+
+            if (isCallbackRoute) {
+              window.location.hash = '#/sessions'
+            } else {
+              window.location.hash = '#/'
             }
+
+            setAccessToken(null)
           }
         })
       all.push(prom)
@@ -110,7 +137,7 @@ export function AuthProvider(props: AuthProviderProps) {
           authStore.remove()
           localStorage.removeItem('sst-replicache-template.workspace')
           dropAllDatabases()
-          window.location.href = '/'
+          window.location.hash = '#/auth/login'
         },
         refresh,
         isReady

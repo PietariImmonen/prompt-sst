@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 import { useAuth } from '@/hooks/use-auth'
 import { WorkspaceProvider } from '@/providers/workspace-provider'
@@ -31,22 +31,26 @@ const SplashScreen = () => {
 const AuthenticatedApp = () => {
   const auth = useAuth()
   const activeAccount = auth.current
-  const [workspaceID, setWorkspaceID] = useState<string | null>(null)
+  const [workspaceID, setWorkspaceID] = useState<string | null>(
+    () => activeAccount?.workspaces?.[0]?.id ?? null
+  )
 
   useEffect(() => {
-    if (!activeAccount || !activeAccount.workspaces?.length) {
+    if (!activeAccount?.workspaces?.length) {
+      setWorkspaceID(null)
       return
     }
 
-    if (!workspaceID) {
-      const firstWorkspace = activeAccount.workspaces[0]
-      if (firstWorkspace && firstWorkspace.id) {
-        setWorkspaceID(firstWorkspace.id)
-      }
+    if (!workspaceID || !activeAccount.workspaces.some((workspace) => workspace.id === workspaceID)) {
+      setWorkspaceID(activeAccount.workspaces[0]?.id ?? null)
     }
   }, [activeAccount, workspaceID])
 
   if (!workspaceID) {
+    if (activeAccount?.workspaces?.length) {
+      return <SplashScreen />
+    }
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0E111A] text-white">
         <div className="space-y-2 text-center">
@@ -111,7 +115,7 @@ const Content = () => {
 
 function App(): JSX.Element {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ThemeProvider defaultTheme="system" storageKey="prompt-desktop-theme">
         <AuthProvider>
           <Toaster richColors position="top-right" />
@@ -121,7 +125,7 @@ function App(): JSX.Element {
           </Routes>
         </AuthProvider>
       </ThemeProvider>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 

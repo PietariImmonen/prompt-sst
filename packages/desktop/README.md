@@ -35,7 +35,8 @@ Electron client for the Prompt SST stack. The renderer is a custom React app tha
    ```bash
    bun run --filter @sst-replicache-template/desktop dev
    ```
-   The renderer runs on the Vite dev server used by `electron-vite`; OAuth redirects back into that window.
+   The renderer runs on the Vite dev server used by `electron-vite`; OAuth opens in your default browser and returns to the desktop app through a secure loopback callback on `127.0.0.1`.
+   > **Google OAuth:** add `http://127.0.0.1` to the Authorized redirect URIs for your "Desktop" client in Google Cloud. Dynamic loopback ports are supported and the callback path is fixed to `/`.
    The generated `.env` is refreshed automatically whenever you run the build scripts.
 
 ## Scripts
@@ -50,7 +51,7 @@ Electron client for the Prompt SST stack. The renderer is a custom React app tha
 
 ## Architecture Notes
 
-- **Auth**: `AuthProvider` stores session tokens in `localStorage` and calls `@openauthjs/openauth` to open the OAuth flow. After redirect the provider hydrates accounts via the Hono client.
+- **Auth**: `AuthProvider` stores session tokens in `localStorage` and drives the OAuth flow via the `@openauthjs/openauth` client. A loopback HTTP server spins up on `127.0.0.1` for each sign-in, and the main + preload layers relay the returned tokens back to the renderer before hydrating accounts via the Hono client.
 - **Replicache**: `ReplicacheProvider` mirrors the web mutators/stores locally. `RealtimeProvider` subscribes to MQTT and pokes Replicache when backend changes land.
 - **Workspace switching**: The dashboard renders the active workspace from Replicache and surfaces a selector sourced from the synced `/workspace/*` keys.
 - **Styling**: Tailwind v4 with the `@tailwindcss/vite` plugin. UI primitives live under `src/renderer/src/components/ui` to keep the desktop design independent from the web package.

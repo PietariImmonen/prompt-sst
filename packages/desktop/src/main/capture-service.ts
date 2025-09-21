@@ -16,12 +16,32 @@ import { is } from '@electron-toolkit/utils'
 let iohook: any = null
 let robot: any = null
 
+// Temporarily suppress console.error to prevent verbose iohook errors
+const originalConsoleError = console.error
+console.error = (...args: any[]) => {
+  const message = args.join(' ')
+  if (message.includes('iohook') || message.includes('Cannot find module')) {
+    // Suppress iohook-related errors
+    return
+  }
+  originalConsoleError.apply(console, args)
+}
+
 try {
   iohook = require('iohook')
-  robot = require('robotjs')
-  console.log('Native modules loaded successfully')
+  console.log('iohook loaded successfully')
 } catch (error) {
-  console.warn('Failed to load native modules:', error)
+  console.warn('Failed to load iohook (global keyboard capture will be disabled)')
+} finally {
+  // Restore original console.error
+  console.error = originalConsoleError
+}
+
+try {
+  robot = require('robotjs')
+  console.log('robotjs loaded successfully')
+} catch (error) {
+  console.warn('Failed to load robotjs (text injection will use clipboard fallback)')
 }
 
 const captureAccelerator = process.platform === 'darwin' ? 'Command+Shift+P' : 'Control+Shift+P'
@@ -176,6 +196,7 @@ export function createCaptureService(getWindow: WindowGetter) {
     if (!iohook || iohookStarted) {
       if (!iohook) {
         console.warn('Global keyboard capture not available - native modules not loaded')
+        useGlobalCapture = false
       }
       return
     }
