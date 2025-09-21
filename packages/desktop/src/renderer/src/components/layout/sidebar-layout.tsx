@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { MessageSquare, Settings } from 'lucide-react'
 
@@ -15,6 +16,11 @@ import {
   SidebarMenuItem,
   SidebarProvider
 } from '@/components/ui/sidebar'
+import {
+  PromptInsertionPalette,
+  PromptInsertionPaletteTrigger
+} from '@/components/prompt-insertion-palette'
+import { getPromptPaletteShortcutDisplay } from '@/components/prompt-insertion-palette/shortcut'
 
 // Menu items for the desktop app
 const menuItems = [
@@ -32,6 +38,7 @@ const menuItems = [
 
 function AppSidebar() {
   const location = useLocation()
+  const shortcutHint = React.useMemo(getPromptPaletteShortcutDisplay, [])
 
   return (
     <Sidebar variant="inset" className="border-r border-border">
@@ -67,7 +74,18 @@ function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="gap-3 pb-4">
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-sidebar p-2 pr-1">
+          <div className="leading-tight">
+            <p className="text-xs font-semibold text-sidebar-foreground">
+              Prompt palette
+            </p>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/70">
+              {shortcutHint}
+            </p>
+          </div>
+          <PromptInsertionPaletteTrigger />
+        </div>
         <div className="flex items-center gap-2 px-2 py-1 text-sm text-sidebar-foreground/70">
           <div className="flex-1">
             <p className="text-xs">Prompt Capture Desktop</p>
@@ -82,6 +100,7 @@ function AppSidebar() {
 const SidebarLayout = () => {
   return (
     <SidebarProvider defaultOpen={true}>
+      <PromptInsertionPalette />
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <SidebarInset>

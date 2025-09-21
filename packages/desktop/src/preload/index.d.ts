@@ -22,6 +22,7 @@ type PromptCaptureAPI = {
     callback: (payload: PromptCapturePayload) => void,
   ) => () => void;
   onStatus: (callback: (payload: CaptureStatusPayload) => void) => () => void;
+  onOpenPalette: (callback: () => void) => () => void;
   enable: () => Promise<boolean>;
   disable: () => Promise<boolean>;
   notifyCapture: (result: { success: boolean; message?: string }) => Promise<void>;

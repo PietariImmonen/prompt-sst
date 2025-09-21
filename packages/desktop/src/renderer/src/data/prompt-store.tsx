@@ -2,36 +2,40 @@ import { ReadTransaction, WriteTransaction } from "replicache";
 
 import { Prompt } from "@sst-replicache-template/core/models/Prompt";
 
-const PROMPT_PREFIX = "/prompt/";
-
 export namespace PromptStore {
+  function sortPrompts(list: Prompt[]) {
+    return [...list].sort((a, b) => {
+      if (a.isFavorite && !b.isFavorite) return -1;
+      if (!a.isFavorite && b.isFavorite) return 1;
+      const createdA = a.timeCreated ? new Date(a.timeCreated).getTime() : 0;
+      const createdB = b.timeCreated ? new Date(b.timeCreated).getTime() : 0;
+      return createdB - createdA;
+    });
+  }
+
   export function list() {
     return async (tx: ReadTransaction) => {
-      const result = await tx.scan<Prompt>({ prefix: PROMPT_PREFIX }).toArray();
-      return (result as Prompt[]).sort((a, b) => {
-        const aTime = a.timeCreated ? new Date(a.timeCreated).getTime() : 0;
-        const bTime = b.timeCreated ? new Date(b.timeCreated).getTime() : 0;
-        return bTime - aTime;
-      });
+      const prompts = await tx.scan<Prompt>({ prefix: "/prompt/" }).toArray();
+      return sortPrompts(prompts.filter((prompt) => !prompt.timeDeleted));
     };
   }
 
   export function fromID(id: string) {
     return async (tx: ReadTransaction) => {
-      const result = await tx.get<Prompt>(`${PROMPT_PREFIX}${id}`);
-      return result as Prompt | undefined;
+      const prompt = await tx.get<Prompt>(`/prompt/${id}`);
+      return prompt && !prompt.timeDeleted ? prompt : undefined;
     };
   }
 
-  export function set(item: Prompt) {
+  export function set(prompt: Prompt) {
     return async (tx: WriteTransaction) => {
-      await tx.set(`${PROMPT_PREFIX}${item.id}`, item);
+      await tx.set(`/prompt/${prompt.id}`, prompt);
     };
   }
 
   export function remove(id: string) {
     return async (tx: WriteTransaction) => {
-      await tx.del(`${PROMPT_PREFIX}${id}`);
+      await tx.del(`/prompt/${id}`);
     };
   }
 }

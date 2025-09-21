@@ -55,7 +55,9 @@ export function AuthPage() {
     try {
       setError(null)
       setLoading(provider)
-      const { url } = await client.authorize(`${location.origin}/auth/callback`, 'token', {
+      // Use localhost callback for desktop app instead of file:// protocol
+      const callbackUrl = 'http://localhost:3000/auth/callback'
+      const { url } = await client.authorize(callbackUrl, 'token', {
         provider
       })
       window.location.href = url

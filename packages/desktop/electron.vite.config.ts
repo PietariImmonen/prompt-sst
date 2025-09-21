@@ -24,6 +24,11 @@ export default defineConfig({
         '@sst-replicache-template/functions': resolve(__dirname, '../functions/src')
       }
     },
+    optimizeDeps: {
+      // Our installed react-router-dom exposes only dist/index.js; skipping prebundle
+      // avoids Vite expecting a non-existent dist/index.mjs entry.
+      exclude: ['react-router-dom', 'react-router']
+    },
     define: {
       'process.env': {},
       process: {

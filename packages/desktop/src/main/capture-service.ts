@@ -4,12 +4,28 @@ import {
   clipboard,
   globalShortcut,
   ipcMain,
-  shell
+  shell,
+  screen
 } from 'electron'
 import { execSync } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
+import { join } from 'path'
+import { is } from '@electron-toolkit/utils'
 
-const accelerator = process.platform === 'darwin' ? 'Command+Shift+P' : 'Control+Shift+P'
+// Import native modules for global keyboard capture and text injection
+let iohook: any = null
+let robot: any = null
+
+try {
+  iohook = require('iohook')
+  robot = require('robotjs')
+  console.log('Native modules loaded successfully')
+} catch (error) {
+  console.warn('Failed to load native modules:', error)
+}
+
+const captureAccelerator = process.platform === 'darwin' ? 'Command+Shift+P' : 'Control+Shift+P'
+const paletteAccelerator = process.platform === 'darwin' ? 'Command+Shift+O' : 'Control+Shift+O'
 
 type PromptSource = 'chatgpt' | 'claude' | 'gemini' | 'grok' | 'other'
 
@@ -87,7 +103,7 @@ async function readHighlightedText(): Promise<{
   try {
     if (process.platform === 'darwin') {
       execSync(
-        "osascript -e 'tell application \"System Events\" to keystroke \"c\" using {command down}'",
+        'osascript -e \'tell application "System Events" to keystroke "c" using {command down}\'',
         { stdio: 'ignore' }
       )
       invokedCopy = true
@@ -145,7 +161,254 @@ function notifySystem(result: CaptureResult) {
 }
 
 export function createCaptureService(getWindow: WindowGetter) {
-  let listening = false
+  let captureListening = false
+  let paletteListening = false
+  let paletteWindow: BrowserWindow | null = null
+
+  // Global keyboard capture state
+  let overlayVisible = false
+  let searchBuffer = ''
+  let selectedPromptText = ''
+  let iohookStarted = false
+  let useGlobalCapture = !!iohook // Determine if we can use global keyboard capture
+
+  function startGlobalKeyboardCapture() {
+    if (!iohook || iohookStarted) {
+      if (!iohook) {
+        console.warn('Global keyboard capture not available - native modules not loaded')
+      }
+      return
+    }
+
+    console.log('Starting global keyboard capture')
+
+    try {
+      iohook.on('keydown', (event: any) => {
+        if (!overlayVisible) return
+
+        try {
+          // Handle special keys
+          if (event.rawcode === 27) {
+            // Escape
+            hideOverlay()
+            return
+          }
+
+          if (event.rawcode === 13) {
+            // Enter
+            submitSelectedPrompt()
+            return
+          }
+
+          if (event.rawcode === 8) {
+            // Backspace
+            searchBuffer = searchBuffer.slice(0, -1)
+            updateOverlaySearch()
+            return
+          }
+
+          // Handle regular characters
+          if (event.keychar && event.keychar > 0) {
+            const char = String.fromCharCode(event.keychar)
+            if (char.match(/[a-zA-Z0-9\s]/)) {
+              // Only allow alphanumeric and space
+              searchBuffer += char
+              updateOverlaySearch()
+            }
+          }
+        } catch (error) {
+          console.error('Error in global keyboard handler:', error)
+        }
+      })
+
+      iohook.start()
+      iohookStarted = true
+    } catch (error) {
+      console.error('Failed to start global keyboard capture:', error)
+    }
+  }
+
+  function stopGlobalKeyboardCapture() {
+    if (!iohook || !iohookStarted) return
+
+    console.log('Stopping global keyboard capture')
+    try {
+      iohook.stop()
+      iohookStarted = false
+    } catch (error) {
+      console.error('Error stopping iohook:', error)
+    }
+  }
+
+  function showOverlay() {
+    overlayVisible = true
+    searchBuffer = ''
+    selectedPromptText = ''
+
+    if (paletteWindow && !paletteWindow.isDestroyed()) {
+      paletteWindow.webContents.send('overlay:show', {
+        searchBuffer,
+        useGlobalCapture
+      })
+    }
+  }
+
+  function hideOverlay() {
+    overlayVisible = false
+    searchBuffer = ''
+    selectedPromptText = ''
+
+    if (paletteWindow && !paletteWindow.isDestroyed()) {
+      paletteWindow.hide()
+      paletteWindow.webContents.send('overlay:hide')
+    }
+  }
+
+  function updateOverlaySearch() {
+    if (paletteWindow && !paletteWindow.isDestroyed()) {
+      paletteWindow.webContents.send('overlay:search-update', { searchBuffer })
+    }
+  }
+
+  function submitSelectedPrompt() {
+    if (!selectedPromptText) {
+      hideOverlay()
+      return
+    }
+
+    console.log('Injecting selected prompt text:', selectedPromptText.substring(0, 50) + '...')
+
+    // Hide overlay first
+    hideOverlay()
+
+    // Wait a bit for overlay to hide, then inject text
+    setTimeout(() => {
+      try {
+        // Copy to clipboard
+        clipboard.writeText(selectedPromptText)
+
+        if (robot) {
+          // Use robotjs to simulate paste if available
+          if (process.platform === 'darwin') {
+            robot.keyTap('v', 'command')
+          } else {
+            robot.keyTap('v', 'control')
+          }
+        } else {
+          // Fallback: just copy to clipboard and show notification
+          console.warn('Robotjs not available - text copied to clipboard, please paste manually')
+          notifySystem({
+            success: true,
+            message: 'Prompt copied to clipboard - paste with Cmd+V'
+          })
+        }
+      } catch (error) {
+        console.error('Error injecting text:', error)
+        // Fallback: still copy to clipboard
+        try {
+          clipboard.writeText(selectedPromptText)
+          notifySystem({
+            success: true,
+            message: 'Prompt copied to clipboard - paste with Cmd+V'
+          })
+        } catch (clipboardError) {
+          console.error('Failed to copy to clipboard:', clipboardError)
+        }
+      }
+    }, 100)
+  }
+
+  function createPaletteWindow() {
+    if (paletteWindow && !paletteWindow.isDestroyed()) {
+      paletteWindow.close()
+      paletteWindow = null
+    }
+
+    // Get the display where the cursor currently is
+    const cursorPoint = screen.getCursorScreenPoint()
+    const currentDisplay = screen.getDisplayNearestPoint(cursorPoint)
+    const { width, height } = currentDisplay.workAreaSize
+    const { x: displayX, y: displayY } = currentDisplay.workArea
+
+    console.log(
+      `Creating non-focusable overlay on display: ${currentDisplay.id}, bounds: ${displayX},${displayY} ${width}x${height}`
+    )
+
+    paletteWindow = new BrowserWindow({
+      width: 600,
+      height: 400,
+      x: displayX + Math.floor((width - 600) / 2),
+      y: displayY + Math.floor((height - 400) / 3), // Position higher on screen
+      show: false,
+      frame: false,
+      transparent: true,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      resizable: false,
+      movable: false,
+      minimizable: false,
+      maximizable: false,
+      closable: true,
+      focusable: !useGlobalCapture, // Only focusable if we can't capture globally
+      fullscreenable: false,
+      hasShadow: true,
+      vibrancy: 'under-window', // macOS vibrancy effect
+      webPreferences: {
+        preload: join(__dirname, '../preload/index.mjs'),
+        sandbox: false,
+        nodeIntegration: false,
+        contextIsolation: true,
+        backgroundThrottling: false // Prevent throttling when window is hidden
+      }
+    })
+
+    // Load the overlay-specific content
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      paletteWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#overlay`)
+    } else {
+      paletteWindow.loadFile(join(__dirname, '../renderer/index.html'), {
+        hash: 'overlay'
+      })
+    }
+
+    // Handle window events with debouncing to prevent focus/blur loops
+    let blurTimeout: NodeJS.Timeout | null = null
+
+    paletteWindow.on('blur', () => {
+      console.log('Overlay window lost focus, scheduling hide')
+      // Debounce the blur event to prevent rapid hide/show cycles
+      if (blurTimeout) clearTimeout(blurTimeout)
+      blurTimeout = setTimeout(() => {
+        if (paletteWindow && !paletteWindow.isDestroyed() && !paletteWindow.isFocused()) {
+          console.log('Overlay window hiding after blur timeout')
+          paletteWindow.hide()
+        }
+      }, 200)
+    })
+
+    paletteWindow.on('focus', () => {
+      console.log('Overlay window gained focus')
+      if (blurTimeout) {
+        clearTimeout(blurTimeout)
+        blurTimeout = null
+      }
+    })
+
+    paletteWindow.on('closed', () => {
+      console.log('Overlay window closed')
+      if (blurTimeout) {
+        clearTimeout(blurTimeout)
+        blurTimeout = null
+      }
+      paletteWindow = null
+    })
+
+    // Ensure the window stays on top and doesn't interfere with other apps
+    paletteWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+    paletteWindow.setAlwaysOnTop(true, 'screen-saver')
+
+    return paletteWindow
+  }
 
   async function handleCapture() {
     const window = getWindow()
@@ -191,55 +454,157 @@ export function createCaptureService(getWindow: WindowGetter) {
     } satisfies PromptCapturePayload)
   }
 
-  function registerShortcut() {
-    if (listening) return
-    const success = globalShortcut.register(accelerator, () => {
+  function registerCaptureShortcut() {
+    if (captureListening) return
+    const success = globalShortcut.register(captureAccelerator, () => {
       void handleCapture()
     })
     if (!success) {
       pushStatus(getWindow(), 'failed', 'Unable to register capture shortcut')
-      console.warn(`Unable to register global shortcut ${accelerator}`)
+      console.warn(`Unable to register global shortcut ${captureAccelerator}`)
       return
     }
-    listening = true
+    captureListening = true
     pushStatus(getWindow(), 'listening')
   }
 
-  function unregisterShortcut() {
-    if (!listening) return
-    if (globalShortcut.isRegistered(accelerator)) {
-      globalShortcut.unregister(accelerator)
+  function registerPaletteShortcut() {
+    if (paletteListening) return
+    const success = globalShortcut.register(paletteAccelerator, () => {
+      console.log(`Palette shortcut ${paletteAccelerator} triggered`)
+
+      // Create the overlay window at the current cursor position
+      const overlayWindow = createPaletteWindow()
+      if (!overlayWindow) {
+        console.warn('Failed to create palette overlay window')
+        return
+      }
+
+      // Show the window
+      overlayWindow.once('ready-to-show', () => {
+        if (useGlobalCapture) {
+          console.log('Non-focusable overlay window ready, showing without focus')
+          overlayWindow.showInactive() // Show without focusing when using global capture
+        } else {
+          console.log('Focusable overlay window ready, showing with focus (fallback mode)')
+          overlayWindow.show() // Show with focus when not using global capture
+          overlayWindow.focus()
+        }
+
+        // Initialize the overlay state
+        showOverlay()
+      })
+    })
+    if (!success) {
+      console.warn(`Unable to register global shortcut ${paletteAccelerator}`)
+      return
     }
-    listening = false
+    console.log(`Successfully registered palette shortcut ${paletteAccelerator}`)
+    paletteListening = true
+  }
+
+  function registerShortcuts() {
+    registerCaptureShortcut()
+    registerPaletteShortcut()
+  }
+
+  function unregisterCaptureShortcut() {
+    if (!captureListening) return
+    if (globalShortcut.isRegistered(captureAccelerator)) {
+      globalShortcut.unregister(captureAccelerator)
+    }
+    captureListening = false
     pushStatus(getWindow(), 'idle')
   }
 
-  ipcMain.handle('prompt:capture:enable', () => {
-    registerShortcut()
-    return listening
-  })
+  function unregisterPaletteShortcut() {
+    if (!paletteListening) return
+    if (globalShortcut.isRegistered(paletteAccelerator)) {
+      globalShortcut.unregister(paletteAccelerator)
+    }
+    paletteListening = false
+  }
 
-  ipcMain.handle('prompt:capture:disable', () => {
-    unregisterShortcut()
-    return listening
-  })
+  function unregisterShortcuts() {
+    unregisterCaptureShortcut()
+    unregisterPaletteShortcut()
+  }
 
   ipcMain.handle('prompt:capture:result', (_event, result: CaptureResult) => {
     notifySystem(result)
     const window = getWindow()
     pushStatus(window, result.success ? 'success' : 'failed', result.message)
 
-    setTimeout(() => {
-      pushStatus(window, listening ? 'listening' : 'idle')
-    }, result.success ? 1500 : 3000)
+    setTimeout(
+      () => {
+        pushStatus(window, captureListening ? 'listening' : 'idle')
+      },
+      result.success ? 1500 : 3000
+    )
+  })
+
+  // Handle overlay hide requests
+  ipcMain.on('overlay:hide', () => {
+    console.log('Received overlay hide request')
+    try {
+      if (paletteWindow && !paletteWindow.isDestroyed()) {
+        paletteWindow.hide()
+      }
+    } catch (error) {
+      console.error('Error hiding overlay window:', error)
+    }
+  })
+
+  // Handle force close requests (for when overlay gets stuck)
+  ipcMain.on('overlay:force-close', () => {
+    console.log('Received overlay force close request')
+    try {
+      if (paletteWindow && !paletteWindow.isDestroyed()) {
+        paletteWindow.close()
+        paletteWindow = null
+      }
+    } catch (error) {
+      console.error('Error force closing overlay window:', error)
+      // Force null the reference even if close failed
+      paletteWindow = null
+    }
+  })
+
+  // Handle prompt selection from overlay
+  ipcMain.on('overlay:select-prompt', (_event, promptText: string) => {
+    console.log('Received prompt selection:', promptText.substring(0, 50) + '...')
+    selectedPromptText = promptText
+    submitSelectedPrompt()
+  })
+
+  // Initialize global keyboard capture when shortcuts are enabled
+  ipcMain.handle('prompt:capture:enable', () => {
+    registerShortcuts()
+    startGlobalKeyboardCapture()
+    return captureListening
+  })
+
+  // Stop global keyboard capture when shortcuts are disabled
+  ipcMain.handle('prompt:capture:disable', () => {
+    unregisterShortcuts()
+    stopGlobalKeyboardCapture()
+    return captureListening
   })
 
   return {
     dispose() {
-      unregisterShortcut()
+      unregisterShortcuts()
+      stopGlobalKeyboardCapture()
+      if (paletteWindow && !paletteWindow.isDestroyed()) {
+        paletteWindow.close()
+        paletteWindow = null
+      }
       ipcMain.removeHandler('prompt:capture:enable')
       ipcMain.removeHandler('prompt:capture:disable')
       ipcMain.removeHandler('prompt:capture:result')
+      ipcMain.removeAllListeners('overlay:hide')
+      ipcMain.removeAllListeners('overlay:force-close')
+      ipcMain.removeAllListeners('overlay:select-prompt')
     }
   }
 }

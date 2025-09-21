@@ -51,6 +51,12 @@ app.whenReady().then(() => {
 
   createWindow()
 
+  // Initialize shortcuts after window is created
+  setTimeout(() => {
+    console.log('Initializing capture service shortcuts...')
+    // The shortcuts will be registered when the renderer calls enable()
+  }, 1000)
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
