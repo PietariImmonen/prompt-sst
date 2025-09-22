@@ -21,6 +21,7 @@ import {
   PromptInsertionPaletteTrigger
 } from '@/components/prompt-insertion-palette'
 import { getPromptPaletteShortcutDisplay } from '@/components/prompt-insertion-palette/shortcut'
+import { PromptCapturePaletteTrigger } from '@/components/prompt-capture-palette/prompt-capture-trigger'
 
 // Menu items for the desktop app
 const menuItems = [
@@ -84,11 +85,14 @@ function AppSidebar() {
           </div>
           <PromptInsertionPaletteTrigger />
         </div>
-        <div className="flex items-center gap-2 px-2 py-1 text-sm text-sidebar-foreground/70">
-          <div className="flex-1">
-            <p className="text-xs">Prompt Capture Desktop</p>
-            <p className="text-xs text-sidebar-foreground/50">v1.0.0</p>
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-sidebar p-2 pr-1">
+          <div className="leading-tight">
+            <p className="text-xs font-semibold text-sidebar-foreground">Prompt capture</p>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/70">
+              {shortcutHint}
+            </p>
           </div>
+          <PromptCapturePaletteTrigger />
         </div>
       </SidebarFooter>
     </Sidebar>
