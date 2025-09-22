@@ -4,9 +4,12 @@ import type { IncomingMessage, ServerResponse } from 'http'
 import { AddressInfo } from 'net'
 import { randomUUID } from 'crypto'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+// Replaced electron-toolkit with native Electron APIs
 import icon from '../../resources/icon.png?asset'
 import { createCaptureService } from './capture-service.js'
+
+// Check if running in development mode
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
 // Suppress verbose native module errors
 process.on('uncaughtException', (error) => {
@@ -44,8 +47,16 @@ const activeAuthRequests = new Map<string, AuthRequest>()
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
 
+console.log('Single instance lock acquired:', gotSingleInstanceLock)
+
 if (!gotSingleInstanceLock) {
-  app.quit()
+  console.log('Could not acquire single instance lock, quitting...')
+  // In development mode, don't quit - allow multiple instances for debugging
+  if (!isDev) {
+    app.quit()
+  } else {
+    console.log('Development mode: allowing multiple instances')
+  }
 }
 
 function flushPendingAuthCallbacks() {
@@ -279,7 +290,7 @@ function createWindow(): void {
     mainWindow = null
   })
 
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+  if (isDev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow?.loadFile(join(__dirname, '../renderer/index.html'))
@@ -287,10 +298,10 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.electron')
+  app.setAppUserModelId('com.electron')
 
   app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
+    // Removed optimizer.watchWindowShortcuts - not essential for basic functionality
     rendererReadyForAuthCallbacks = false
   })
 

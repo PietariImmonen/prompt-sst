@@ -13,7 +13,7 @@
     "typecheck:sst": "cd ../.. && sst bind -- bun run --filter @sst-replicache-template/desktop typecheck",
     "env:generate": "node ../../scripts/generate-desktop-env.mjs",
     "start": "bunx electron-vite preview",
-    "dev": "bunx electron-vite dev",
+    "dev": "./dev-start.sh",
     "dev:with-env": "bun run env:generate && bun run dev",
     "build": "bun run env:generate -- --stage production --mode production && bun run typecheck && bunx electron-vite build",
     "postinstall": "bunx electron-builder install-app-deps",
@@ -23,8 +23,6 @@
     "build:linux": "bun run build && bunx electron-builder --linux"
   },
   "dependencies": {
-    "@electron-toolkit/preload": "^3.0.1",
-    "@electron-toolkit/utils": "^3.0.0",
     "@openauthjs/openauth": "^0.4.3",
     "@paralleldrive/cuid2": "^2.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -76,9 +74,6 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@electron-toolkit/eslint-config-prettier": "^2.0.0",
-    "@electron-toolkit/eslint-config-ts": "^2.0.0",
-    "@electron-toolkit/tsconfig": "^1.0.1",
     "@tailwindcss/postcss": "^4.0.15",
     "@tailwindcss/vite": "^4.0.15",
     "@types/node": "^20.17.6",
@@ -86,7 +81,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.8.0",
     "autoprefixer": "^10.4.20",
-    "electron": "31.0.2",
+    "electron": "^33.0.0",
     "electron-builder": "^24.13.3",
     "electron-rebuild": "^3.2.9",
     "electron-vite": "^2.3.0",

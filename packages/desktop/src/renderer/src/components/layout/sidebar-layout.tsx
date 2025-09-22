@@ -77,9 +77,7 @@ function AppSidebar() {
       <SidebarFooter className="gap-3 pb-4">
         <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-sidebar p-2 pr-1">
           <div className="leading-tight">
-            <p className="text-xs font-semibold text-sidebar-foreground">
-              Prompt palette
-            </p>
+            <p className="text-xs font-semibold text-sidebar-foreground">Prompt palette</p>
             <p className="text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/70">
               {shortcutHint}
             </p>

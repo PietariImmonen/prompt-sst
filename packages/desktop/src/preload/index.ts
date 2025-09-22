@@ -1,5 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+// Create a simple electronAPI implementation
+const electronAPI = {
+  ipcRenderer: {
+    send: ipcRenderer.send.bind(ipcRenderer),
+    invoke: ipcRenderer.invoke.bind(ipcRenderer),
+    on: ipcRenderer.on.bind(ipcRenderer),
+    off: ipcRenderer.off.bind(ipcRenderer),
+    removeListener: ipcRenderer.removeListener.bind(ipcRenderer),
+    removeAllListeners: ipcRenderer.removeAllListeners.bind(ipcRenderer)
+  }
+}
 
 type PromptCapturePayload = {
   content: string

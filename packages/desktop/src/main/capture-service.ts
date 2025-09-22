@@ -1,4 +1,5 @@
 import {
+  app,
   BrowserWindow,
   Notification,
   clipboard,
@@ -10,7 +11,8 @@ import {
 import { execSync } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { join } from 'path'
-import { is } from '@electron-toolkit/utils'
+// Replaced electron-toolkit with native check
+const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
 // Removed native module dependencies (iohook, robotjs) to prevent crashes
 // Using simple clipboard-based approach for better stability
@@ -226,11 +228,11 @@ export function createCaptureService(getWindow: WindowGetter) {
           // Type the text directly character by character
           // This approach maintains focus better than clipboard paste
           const escapedText = promptText
-            .replace(/\\/g, '\\\\')  // Escape backslashes
-            .replace(/"/g, '\\"')    // Escape quotes
-            .replace(/\n/g, '\\n')   // Handle newlines
-            .replace(/\r/g, '\\r')   // Handle carriage returns
-            .replace(/\t/g, '\\t')   // Handle tabs
+            .replace(/\\/g, '\\\\') // Escape backslashes
+            .replace(/"/g, '\\"') // Escape quotes
+            .replace(/\n/g, '\\n') // Handle newlines
+            .replace(/\r/g, '\\r') // Handle carriage returns
+            .replace(/\t/g, '\\t') // Handle tabs
 
           execSync(
             `osascript -e 'tell application "System Events" to keystroke "${escapedText}"'`,
@@ -248,7 +250,10 @@ export function createCaptureService(getWindow: WindowGetter) {
         } else {
           // Linux: Use xdotool to type if available
           try {
-            execSync(`xdotool type --delay 1 "${promptText.replace(/"/g, '\\"')}"`, { stdio: 'ignore', timeout: 5000 })
+            execSync(`xdotool type --delay 1 "${promptText.replace(/"/g, '\\"')}"`, {
+              stdio: 'ignore',
+              timeout: 5000
+            })
             insertedDirectly = true
           } catch {
             // Fallback to clipboard paste
@@ -263,10 +268,16 @@ export function createCaptureService(getWindow: WindowGetter) {
         // Try clipboard paste as fallback
         try {
           if (process.platform === 'darwin') {
-            execSync('osascript -e "tell application \\"System Events\\" to keystroke \\"v\\" using {command down}"', { stdio: 'ignore', timeout: 2000 })
+            execSync(
+              'osascript -e "tell application \\"System Events\\" to keystroke \\"v\\" using {command down}"',
+              { stdio: 'ignore', timeout: 2000 }
+            )
             insertedDirectly = true
           } else if (process.platform === 'win32') {
-            execSync('powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\\"^v\\")"', { stdio: 'ignore', timeout: 2000 })
+            execSync(
+              'powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\\"^v\\")"',
+              { stdio: 'ignore', timeout: 2000 }
+            )
             insertedDirectly = true
           }
         } catch {
@@ -338,7 +349,7 @@ export function createCaptureService(getWindow: WindowGetter) {
     })
 
     // Load the overlay content
-    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    if (isDev && process.env['ELECTRON_RENDERER_URL']) {
       paletteWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#overlay`)
     } else {
       paletteWindow.loadFile(join(__dirname, '../renderer/index.html'), {
@@ -434,7 +445,8 @@ export function createCaptureService(getWindow: WindowGetter) {
 
     try {
       // Get the current frontmost application and window information
-      const appInfo = execSync(`osascript -e '
+      const appInfo = execSync(
+        `osascript -e '
         tell application "System Events"
           set frontApp to name of first application process whose frontmost is true
           set appWindows to windows of first application process whose frontmost is true
@@ -444,7 +456,9 @@ export function createCaptureService(getWindow: WindowGetter) {
           else
             return frontApp & "|"
           end if
-        end tell'`, { encoding: 'utf8', timeout: 1000 }).trim()
+        end tell'`,
+        { encoding: 'utf8', timeout: 1000 }
+      ).trim()
 
       const [appName, windowName] = appInfo.split('|')
       return { appName, windowName: windowName || '' }
@@ -462,28 +476,36 @@ export function createCaptureService(getWindow: WindowGetter) {
     try {
       // Restore focus to the specific application and window
       if (focusInfo.windowName) {
-        execSync(`osascript -e '
+        execSync(
+          `osascript -e '
           tell application "${focusInfo.appName}"
             activate
             if exists window "${focusInfo.windowName}" then
               set index of window "${focusInfo.windowName}" to 1
             end if
-          end tell'`, { encoding: 'utf8', timeout: 2000 })
+          end tell'`,
+          { encoding: 'utf8', timeout: 2000 }
+        )
       } else {
-        execSync(`osascript -e 'tell application "${focusInfo.appName}" to activate'`, { encoding: 'utf8', timeout: 2000 })
+        execSync(`osascript -e 'tell application "${focusInfo.appName}" to activate'`, {
+          encoding: 'utf8',
+          timeout: 2000
+        })
       }
 
       // Small delay to let the app become active
       await delay(100)
 
       // For browsers, try to focus back into the input field
-      if (focusInfo.appName.toLowerCase().includes('chrome') ||
-          focusInfo.appName.toLowerCase().includes('firefox') ||
-          focusInfo.appName.toLowerCase().includes('safari') ||
-          focusInfo.appName.toLowerCase().includes('edge')) {
-
+      if (
+        focusInfo.appName.toLowerCase().includes('chrome') ||
+        focusInfo.appName.toLowerCase().includes('firefox') ||
+        focusInfo.appName.toLowerCase().includes('safari') ||
+        focusInfo.appName.toLowerCase().includes('edge')
+      ) {
         // Try to focus the address/input field by clicking in the center of the window
-        execSync(`osascript -e '
+        execSync(
+          `osascript -e '
           tell application "System Events"
             # Try Tab key to restore focus to last focused element
             keystroke tab
@@ -492,7 +514,9 @@ export function createCaptureService(getWindow: WindowGetter) {
             if not exists (first UI element of first window of application process "${focusInfo.appName}" whose focused is true and role is not "AXWindow") then
               click at {400, 300}
             end if
-          end tell'`, { encoding: 'utf8', timeout: 1000 })
+          end tell'`,
+          { encoding: 'utf8', timeout: 1000 }
+        )
       }
     } catch (error) {
       console.log('Failed to restore focus:', error)

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx:*)",
+      "Bash(dmesg:*)",
+      "Bash(log show:*)",
+      "Bash(timeout 30s bunx electron-vite dev)",
+      "Bash(echo:*)",
+      "Bash(bun install:*)",
+      "Bash(ELECTRON_ENABLE_LOGGING=1 DEBUG=electron* bun run --filter @sst-replicache-template/desktop dev)",
+      "Bash(./node_modules/.bin/electron:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
