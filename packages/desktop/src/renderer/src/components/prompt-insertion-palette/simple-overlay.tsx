@@ -34,12 +34,17 @@ export function SimplePromptOverlay() {
     }
   }, [])
 
-  // Load prompts when overlay becomes visible
+  // Load prompts only once when component mounts
   React.useEffect(() => {
-    if (isVisible) {
+    loadPrompts()
+  }, [loadPrompts])
+
+  // Refresh prompts when overlay becomes visible (only if no prompts exist)
+  React.useEffect(() => {
+    if (isVisible && prompts.length === 0 && !isLoading) {
       loadPrompts()
     }
-  }, [isVisible, loadPrompts])
+  }, [isVisible, prompts.length, isLoading, loadPrompts])
 
   // Debug logging
   React.useEffect(() => {
@@ -47,61 +52,6 @@ export function SimplePromptOverlay() {
     if (prompts.length > 0) {
       console.log('First prompt:', prompts[0])
     }
-  }, [prompts])
-
-  // Use real prompts if available, otherwise fallback to test prompts
-  const testPrompts = React.useMemo(() => {
-    // Use real prompts from main app if available
-    if (prompts.length > 0) {
-      return prompts
-    }
-
-    // Fallback test prompts when no real data is available
-    return [
-      {
-        id: 'test-1',
-        title: 'Email Reply',
-        content:
-          'Thank you for your email. I will review this and get back to you within 24 hours.',
-        isFavorite: true,
-        categoryPath: 'work/email',
-        visibility: 'private' as const,
-        source: 'other' as const,
-        metadata: {},
-        timeCreated: new Date().toISOString(),
-        timeUpdated: new Date().toISOString(),
-        workspaceID: 'test',
-        userID: 'test'
-      },
-      {
-        id: 'test-2',
-        title: 'Meeting Summary',
-        content: 'Please find below the key points discussed in our meeting today:',
-        isFavorite: false,
-        categoryPath: 'work/meetings',
-        visibility: 'private' as const,
-        source: 'other' as const,
-        metadata: {},
-        timeCreated: new Date().toISOString(),
-        timeUpdated: new Date().toISOString(),
-        workspaceID: 'test',
-        userID: 'test'
-      },
-      {
-        id: 'test-3',
-        title: 'Code Review Comment',
-        content: 'Thanks for the changes! This looks good. Just a few minor suggestions:',
-        isFavorite: true,
-        categoryPath: 'dev/reviews',
-        visibility: 'private' as const,
-        source: 'other' as const,
-        metadata: {},
-        timeCreated: new Date().toISOString(),
-        timeUpdated: new Date().toISOString(),
-        workspaceID: 'test',
-        userID: 'test'
-      }
-    ]
   }, [prompts])
 
   // Listen for overlay events from main process
@@ -142,7 +92,7 @@ export function SimplePromptOverlay() {
 
   // Filter prompts based on search query
   const filteredPrompts = React.useMemo(() => {
-    const activePrompts = testPrompts // Use testPrompts which includes fallbacks
+    const activePrompts = prompts // Use testPrompts which includes fallbacks
 
     console.log('Filtering prompts, activePrompts:', activePrompts.length)
 
@@ -198,9 +148,8 @@ export function SimplePromptOverlay() {
 
         return { prompt, score, rank }
       })
-      .filter(
-        (entry): entry is { prompt: (typeof testPrompts)[number]; score: number; rank: number } =>
-          Boolean(entry)
+      .filter((entry): entry is { prompt: (typeof prompts)[number]; score: number; rank: number } =>
+        Boolean(entry)
       )
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score
@@ -208,7 +157,7 @@ export function SimplePromptOverlay() {
       })
 
     return scored.slice(0, 10).map((entry) => entry.prompt)
-  }, [searchQuery, testPrompts])
+  }, [searchQuery, prompts])
 
   // Handle keyboard input
   React.useEffect(() => {
@@ -268,8 +217,7 @@ export function SimplePromptOverlay() {
       const itemRect = selectedItem.getBoundingClientRect()
 
       const isItemVisible =
-        itemRect.top >= containerRect.top &&
-        itemRect.bottom <= containerRect.bottom
+        itemRect.top >= containerRect.top && itemRect.bottom <= containerRect.bottom
 
       if (!isItemVisible) {
         selectedItem.scrollIntoView({
@@ -281,7 +229,7 @@ export function SimplePromptOverlay() {
   }, [selectedIndex, filteredPrompts])
 
   // Handle prompt click selection
-  const handlePromptSelect = (prompt: (typeof testPrompts)[number]) => {
+  const handlePromptSelect = (prompt: (typeof prompts)[number]) => {
     if (window.electron?.ipcRenderer) {
       window.electron.ipcRenderer.send('overlay:select-prompt', prompt.content)
     }
@@ -292,7 +240,7 @@ export function SimplePromptOverlay() {
   }
 
   return (
-    <div className="fixed inset-0 flex items-start justify-center pt-20 bg-black/30 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-start justify-center pt-8 bg-black/30 backdrop-blur-sm">
       <div className="w-full max-w-2xl mx-4 animate-in slide-in-from-top-4 duration-200">
         <div className="rounded-xl border border-border/50 bg-background/95 backdrop-blur-md shadow-2xl ring-1 ring-white/10">
           {/* Header */}
@@ -403,15 +351,21 @@ export function SimplePromptOverlay() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">↑↓</kbd>
+                  <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">
+                    ↑↓
+                  </kbd>
                   <span>navigate</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">↵</kbd>
+                  <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">
+                    ↵
+                  </kbd>
                   <span>insert</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">Esc</kbd>
+                  <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">
+                    Esc
+                  </kbd>
                   <span>close</span>
                 </div>
               </div>

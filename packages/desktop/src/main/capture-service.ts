@@ -422,6 +422,7 @@ export function createCaptureService(getWindow: WindowGetter) {
         captureMethod: method
       }
     } satisfies PromptCapturePayload)
+
   }
 
   function registerCaptureShortcut() {
@@ -637,6 +638,7 @@ export function createCaptureService(getWindow: WindowGetter) {
     submitSelectedPrompt(promptText)
   })
 
+
   // Handle prompts data request from overlay
   ipcMain.handle('overlay:get-prompts', async () => {
     console.log('Overlay requesting prompts data')
@@ -647,62 +649,26 @@ export function createCaptureService(getWindow: WindowGetter) {
     }
 
     try {
-      // Request prompts from the main window's renderer process
-      const prompts = await window.webContents.executeJavaScript(`
-        (async () => {
-          try {
-            // Check if we have access to a global replicache instance
-            if (window.__replicacheInstance) {
-              console.log('Found replicache instance, querying prompts...');
-              const rep = window.__replicacheInstance;
+      // Send a message to the main window to get prompts via its provider context
+      console.log('Requesting prompts from main window via IPC')
+      window.webContents.send('overlay:request-prompts')
 
-              const prompts = await rep.query(async (tx) => {
-                const promptData = await tx.scan({ prefix: "/prompt/" }).toArray();
-                return promptData.filter(prompt => !prompt.timeDeleted);
-              });
+      // Wait for the response - this will be sent back via a separate IPC handler
+      const prompts = await new Promise<any[]>((resolve) => {
+        const timeout = setTimeout(() => {
+          console.warn('Timeout waiting for prompts from main window')
+          resolve([])
+        }, 5000)
 
-              console.log('Found prompts via replicache:', prompts.length);
-              return prompts;
-            }
+        const handler = (_event: any, data: any[]) => {
+          console.log('Capture service: Received prompts response from main window:', data?.length || 0)
+          clearTimeout(timeout)
+          ipcMain.removeListener('overlay:prompts-response', handler)
+          resolve(data || [])
+        }
 
-            // Fallback: return test prompts if no real data available
-            console.log('No replicache instance found, returning test prompts');
-            return [
-              {
-                id: 'main-test-1',
-                title: 'Welcome Message',
-                content: 'Welcome to our platform! We are excited to have you on board.',
-                isFavorite: true,
-                categoryPath: 'general/welcome',
-                visibility: 'private',
-                source: 'other',
-                metadata: {},
-                timeCreated: new Date().toISOString(),
-                timeUpdated: new Date().toISOString(),
-                workspaceID: 'main-test',
-                userID: 'main-test'
-              },
-              {
-                id: 'main-test-2',
-                title: 'Follow-up Email',
-                content: 'Thank you for your interest. I wanted to follow up on our previous conversation.',
-                isFavorite: false,
-                categoryPath: 'work/followup',
-                visibility: 'private',
-                source: 'other',
-                metadata: {},
-                timeCreated: new Date().toISOString(),
-                timeUpdated: new Date().toISOString(),
-                workspaceID: 'main-test',
-                userID: 'main-test'
-              }
-            ];
-          } catch (error) {
-            console.error('Error getting prompts:', error);
-            return [];
-          }
-        })()
-      `)
+        ipcMain.once('overlay:prompts-response', handler)
+      })
 
       console.log('Retrieved prompts for overlay:', prompts?.length || 0)
       return prompts || []

@@ -215,7 +215,7 @@ export function PromptInsertionOverlayV2() {
   }
 
   return (
-    <div className="fixed inset-0 flex items-start justify-center pt-32">
+    <div className="fixed inset-0 flex items-start justify-center pt-8">
       <div className="w-full max-w-2xl mx-4">
         <div className="rounded-lg border border-border/60 bg-popover/95 backdrop-blur-sm shadow-2xl">
           {/* Search Input Display */}

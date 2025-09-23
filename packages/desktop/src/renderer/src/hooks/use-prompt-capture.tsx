@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { createId } from '@paralleldrive/cuid2'
 import { toast } from 'sonner'
 
-import { useReplicache } from './use-replicache'
+import { useReplicache, useSubscribe } from './use-replicache'
+import { PromptStore } from '@/data/prompt-store'
 
 type CaptureStatus = 'idle' | 'listening' | 'capturing' | 'success' | 'failed'
 
@@ -18,6 +19,7 @@ type CapturePayload = {
 
 export function usePromptCapture(enabled = true) {
   const rep = useReplicache()
+  const prompts = useSubscribe(PromptStore.list(), { default: [] })
   const lastCaptureRef = useRef<{ content: string; timestamp: number } | null>(null)
   const lastStatusRef = useRef<CaptureStatus>('idle')
   const [status, setStatus] = useState<CaptureStatus>('idle')
@@ -143,6 +145,28 @@ export function usePromptCapture(enabled = true) {
       unsubscribe?.()
     }
   }, [rep])
+
+  // Handle overlay prompt requests
+  useEffect(() => {
+    if (!window.electron?.ipcRenderer) {
+      console.log('Main window: IPC renderer not available')
+      return
+    }
+
+    const handleOverlayRequest = () => {
+      console.log('Main window: Received overlay prompt request, sending', prompts.length, 'prompts')
+      console.log('First few prompts:', prompts.slice(0, 2).map(p => ({ id: p.id, title: p.title })))
+      window.electron.ipcRenderer.send('overlay:prompts-response', prompts)
+    }
+
+    window.electron.ipcRenderer.on('overlay:request-prompts', handleOverlayRequest)
+    console.log('Main window: Registered overlay prompt request handler')
+
+    return () => {
+      window.electron.ipcRenderer.removeListener('overlay:request-prompts', handleOverlayRequest)
+      console.log('Main window: Unregistered overlay prompt request handler')
+    }
+  }, [prompts])
 
   return { status, message: statusMessage }
 }

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { MessageSquare, Settings } from 'lucide-react'
+import { LogOut, MessageSquare, Settings } from 'lucide-react'
 
 import {
   Sidebar,
@@ -22,6 +22,7 @@ import {
 } from '@/components/prompt-insertion-palette'
 import { getPromptPaletteShortcutDisplay } from '@/components/prompt-insertion-palette/shortcut'
 import { PromptCapturePaletteTrigger } from '@/components/prompt-capture-palette/prompt-capture-trigger'
+import { useAuth } from '@/hooks/use-auth'
 
 // Menu items for the desktop app
 const menuItems = [
@@ -40,6 +41,7 @@ const menuItems = [
 function AppSidebar() {
   const location = useLocation()
   const shortcutHint = React.useMemo(getPromptPaletteShortcutDisplay, [])
+  const auth = useAuth()
 
   return (
     <Sidebar variant="inset" className="border-r border-border">
@@ -94,6 +96,13 @@ function AppSidebar() {
           </div>
           <PromptCapturePaletteTrigger />
         </div>
+        <SidebarMenuButton 
+          onClick={() => auth.logout()}
+          className="w-full justify-start"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
+        </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>
   )
