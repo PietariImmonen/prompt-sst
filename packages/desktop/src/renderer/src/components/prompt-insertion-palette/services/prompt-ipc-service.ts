@@ -55,14 +55,14 @@ class PromptIPCServiceImpl implements IPCPromptService {
     console.warn('requestPrompts() is deprecated, use getPrompts() instead')
   }
 
-  onPromptsReceived(callback: (prompts: Prompt[]) => void): () => void {
+  onPromptsReceived(_callback: (prompts: Prompt[]) => void): () => void {
     // Deprecated - prompts are loaded once via getPrompts()
     console.warn('onPromptsReceived() is deprecated, prompts are loaded once via getPrompts()')
     return () => {}
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   reset(): void {

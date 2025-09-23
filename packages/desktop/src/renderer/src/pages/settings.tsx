@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from '@desktop/components/ui/button'
 import {
   Card,
@@ -20,8 +20,8 @@ import { UserSettings } from '@sst-replicache-template/core/models/UserSettings'
 
 const SettingsPage = () => {
   const rep = useReplicache()
-  const [isSaving, setIsSaving] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, _setIsSaving] = useState(false)
+  const [isLoading, _setIsLoading] = useState(true)
 
   // Fetch current settings using Replicache
   const userSettings = useSubscribe(UserSettingsStore.get(), {

@@ -1,9 +1,11 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-
 import { ActorContext, assertActor } from "@sst-replicache-template/core/actor";
 import { User } from "@sst-replicache-template/core/domain/user";
 import { UserSettings } from "@sst-replicache-template/core/domain/user-settings";
-import { Workspace, WorkspaceExistsError } from "@sst-replicache-template/core/domain/workspace";
+import {
+  Workspace,
+  WorkspaceExistsError,
+} from "@sst-replicache-template/core/domain/workspace";
 import { WorkspaceSchema } from "@sst-replicache-template/core/models/Workspace";
 
 import { Result } from "./common";
@@ -90,8 +92,6 @@ export namespace WorkspaceApi {
 
             await Promise.all([
               UserSettings.create({
-                fullSentences: false,
-                language: "fi",
                 userID,
                 inAppOnboardingCompleted: false,
               }),
