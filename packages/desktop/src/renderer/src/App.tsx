@@ -16,6 +16,7 @@ import SidebarLayout from '@/components/layout/sidebar-layout'
 import { Toaster } from '@/components/ui/sonner'
 import { PromptCaptureProvider } from '@/providers/prompt-capture-provider'
 import { CallbackPage } from '@/routes/auth/callback/callback'
+import OnboardingPage from '@/routes/onboarding'
 
 const SplashScreen = () => {
   return (
@@ -85,6 +86,7 @@ const AuthenticatedApp = () => {
         <WorkspaceProvider workspace={workspace}>
           <PromptCaptureProvider>
             <Routes>
+              <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/" element={<SidebarLayout />}>
                 <Route index element={<Navigate to="/sessions" replace />} />
                 <Route path="sessions" element={<PromptsPage />} />

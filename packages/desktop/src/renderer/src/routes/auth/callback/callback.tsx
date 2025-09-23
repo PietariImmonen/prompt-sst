@@ -14,6 +14,34 @@ export function CallbackPage() {
   const errorDescription = searchParams.get('error_description')
 
   React.useEffect(() => {
+    const completeAuthFlow = async () => {
+      // Refresh the auth state to get the new token
+      await auth.refresh()
+      
+      // Call the complete registration API
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/account/complete-registration`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${auth.current?.token}`
+          },
+        })
+        
+        if (response.ok) {
+          // Registration completed successfully, redirect to onboarding
+          navigate("/onboarding", { replace: true })
+        } else {
+          // Handle error
+          console.error("Failed to complete registration")
+          navigate("/auth/login")
+        }
+      } catch (err) {
+        console.error("Error completing registration", err)
+        navigate("/auth/login")
+      }
+    };
+
     if (errorDescription === 'no_account') {
       navigate({
         pathname: '/auth/login',
@@ -22,15 +50,10 @@ export function CallbackPage() {
           timestamp: new Date().getTime().toString()
         }).toString()
       })
+    } else if (auth.isReady && auth.current && !error) {
+      completeAuthFlow()
     }
-  }, [errorDescription, navigate])
-
-  // Redirect to main app if authentication is successful
-  React.useEffect(() => {
-    if (auth.isReady && auth.current && !error) {
-      navigate('/sessions', { replace: true })
-    }
-  }, [auth.isReady, auth.current, error, navigate])
+  }, [auth, errorDescription, error, navigate])
 
   if (error) {
     return (
@@ -51,7 +74,7 @@ export function CallbackPage() {
     <div className="flex h-dvh w-screen flex-col items-center justify-center gap-4 bg-[#0E111A] text-white">
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-white/80" />
-        <p className="text-sm text-white/60">Loading workspace...</p>
+        <p className="text-sm text-white/60">Setting up your workspace...</p>
       </div>
     </div>
   )
