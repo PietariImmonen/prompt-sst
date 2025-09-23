@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { toast } from 'sonner'
 
 import {
   Form,
@@ -34,6 +35,7 @@ interface PromptEditDialogProps {
 
 export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialogProps) {
   const rep = useReplicache()
+  const [isLoading, setIsLoading] = React.useState(false)
 
   const form = useForm<PromptEditFormValues>({
     resolver: zodResolver(promptEditSchema),
@@ -47,6 +49,7 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
   const handleSubmit = async (data: PromptEditFormValues) => {
     if (!prompt?.id || !rep) return
 
+    setIsLoading(true)
     try {
       await rep.mutate.prompt_update({
         id: prompt.id,
@@ -55,10 +58,13 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
         categoryPath: data.categoryPath
       })
 
+      toast.success('Prompt updated successfully')
       onOpenChange(false)
     } catch (error) {
       console.error('Failed to update prompt:', error)
-      // TODO: Add error handling/toast notification
+      toast.error('Failed to update prompt. Please try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -86,17 +92,31 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
     }
   }, [open, prompt, form])
 
+  // Handle the case where prompt data might be loading
+  const isPromptValid = prompt && prompt.id && prompt.title && prompt.content
+
   if (!prompt) {
     return null
   }
 
+  // Show loading state if prompt data is not yet valid
+  if (!isPromptValid) {
+    return (
+      <EditDialog
+        title="Loading Prompt..."
+        open={open}
+        onOpenChange={onOpenChange}
+        form="prompt-edit-form"
+      >
+        <div className="flex h-full items-center justify-center p-6">
+          <div className="text-gray-400">Loading prompt data...</div>
+        </div>
+      </EditDialog>
+    )
+  }
+
   return (
-    <EditDialog
-      title="Edit Prompt"
-      open={open}
-      onOpenChange={onOpenChange}
-      form="prompt-edit-form"
-    >
+    <EditDialog title="Edit Prompt" open={open} onOpenChange={onOpenChange} form="prompt-edit-form">
       <Form {...form}>
         <form
           id="prompt-edit-form"
@@ -113,10 +133,11 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
                   <FormItem>
                     <FormLabel className="text-gray-300">Title</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Enter prompt title" 
-                        {...field} 
+                      <Input
+                        placeholder="Enter prompt title"
+                        {...field}
                         className="border-gray-800 bg-gray-800/50 text-gray-200 placeholder:text-gray-500 focus:border-gray-700"
+                        disabled={isLoading}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -135,6 +156,7 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
                         placeholder="Enter prompt content"
                         className="min-h-[300px] border-gray-800 bg-gray-800/50 text-gray-200 placeholder:text-gray-500 focus:border-gray-700"
                         {...field}
+                        disabled={isLoading}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -149,10 +171,11 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
                   <FormItem>
                     <FormLabel className="text-gray-300">Category</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Enter category path" 
-                        {...field} 
+                      <Input
+                        placeholder="Enter category path"
+                        {...field}
                         className="border-gray-800 bg-gray-800/50 text-gray-200 placeholder:text-gray-500 focus:border-gray-700"
+                        disabled={isLoading}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />

@@ -6,7 +6,7 @@ import { randomUUID } from 'crypto'
 import { join } from 'path'
 // Replaced electron-toolkit with native Electron APIs
 import icon from '../../resources/icon.png?asset'
-import { createCaptureService } from './capture-service.js'
+import { createCaptureService, updateSettings } from './capture-service.js'
 
 // Check if running in development mode
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged

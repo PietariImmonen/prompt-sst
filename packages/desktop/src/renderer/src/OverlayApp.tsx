@@ -1,12 +1,12 @@
 import { ThemeProvider } from '@/providers/theme-provider'
-import { SimplePromptOverlay } from '@/components/prompt-insertion-palette/simple-overlay'
+import { PromptOverlay } from '@/components/prompt-insertion-palette'
 
 function OverlayApp(): JSX.Element {
   console.log('OverlayApp: Initializing standalone overlay application')
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="prompt-desktop-overlay-theme">
-      <SimplePromptOverlay />
+      <PromptOverlay />
     </ThemeProvider>
   )
 }

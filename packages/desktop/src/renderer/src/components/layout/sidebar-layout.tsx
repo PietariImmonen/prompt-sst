@@ -16,10 +16,7 @@ import {
   SidebarMenuItem,
   SidebarProvider
 } from '@/components/ui/sidebar'
-import {
-  PromptInsertionPalette,
-  PromptInsertionPaletteTrigger
-} from '@/components/prompt-insertion-palette'
+import { PromptInsertionPalette } from '@/components/prompt-insertion-palette'
 import { getPromptPaletteShortcutDisplay } from '@/components/prompt-insertion-palette/shortcut'
 import { PromptCapturePaletteTrigger } from '@/components/prompt-capture-palette/prompt-capture-trigger'
 import { useAuth } from '@/hooks/use-auth'
@@ -64,8 +61,8 @@ function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
+                  <SidebarMenuButton
+                    asChild
                     isActive={location.pathname === item.url}
                     className="hover:bg-gray-900 data-[active=true]:bg-gray-900 data-[active=true]:text-white"
                   >
@@ -89,7 +86,6 @@ function AppSidebar() {
               {shortcutHint}
             </p>
           </div>
-          <PromptInsertionPaletteTrigger />
         </div>
         <div className="flex items-center justify-between gap-2 rounded-md border border-gray-800 bg-gray-900 p-2 pr-1 hover:bg-gray-800 transition-colors">
           <div className="leading-tight">
@@ -100,7 +96,7 @@ function AppSidebar() {
           </div>
           <PromptCapturePaletteTrigger />
         </div>
-        <SidebarMenuButton 
+        <SidebarMenuButton
           onClick={() => auth.logout()}
           className="w-full justify-start hover:bg-gray-900 text-gray-300 hover:text-white"
         >

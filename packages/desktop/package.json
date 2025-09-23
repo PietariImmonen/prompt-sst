@@ -13,7 +13,7 @@
     "typecheck:sst": "cd ../.. && sst bind -- bun run --filter @sst-replicache-template/desktop typecheck",
     "env:generate": "node ../../scripts/generate-desktop-env.mjs",
     "start": "bunx electron-vite preview",
-    "dev": "bun run env:generate && electron-vite dev",
+    "dev": "electron-vite dev",
     "build": "bun run env:generate -- --stage production --mode production && bun run typecheck && bunx electron-vite build",
     "postinstall": "bunx electron-builder install-app-deps",
     "build:unpack": "bun run build && bunx electron-builder --dir",

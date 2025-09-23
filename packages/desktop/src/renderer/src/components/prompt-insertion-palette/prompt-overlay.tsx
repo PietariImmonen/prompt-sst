@@ -1,12 +1,19 @@
 import * as React from 'react'
-import { Star, Search } from 'lucide-react'
+import { Star, Search, RefreshCw } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
+import { useOverlayPrompts } from './hooks/use-overlay-prompts'
+import { usePromptSearch } from './hooks/use-prompt-search'
+import { Prompt } from './types'
 
-export function SimplePromptOverlay() {
-  const [prompts, setPrompts] = React.useState<any[]>([])
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [isVisible, setIsVisible] = React.useState(false)
+interface PromptOverlayProps {
+  onSelectPrompt?: (prompt: Prompt) => void
+  onClose?: () => void
+}
+
+export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
+  const { prompts, state, setVisible, refreshPrompts } = useOverlayPrompts()
+
   const [searchQuery, setSearchQuery] = React.useState('')
   const [selectedIndex, setSelectedIndex] = React.useState(0)
 
@@ -14,71 +21,48 @@ export function SimplePromptOverlay() {
   const resultsContainerRef = React.useRef<HTMLDivElement>(null)
   const selectedItemRef = React.useRef<HTMLDivElement>(null)
 
-  // Function to load prompts from main app
-  const loadPrompts = React.useCallback(async () => {
-    if (!window.electron?.ipcRenderer) {
-      console.warn('IPC renderer not available')
-      return
-    }
+  const filteredPrompts = usePromptSearch(prompts, searchQuery, { maxResults: 10 })
 
-    setIsLoading(true)
-    try {
-      const mainAppPrompts = await window.electron.ipcRenderer.invoke('overlay:get-prompts')
-      console.log('Received prompts from main app:', mainAppPrompts?.length || 0)
-      setPrompts(mainAppPrompts || [])
-    } catch (error) {
-      console.error('Failed to load prompts from main app:', error)
-      setPrompts([])
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
-
-  // Load prompts only once when component mounts
+  // Initialize overlay when component mounts
   React.useEffect(() => {
-    loadPrompts()
-  }, [loadPrompts])
+    setVisible(true)
 
-  // Refresh prompts when overlay becomes visible (only if no prompts exist)
-  React.useEffect(() => {
-    if (isVisible && prompts.length === 0 && !isLoading) {
-      loadPrompts()
-    }
-  }, [isVisible, prompts.length, isLoading, loadPrompts])
+    // Focus input after a brief delay
+    const timer = setTimeout(() => {
+      inputRef.current?.focus()
+    }, 50)
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('SimplePromptOverlay: prompts loaded:', prompts.length)
-    if (prompts.length > 0) {
-      console.log('First prompt:', prompts[0])
+    return () => {
+      clearTimeout(timer)
+      setVisible(false)
     }
-  }, [prompts])
+  }, [setVisible])
 
   // Listen for overlay events from main process
   React.useEffect(() => {
     if (!window.electron?.ipcRenderer) {
-      console.warn('IPC renderer not available in simple overlay')
+      console.warn('IPC renderer not available in overlay')
       return
     }
 
     const ipc = window.electron.ipcRenderer
 
     const handleShow = () => {
-      console.log('Simple overlay: Show event received')
-      setIsVisible(true)
+      console.log('Overlay: Show event received')
+      setVisible(true)
       setSearchQuery('')
       setSelectedIndex(0)
-      // Focus input after a brief delay to ensure it's rendered
       setTimeout(() => {
         inputRef.current?.focus()
       }, 50)
     }
 
     const handleHide = () => {
-      console.log('Simple overlay: Hide event received')
-      setIsVisible(false)
+      console.log('Overlay: Hide event received')
+      setVisible(false)
       setSearchQuery('')
       setSelectedIndex(0)
+      onClose?.()
     }
 
     ipc.on('overlay:show', handleShow)
@@ -88,80 +72,11 @@ export function SimplePromptOverlay() {
       ipc.removeListener('overlay:show', handleShow)
       ipc.removeListener('overlay:hide', handleHide)
     }
-  }, [])
+  }, [setVisible, onClose])
 
-  // Filter prompts based on search query
-  const filteredPrompts = React.useMemo(() => {
-    const activePrompts = prompts // Use testPrompts which includes fallbacks
-
-    console.log('Filtering prompts, activePrompts:', activePrompts.length)
-
-    if (!searchQuery.trim()) {
-      const result = activePrompts.slice(0, 10) // Show top 10 when no search
-      console.log('No search query, returning:', result.length, 'prompts')
-      return result
-    }
-
-    const tokens = searchQuery.toLowerCase().split(/\s+/).filter(Boolean)
-
-    const scored = activePrompts
-      .map((prompt, rank) => {
-        const title = prompt.title.toLowerCase()
-        const content = prompt.content.toLowerCase()
-
-        let score = prompt.isFavorite ? 150 : 0
-        let matched = false
-
-        for (const token of tokens) {
-          let tokenMatched = false
-
-          if (title === token) {
-            score += 600
-            tokenMatched = true
-          }
-          if (title.startsWith(token)) {
-            score += 450
-            tokenMatched = true
-          }
-          if (title.includes(token)) {
-            score += 240
-            tokenMatched = true
-          }
-          if (content.includes(token)) {
-            score += 160
-            tokenMatched = true
-          }
-
-          if (!tokenMatched) {
-            return null
-          }
-
-          matched = matched || tokenMatched
-        }
-
-        if (!matched && tokens.length > 0) {
-          return null
-        }
-
-        const recencyBoost = activePrompts.length - rank
-        score += recencyBoost * 0.5
-
-        return { prompt, score, rank }
-      })
-      .filter((entry): entry is { prompt: (typeof prompts)[number]; score: number; rank: number } =>
-        Boolean(entry)
-      )
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score
-        return a.rank - b.rank
-      })
-
-    return scored.slice(0, 10).map((entry) => entry.prompt)
-  }, [searchQuery, prompts])
-
-  // Handle keyboard input
+  // Handle keyboard navigation
   React.useEffect(() => {
-    if (!isVisible) return
+    if (!state.isVisible) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -175,10 +90,8 @@ export function SimplePromptOverlay() {
       if (event.key === 'Enter') {
         event.preventDefault()
         if (filteredPrompts.length > 0 && selectedIndex < filteredPrompts.length) {
-          const selectedPrompt = filteredPrompts[selectedIndex]
-          if (window.electron?.ipcRenderer) {
-            window.electron.ipcRenderer.send('overlay:select-prompt', selectedPrompt.content)
-          }
+          const selectedPrompt = filteredPrompts[selectedIndex]!
+          handlePromptSelect(selectedPrompt)
         }
         return
       }
@@ -198,7 +111,7 @@ export function SimplePromptOverlay() {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isVisible, filteredPrompts, selectedIndex])
+  }, [state.isVisible, filteredPrompts, selectedIndex])
 
   // Auto-select first prompt when filtered prompts change
   React.useEffect(() => {
@@ -228,14 +141,22 @@ export function SimplePromptOverlay() {
     }
   }, [selectedIndex, filteredPrompts])
 
-  // Handle prompt click selection
-  const handlePromptSelect = (prompt: (typeof prompts)[number]) => {
-    if (window.electron?.ipcRenderer) {
-      window.electron.ipcRenderer.send('overlay:select-prompt', prompt.content)
-    }
-  }
+  const handlePromptSelect = React.useCallback(
+    (prompt: Prompt) => {
+      onSelectPrompt?.(prompt)
 
-  if (!isVisible) {
+      if (window.electron?.ipcRenderer) {
+        window.electron.ipcRenderer.send('overlay:select-prompt', prompt.content)
+      }
+    },
+    [onSelectPrompt]
+  )
+
+  const handleRefresh = React.useCallback(() => {
+    refreshPrompts()
+  }, [refreshPrompts])
+
+  if (!state.isVisible) {
     return null
   }
 
@@ -267,24 +188,41 @@ export function SimplePromptOverlay() {
                   setSearchQuery(e.target.value)
                   setSelectedIndex(0)
                 }}
-                className="w-full pl-10 pr-4 py-3 bg-background/50 border-border/50 focus:bg-background focus:border-primary/50"
+                className="w-full pl-10 pr-12 py-3 bg-background/50 border-border/50 focus:bg-background focus:border-primary/50"
               />
+              <button
+                onClick={handleRefresh}
+                disabled={state.isLoading}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${state.isLoading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
 
           {/* Results */}
           <div ref={resultsContainerRef} className="max-h-80 overflow-y-auto">
-            {isLoading ? (
+            {state.isLoading ? (
               <div className="p-8 text-center text-muted-foreground">
                 <div className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
                 Loading prompts...
+              </div>
+            ) : state.error ? (
+              <div className="p-8 text-center text-destructive">
+                <p>Error: {state.error}</p>
+                <button
+                  onClick={handleRefresh}
+                  className="mt-2 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Try again
+                </button>
               </div>
             ) : filteredPrompts.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
                 {searchQuery
                   ? 'No prompts match your search'
                   : prompts.length === 0
-                    ? 'No prompts found - showing test prompts'
+                    ? 'No prompts found'
                     : 'No prompts available'}
               </div>
             ) : (

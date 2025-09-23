@@ -11,8 +11,6 @@ import {
   CommandList
 } from '@/components/ui/command'
 import { Switch } from '@/components/ui/switch'
-import { useSubscribe } from '@/hooks/use-replicache'
-import { PromptStore } from '@/data/prompt-store'
 
 import { getPromptPaletteShortcutDisplay, PROMPT_INSERTION_PALETTE_OPEN_EVENT } from './shortcut'
 
@@ -34,6 +32,19 @@ type Position = {
   top: number
   left: number
   width: number
+}
+
+// Define the Prompt type locally since we can't import it directly
+type Prompt = {
+  id: string
+  title: string
+  content: string
+  categoryPath?: string
+  isFavorite?: boolean
+  source?: string
+  timeCreated?: string
+  timeUpdated?: string
+  timeDeleted?: string
 }
 
 function isInputElement(
@@ -178,7 +189,11 @@ function insertText(snapshot: EditableSnapshot, text: string) {
 }
 
 export function PromptInsertionPalette() {
-  const prompts = useSubscribe(PromptStore.list(), { default: [] })
+  const [prompts, setPrompts] = React.useState<Prompt[]>([])
+
+  // Add refs to track state
+  const isOpeningRef = React.useRef(false)
+  const hasRequestedDataRef = React.useRef(false)
 
   const [state, setState] = React.useState<{
     snapshot: EditableSnapshot
@@ -242,6 +257,8 @@ export function PromptInsertionPalette() {
       setState(null)
       setQuery('')
       setIncludeTitle(false)
+      isOpeningRef.current = false
+      hasRequestedDataRef.current = false
 
       if (focusAnchor && state?.snapshot) {
         requestAnimationFrame(() => restoreSelection(state.snapshot))
@@ -262,10 +279,17 @@ export function PromptInsertionPalette() {
       event.preventDefault()
       event.stopPropagation()
 
+      // Prevent multiple openings
+      if (isOpeningRef.current) {
+        console.log('Palette already opening, ignoring duplicate shortcut')
+        return
+      }
+
       console.log('Keyboard shortcut triggered for prompt palette')
       const snapshot = captureSnapshot(active)
       if (!snapshot) return
 
+      isOpeningRef.current = true
       lastEditableRef.current = snapshot.element
       updatePosition(snapshot)
     }
@@ -277,6 +301,13 @@ export function PromptInsertionPalette() {
   React.useEffect(() => {
     const handler = (event: Event) => {
       console.log('Custom event handler triggered for prompt palette')
+
+      // Prevent multiple openings
+      if (isOpeningRef.current) {
+        console.log('Palette already opening, ignoring duplicate event')
+        return
+      }
+
       const active = document.activeElement as HTMLElement | null
       const anchor = isEditableElement(active) ? active : lastEditableRef.current
       if (!anchor || !anchor.isConnected) {
@@ -299,6 +330,8 @@ export function PromptInsertionPalette() {
       }
       lastEditableRef.current = snapshot.element
       console.log('Opening prompt palette with snapshot')
+
+      isOpeningRef.current = true
       updatePosition(snapshot)
     }
 
@@ -315,6 +348,13 @@ export function PromptInsertionPalette() {
 
     const unsubscribe = window.promptCapture.onOpenPalette(() => {
       console.log('Received onOpenPalette event from main process')
+
+      // Prevent multiple openings
+      if (isOpeningRef.current) {
+        console.log('Palette already opening, ignoring duplicate main process event')
+        return
+      }
+
       document.dispatchEvent(new CustomEvent(PROMPT_INSERTION_PALETTE_OPEN_EVENT))
     })
 
@@ -372,6 +412,8 @@ export function PromptInsertionPalette() {
   React.useEffect(() => {
     if (!state?.snapshot.element.isConnected) {
       setState(null)
+      isOpeningRef.current = false
+      hasRequestedDataRef.current = false
     }
   }, [state?.snapshot.element])
 
@@ -384,6 +426,33 @@ export function PromptInsertionPalette() {
       })
     }
   }, [state])
+
+  // Request prompt data when the palette opens
+  React.useEffect(() => {
+    if (state && !hasRequestedDataRef.current && window.electron?.ipcRenderer) {
+      hasRequestedDataRef.current = true
+      console.log('Requesting prompt data from main window')
+      window.electron.ipcRenderer.send('overlay:request-prompts')
+    }
+  }, [state])
+
+  // Listen for prompt data updates from main window
+  React.useEffect(() => {
+    if (!window.electron?.ipcRenderer) {
+      return
+    }
+
+    const handlePromptData = (_event: any, data: Prompt[]) => {
+      console.log('Received prompt data from main window:', data?.length || 0)
+      setPrompts(data || [])
+    }
+
+    window.electron.ipcRenderer.on('overlay:prompts-response', handlePromptData)
+
+    return () => {
+      window.electron.ipcRenderer.removeListener('overlay:prompts-response', handlePromptData)
+    }
+  }, [])
 
   const handleSelectPrompt = React.useCallback(
     (promptID: string) => {
@@ -406,6 +475,8 @@ export function PromptInsertionPalette() {
     const observer = new MutationObserver(() => {
       if (!state.snapshot.element.isConnected) {
         setState(null)
+        isOpeningRef.current = false
+        hasRequestedDataRef.current = false
       }
     })
 
@@ -416,6 +487,10 @@ export function PromptInsertionPalette() {
 
     return () => observer.disconnect()
   }, [state])
+
+  // Add a check to ensure we have valid prompt data
+  const hasValidPrompts = prompts && Array.isArray(prompts) && prompts.length > 0
+  const isLoadingPrompts = prompts === undefined || prompts === null
 
   const filteredPrompts = React.useMemo(() => {
     if (!debouncedQuery) {
@@ -541,7 +616,13 @@ export function PromptInsertionPalette() {
         />
         <CommandList className="mt-1 max-h-64">
           <CommandEmpty>
-            {debouncedQuery ? 'No prompts match your search' : 'No prompts captured yet'}
+            {debouncedQuery
+              ? 'No prompts match your search'
+              : isLoadingPrompts
+                ? 'Loading prompts...'
+                : hasValidPrompts
+                  ? 'No prompts captured yet'
+                  : 'No prompts available'}
           </CommandEmpty>
           <CommandGroup heading="Prompts">
             {filteredPrompts.map((prompt) => (

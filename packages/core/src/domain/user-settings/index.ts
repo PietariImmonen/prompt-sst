@@ -12,15 +12,17 @@ import { userSettings } from "./user-settings.sql";
 export namespace UserSettings {
   export const create = zod(
     UserSettingsSchema.pick({
-      fullSentences: true,
-      language: true,
       userID: true,
-      defaultTemplateID: true,
       inAppOnboardingCompleted: true,
       workspaceID: true,
+      shortcutCapture: true,
+      shortcutPalette: true,
+      enableAutoCapture: true,
     }).partial({
       workspaceID: true,
-      defaultTemplateID: true,
+      shortcutCapture: true,
+      shortcutPalette: true,
+      enableAutoCapture: true,
     }),
     (input) =>
       useTransaction(async (tx) => {
@@ -31,7 +33,6 @@ export namespace UserSettings {
           .values({
             ...input,
             workspaceID: workspaceID,
-            defaultTemplateID: input.defaultTemplateID ?? null,
             id,
           })
           .onConflictDoNothing()
@@ -75,6 +76,27 @@ export namespace UserSettings {
         .where(eq(userSettings.id, input.id))
         .execute();
     }),
+  );
+
+  export const updateSettings = zod(
+    UserSettingsSchema.pick({
+      id: true,
+      shortcutCapture: true,
+      shortcutPalette: true,
+      enableAutoCapture: true,
+    }).partial({
+      shortcutCapture: true,
+      shortcutPalette: true,
+      enableAutoCapture: true,
+    }),
+    (input) =>
+      useTransaction(async (tx) => {
+        await tx
+          .update(userSettings)
+          .set({ ...removeTimestamps(input) })
+          .where(eq(userSettings.id, input.id))
+          .execute();
+      }),
   );
 
   export const remove = zod(z.string(), (input) =>

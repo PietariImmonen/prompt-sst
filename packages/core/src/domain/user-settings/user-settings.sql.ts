@@ -8,12 +8,17 @@ export const userSettings = pgTable(
     ...workspaceID,
     ...timestamps,
     userID: cuid("user_id").notNull(),
-    fullSentences: boolean("full_sentences").notNull().default(true),
-    defaultTemplateID: cuid("default_template_id"),
-    language: varchar("language", { length: 255 }).notNull(),
+
     inAppOnboardingCompleted: boolean("in_app_onboarding_completed")
       .notNull()
       .default(true),
+    shortcutCapture: varchar("shortcut_capture", { length: 255 })
+      .notNull()
+      .default("CmdOrCtrl+Shift+P"),
+    shortcutPalette: varchar("shortcut_palette", { length: 255 })
+      .notNull()
+      .default("CmdOrCtrl+Shift+O"),
+    enableAutoCapture: boolean("enable_auto_capture").notNull().default(true),
   },
   (table) => [primaryKey({ columns: [table.workspaceID, table.id] })],
 );

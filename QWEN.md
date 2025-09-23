@@ -40,3 +40,14 @@
 - Scope messages by workspace or feature (`fix(app): correct onboarding redirect`).
 - PRs must outline user impact, list verification steps (tests, local dev, deploy), and link to issues or tracking docs.
 - Attach screenshots or terminal snippets for UI or script changes and call out follow-up tasks when relevant.
+
+## Frontend Data Management
+
+All frontend CRUD operations MUST be performed using Replicache's mutate functions rather than direct API calls. This ensures:
+- Proper offline support
+- Consistent data synchronization
+- Transactional integrity
+- Conflict resolution
+- Real-time updates across clients
+
+Direct API calls should only be used for authentication, initialization, or operations that cannot be modeled through Replicache's mutation system.

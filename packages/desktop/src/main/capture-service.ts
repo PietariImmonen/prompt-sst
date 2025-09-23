@@ -17,8 +17,35 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 // Removed native module dependencies (iohook, robotjs) to prevent crashes
 // Using simple clipboard-based approach for better stability
 
-const captureAccelerator = process.platform === 'darwin' ? 'Command+Shift+P' : 'Control+Shift+P'
-const paletteAccelerator = process.platform === 'darwin' ? 'Command+Shift+O' : 'Control+Shift+O'
+let captureAccelerator = process.platform === 'darwin' ? 'Command+Shift+P' : 'Control+Shift+P'
+let paletteAccelerator = process.platform === 'darwin' ? 'Command+Shift+O' : 'Control+Shift+O'
+let enableAutoCapture = true
+
+// Function to update shortcuts from user settings
+export function updateSettings(newSettings: { 
+  shortcutCapture?: string, 
+  shortcutPalette?: string, 
+  enableAutoCapture?: boolean 
+}) {
+  let needsRestart = false;
+  
+  if (newSettings.shortcutCapture && newSettings.shortcutCapture !== captureAccelerator) {
+    captureAccelerator = newSettings.shortcutCapture;
+    needsRestart = true;
+  }
+  
+  if (newSettings.shortcutPalette && newSettings.shortcutPalette !== paletteAccelerator) {
+    paletteAccelerator = newSettings.shortcutPalette;
+    needsRestart = true;
+  }
+  
+  if (newSettings.enableAutoCapture !== undefined && newSettings.enableAutoCapture !== enableAutoCapture) {
+    enableAutoCapture = newSettings.enableAutoCapture;
+    needsRestart = true;
+  }
+  
+  return needsRestart;
+}
 
 type PromptSource = 'chatgpt' | 'claude' | 'gemini' | 'grok' | 'other'
 
@@ -426,6 +453,12 @@ export function createCaptureService(getWindow: WindowGetter) {
   }
 
   function registerCaptureShortcut() {
+    // Only register if auto capture is enabled
+    if (!enableAutoCapture) {
+      console.log('Auto capture is disabled, not registering capture shortcut')
+      return
+    }
+    
     if (captureListening) return
     const success = globalShortcut.register(captureAccelerator, () => {
       void handleCapture()
@@ -688,6 +721,21 @@ export function createCaptureService(getWindow: WindowGetter) {
   ipcMain.handle('prompt:capture:disable', () => {
     unregisterShortcuts()
     return captureListening
+  })
+
+  // Update settings from renderer
+  ipcMain.handle('settings:update', async (_event, newSettings: { 
+    shortcutCapture?: string, 
+    shortcutPalette?: string, 
+    enableAutoCapture?: boolean 
+  }) => {
+    const needsRestart = updateSettings(newSettings)
+    if (needsRestart) {
+      // Re-register shortcuts if they changed
+      unregisterShortcuts()
+      registerShortcuts()
+    }
+    return { success: true }
   })
 
   return {

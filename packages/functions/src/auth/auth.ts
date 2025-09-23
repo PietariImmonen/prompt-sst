@@ -1,14 +1,15 @@
 import { issuer } from "@openauthjs/openauth";
 import { GoogleProvider } from "@openauthjs/openauth/provider/google";
+import { createId } from "@paralleldrive/cuid2";
+import { ActorContext } from "@sst-replicache-template/core/actor";
 import { Account } from "@sst-replicache-template/core/domain/account";
 import { User } from "@sst-replicache-template/core/domain/user";
+import { UserSettings } from "@sst-replicache-template/core/domain/user-settings";
 import { Workspace } from "@sst-replicache-template/core/domain/workspace";
 import { appendSearchParams } from "@sst-replicache-template/core/lib/url";
 import { handle } from "hono/aws-lambda";
 import { Resource } from "sst/resource";
 import { z } from "zod";
-import { createId } from "@paralleldrive/cuid2";
-import { ActorContext } from "@sst-replicache-template/core/actor";
 
 import { subjects } from "./subjects";
 
@@ -78,20 +79,20 @@ const app = issuer({
           name: name,
           emailLanguage: language,
         });
-        
+
         // Get the created account
         account = await Account.fromID(accountID);
-        
+
         // Create workspace
         const workspaceName = `${name}'s Workspace`;
         const workspaceSlug = `${name.toLowerCase().replace(/\s+/g, "-")}-${createId().slice(0, 6)}`;
-        
+
         const workspaceResult = await Workspace.create({
           type: "organization",
           name: workspaceName,
           slug: workspaceSlug,
         });
-        
+
         // Create user in the workspace
         const userID = await ActorContext.with(
           {
@@ -100,15 +101,26 @@ const app = issuer({
               workspaceID: workspaceResult.id,
             },
           },
-          () => User.create({
-            email: email,
-            name: name,
-            role: "admin",
-            status: "active",
-            first: true,
-            workspaceID: workspaceResult.id,
-          })
+          () =>
+            User.create({
+              email: email,
+              name: name,
+              role: "admin",
+              status: "active",
+              first: true,
+              workspaceID: workspaceResult.id,
+            }),
         );
+
+        // Create user settings
+        await UserSettings.create({
+          userID: userID,
+          workspaceID: workspaceResult.id,
+          inAppOnboardingCompleted: true,
+          shortcutCapture: "CmdOrCtrl+Shift+P",
+          shortcutPalette: "CmdOrCtrl+Shift+O",
+          enableAutoCapture: true,
+        });
       }
 
       return ctx.subject("account", {
