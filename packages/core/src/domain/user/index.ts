@@ -42,10 +42,12 @@ export namespace User {
       name: true,
       role: true,
       status: true,
+      workspaceID: true,
     })
       .partial({
         id: true,
         role: true,
+        workspaceID: true,
       })
       .extend({
         first: z.boolean().optional(),
@@ -53,6 +55,7 @@ export namespace User {
     (input) =>
       useTransaction(async (tx) => {
         const id = input.id ?? createId();
+        const workspaceID = input.workspaceID ?? useWorkspaceID();
         await tx
           .insert(user)
           .values({
@@ -60,7 +63,7 @@ export namespace User {
             email: input.email,
             name: input.name,
             role: input.role ?? "member",
-            workspaceID: useWorkspaceID(),
+            workspaceID: workspaceID,
             first: input.first ?? false,
             timeSeen: null,
             isOnboarded: false,

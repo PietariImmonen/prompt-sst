@@ -44,30 +44,34 @@ function AppSidebar() {
   const auth = useAuth()
 
   return (
-    <Sidebar variant="inset" className="border-r border-border">
-      <SidebarHeader className="border-b">
+    <Sidebar variant="inset" className="border-r border-gray-800 bg-gray-950">
+      <SidebarHeader className="border-b border-gray-800">
         <div className="flex items-center gap-2 px-2 py-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-r from-purple-500 to-pink-500 text-white">
             <MessageSquare className="h-4 w-4" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-semibold">Desktop App</span>
-            <span className="truncate text-xs">Prompt Management</span>
+            <span className="truncate font-semibold text-white">Prompt</span>
+            <span className="truncate text-xs text-gray-400">Desktop App</span>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="bg-gray-950">
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-400">Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.url}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === item.url}
+                    className="hover:bg-gray-900 data-[active=true]:bg-gray-900 data-[active=true]:text-white"
+                  >
                     <NavLink to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                      <item.icon className="h-4 w-4 text-gray-400 group-hover:text-white" />
+                      <span className="text-gray-300 group-hover:text-white">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -77,20 +81,20 @@ function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="gap-3 pb-4">
-        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-sidebar p-2 pr-1">
+      <SidebarFooter className="gap-3 pb-4 bg-gray-950">
+        <div className="flex items-center justify-between gap-2 rounded-md border border-gray-800 bg-gray-900 p-2 pr-1 hover:bg-gray-800 transition-colors">
           <div className="leading-tight">
-            <p className="text-xs font-semibold text-sidebar-foreground">Prompt palette</p>
-            <p className="text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/70">
+            <p className="text-xs font-semibold text-gray-200">Prompt palette</p>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
               {shortcutHint}
             </p>
           </div>
           <PromptInsertionPaletteTrigger />
         </div>
-        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-sidebar p-2 pr-1">
+        <div className="flex items-center justify-between gap-2 rounded-md border border-gray-800 bg-gray-900 p-2 pr-1 hover:bg-gray-800 transition-colors">
           <div className="leading-tight">
-            <p className="text-xs font-semibold text-sidebar-foreground">Prompt capture</p>
-            <p className="text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/70">
+            <p className="text-xs font-semibold text-gray-200">Prompt capture</p>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-gray-500">
               {shortcutHint}
             </p>
           </div>
@@ -98,7 +102,7 @@ function AppSidebar() {
         </div>
         <SidebarMenuButton 
           onClick={() => auth.logout()}
-          className="w-full justify-start"
+          className="w-full justify-start hover:bg-gray-900 text-gray-300 hover:text-white"
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
@@ -112,7 +116,7 @@ const SidebarLayout = () => {
   return (
     <SidebarProvider defaultOpen={true}>
       <PromptInsertionPalette />
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full bg-gray-950">
         <AppSidebar />
         <SidebarInset>
           <div className="flex flex-1 flex-col pt-0">

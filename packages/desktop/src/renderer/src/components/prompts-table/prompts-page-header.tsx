@@ -16,16 +16,16 @@ export function PromptsPageHeader(props: PromptsPageHeaderProps) {
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-3 border-b border-white/5 pb-2 text-white/70 overflow-hidden',
+        'flex flex-wrap items-center gap-3 border-b border-gray-800 pb-4 pt-2 overflow-hidden',
         className
       )}
     >
       <div className="ml-auto flex flex-wrap items-center gap-2 justify-between w-full">
-        <div className="relative w-[220px] mx-2">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+        <div className="relative w-[240px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
           <Input
-            placeholder="Search prompts"
-            className=" border-white/10 bg-white/5 pl-9 text-sm text-white placeholder:text-white/40 focus:border-white/20"
+            placeholder="Search prompts..."
+            className="pl-9 text-sm bg-gray-900 border-gray-800 focus:border-gray-700 text-gray-200 placeholder:text-gray-500"
             onChange={(event) => onSearch?.(event.target.value)}
           />
         </div>

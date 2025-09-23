@@ -17,15 +17,20 @@ export namespace UserSettings {
       userID: true,
       defaultTemplateID: true,
       inAppOnboardingCompleted: true,
+      workspaceID: true,
+    }).partial({
+      workspaceID: true,
+      defaultTemplateID: true,
     }),
     (input) =>
       useTransaction(async (tx) => {
         const id = createId();
+        const workspaceID = input.workspaceID ?? useWorkspaceID();
         await tx
           .insert(userSettings)
           .values({
             ...input,
-            workspaceID: useWorkspaceID(),
+            workspaceID: workspaceID,
             defaultTemplateID: input.defaultTemplateID ?? null,
             id,
           })

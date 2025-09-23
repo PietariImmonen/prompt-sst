@@ -2,7 +2,6 @@ import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReplicache } from '@/hooks/use-replicache'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { UserSettingsStore } from '@/data/user-settings'
 import { mutators } from '@/data/mutators'
@@ -33,37 +32,40 @@ export function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#0E111A] p-4">
-      <Card className="w-full max-w-md bg-[#151824] text-white border-[#2A2F47]">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Welcome to Prompt</CardTitle>
-          <CardDescription className="text-white/70">
+    <div className="flex min-h-screen w-full items-center justify-center bg-gray-950 p-4">
+      <div className="w-full max-w-md rounded-lg bg-gray-900 p-8 shadow-xl border border-gray-800">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-white">Welcome to Prompt</h1>
+          <p className="mt-1 text-sm text-gray-400">
             Let's set up your workspace.
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-[#1C2033] rounded-lg">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between rounded-lg bg-gray-800/50 p-4 transition-all hover:bg-gray-800">
               <div>
-                <h3 className="font-medium">Auto-capture prompts</h3>
-                <p className="text-sm text-white/60">
+                <h3 className="font-medium text-white">Auto-capture prompts</h3>
+                <p className="mt-1 text-sm text-gray-400">
                   Automatically capture prompts from your AI applications
                 </p>
               </div>
               <Switch
                 checked={autoCapture}
                 onCheckedChange={setAutoCapture}
-                className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-[#2A2F47]"
+                className="data-[state=checked]:bg-purple-500 data-[state=unchecked]:bg-gray-700"
               />
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+          </div>
+          <div className="mt-8">
+            <Button 
+              type="submit" 
+              className="w-full rounded-md bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-purple-500/20 transition-all duration-200 hover:scale-[1.02]"
+            >
               Continue
             </Button>
-          </CardFooter>
+          </div>
         </form>
-      </Card>
+      </div>
     </div>
   )
 }

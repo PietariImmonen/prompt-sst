@@ -15,29 +15,16 @@ export function CallbackPage() {
 
   React.useEffect(() => {
     const completeAuthFlow = async () => {
-      // Refresh the auth state to get the new token
-      await auth.refresh()
-      
-      // Call the complete registration API
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/account/complete-registration`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${auth.current?.token}`
-          },
-        })
+        // Refresh the auth state to get the new token and updated account info
+        // Since account, workspace, and user are now created during Google auth,
+        // we just need to refresh to get the updated information
+        await auth.refresh()
         
-        if (response.ok) {
-          // Registration completed successfully, redirect to onboarding
-          navigate("/onboarding", { replace: true })
-        } else {
-          // Handle error
-          console.error("Failed to complete registration")
-          navigate("/auth/login")
-        }
+        // Redirect to onboarding (workspace and user should already be created)
+        navigate("/onboarding", { replace: true })
       } catch (err) {
-        console.error("Error completing registration", err)
+        console.error("Error completing auth flow", err)
         navigate("/auth/login")
       }
     };

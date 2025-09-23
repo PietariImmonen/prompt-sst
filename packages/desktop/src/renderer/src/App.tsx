@@ -47,25 +47,25 @@ const AuthenticatedApp = () => {
     }
   }, [activeAccount, workspaceID])
 
-  if (!workspaceID) {
-    if (activeAccount?.workspaces?.length) {
-      return <SplashScreen />
-    }
-
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0E111A] text-white">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-semibold">No workspace available</h1>
-          <p className="text-sm text-white/60">
-            Add a workspace to your account from the web app to continue.
-          </p>
-        </div>
-      </div>
-    )
+  // Show loading screen while checking for workspaces
+  if (!activeAccount) {
+    return <SplashScreen />
   }
 
+  // If no workspaces yet, show loading screen
+  if (!activeAccount.workspaces?.length) {
+    return <SplashScreen />
+  }
+
+  // If we have workspaces but no workspaceID selected yet, set it
+  if (activeAccount.workspaces?.length && !workspaceID) {
+    setWorkspaceID(activeAccount.workspaces[0]?.id ?? null)
+    return <SplashScreen />
+  }
+
+  // If we have a workspaceID but can't find the workspace, show error
   const workspace = activeAccount?.workspaces?.find((w) => w.id === workspaceID)
-  if (!workspace || !activeAccount) {
+  if (!workspace) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0E111A] text-white">
         <div className="space-y-2 text-center">
