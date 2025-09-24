@@ -16,15 +16,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun run --filter app dev` - Start Vite development server for web app
 - `bun run --filter app build` - Build web app for production
 - `bun run --filter app lint` - Run ESLint on web app
-- `bun run --filter @sst-replicache-template/desktop dev` - Start Electron desktop app
-- `bun run --filter @sst-replicache-template/core test` - Run core domain tests
-- `bun run --filter @sst-replicache-template/core db:migrate` - Apply database migrations via `sst shell`
+- `bun run --filter @prompt-saver/desktop dev` - Start Electron desktop app
+- `bun run --filter @prompt-saver/core test` - Run core domain tests
+- `bun run --filter @prompt-saver/core db:migrate` - Apply database migrations via `sst shell`
 
 ### Database Operations (via sst shell)
 
-- `bun run --filter @sst-replicache-template/core db:generate` - Generate migrations
-- `bun run --filter @sst-replicache-template/core db:push` - Push schema changes
-- `bun run --filter @sst-replicache-template/core db:studio` - Open Drizzle Studio
+- `bun run --filter @prompt-saver/core db:generate` - Generate migrations
+- `bun run --filter @prompt-saver/core db:push` - Push schema changes
+- `bun run --filter @prompt-saver/core db:studio` - Open Drizzle Studio
 
 ## Architecture Overview
 

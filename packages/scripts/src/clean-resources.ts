@@ -1,6 +1,6 @@
-import { User } from "@sst-replicache-template/core/domain/user";
-import { UserSettings } from "@sst-replicache-template/core/domain/user-settings";
-import { Workspace } from "@sst-replicache-template/core/domain/workspace";
+import { User } from "@prompt-saver/core/domain/user";
+import { UserSettings } from "@prompt-saver/core/domain/user-settings";
+import { Workspace } from "@prompt-saver/core/domain/workspace";
 
 const workspaces = await Workspace.list();
 

@@ -5,7 +5,7 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "paths": {
-      "@sst-replicache-template/core/*": ["../core/src/*"]
+      "@prompt-saver/core/*": ["../core/src/*"]
     }
   }
 }

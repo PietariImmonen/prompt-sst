@@ -7,7 +7,7 @@
 - `src/renderer/src` is the desktop React app. Key folders:
   - `pages/` – screen-level components (auth, dashboard) that compose providers and layout.
   - `providers/` – desktop-specific wrappers for auth, Replicache, realtime MQTT, and theming.
-  - `data/` – Replicache stores and mutators mirroring backend models from `@sst-replicache-template/core`.
+  - `data/` – Replicache stores and mutators mirroring backend models from `@prompt-saver/core`.
   - `hooks/` – local hooks (auth, workspace, Replicache subscriptions).
   - `components/ui/` – Shadcn primitives copied into this workspace; customise here instead of importing from the web client.
 - `resources/` keeps packaging assets; Electron Builder writes installers to `out/`.
@@ -15,14 +15,14 @@
 ## Build, Test, and Development Commands
 
 - `bun install` from the repo root hoists dependencies (desktop relies on Bun workspaces).
-- `bun run dev --filter @sst-replicache-template/desktop` launches the renderer + Electron alongside an SST dev session (`bun run dev`).
-- `bun run build --filter @sst-replicache-template/desktop` performs TS checks and emits production bundles; append `build:mac|win|linux` for platform installers.
-- `bun run lint --filter @sst-replicache-template/desktop` and `bun run typecheck --filter @sst-replicache-template/desktop` must pass before opening a PR.
+- `bun run dev --filter @prompt-saver/desktop` launches the renderer + Electron alongside an SST dev session (`bun run dev`).
+- `bun run build --filter @prompt-saver/desktop` performs TS checks and emits production bundles; append `build:mac|win|linux` for platform installers.
+- `bun run lint --filter @prompt-saver/desktop` and `bun run typecheck --filter @prompt-saver/desktop` must pass before opening a PR.
 - Required env vars (configure `packages/desktop/.env`): `VITE_APP_URL`, `VITE_API_URL`, `VITE_STAGE`, `VITE_REALTIME_ENDPOINT`, `VITE_AUTHORIZER`, `VITE_AUTH_URL`.
 
 ## Coding Style & Naming Conventions
 
-- Stick to TypeScript, ES modules, and 2-space indentation; run Prettier via `bun run --filter @sst-replicache-template/desktop format` for bulk formatting.
+- Stick to TypeScript, ES modules, and 2-space indentation; run Prettier via `bun run --filter @prompt-saver/desktop format` for bulk formatting.
 - Compose UI from local Shadcn components; extend them within this workspace to keep the desktop design independent from the web client.
 - Use `PascalCase` for components/providers, `camelCase` for hooks and helpers, and `kebab-case` for file names.
 - Co-locate feature state in `data/` or `hooks/`; avoid Zustand/local storage patterns from the legacy Supabase build.

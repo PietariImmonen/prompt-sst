@@ -22,8 +22,8 @@
       "@desktop/*": ["./src/renderer/src/*"],
       "@renderer/*": ["./src/renderer/src/*"],
       "@/*": ["./src/renderer/src/*"],
-      "@sst-replicache-template/core/*": ["../core/src/*"],
-      "@sst-replicache-template/functions/*": ["../functions/src/*"]
+      "@prompt-saver/core/*": ["../core/src/*"],
+      "@prompt-saver/functions/*": ["../functions/src/*"]
     }
   }
 }

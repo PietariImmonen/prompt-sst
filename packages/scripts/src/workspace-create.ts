@@ -2,11 +2,11 @@
 import { ScryptHasher } from "@openauthjs/openauth/provider/password";
 import { DynamoStorage } from "@openauthjs/openauth/storage/dynamo";
 import { init } from "@paralleldrive/cuid2";
-import { ActorContext } from "@sst-replicache-template/core/actor";
-import { Account } from "@sst-replicache-template/core/domain/account";
-import { User } from "@sst-replicache-template/core/domain/user";
-import { UserSettings } from "@sst-replicache-template/core/domain/user-settings";
-import { Workspace } from "@sst-replicache-template/core/domain/workspace";
+import { ActorContext } from "@prompt-saver/core/actor";
+import { Account } from "@prompt-saver/core/domain/account";
+import { User } from "@prompt-saver/core/domain/user";
+import { UserSettings } from "@prompt-saver/core/domain/user-settings";
+import { Workspace } from "@prompt-saver/core/domain/workspace";
 import prompt from "prompt-sync";
 import { Resource } from "sst/resource";
 

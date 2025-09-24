@@ -17,8 +17,8 @@ import { UserStore } from '@/data/user-store'
 import { WorkspaceStore } from '@/data/workspace-store'
 import { PromptStore } from '@/data/prompt-store'
 
-import type { Workspace } from '@sst-replicache-template/core/models/Workspace'
-import type { Prompt } from '@sst-replicache-template/core/models/Prompt'
+import type { Workspace } from '@prompt-saver/core/models/Workspace'
+import type { Prompt } from '@prompt-saver/core/models/Prompt'
 
 type DashboardPageProps = {
   workspaces: Workspace[]
@@ -36,7 +36,6 @@ export default function DashboardPage(props: DashboardPageProps) {
   const prompts = (useSubscribe(PromptStore.list(), {
     default: [] as Prompt[]
   }) ?? []) as Prompt[]
-
 
   return (
     <div className="flex min-h-screen flex-col gap-6 bg-[#0E111A] px-6 py-8 text-white">

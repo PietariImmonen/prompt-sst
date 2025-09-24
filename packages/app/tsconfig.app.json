@@ -25,8 +25,8 @@
 
     "baseUrl": ".",
     "paths": {
-      "@sst-replicache-template/functions/*": ["../functions/src/*"],
-      "@sst-replicache-template/core/*": ["../core/src/*"],
+      "@prompt-saver/functions/*": ["../functions/src/*"],
+      "@prompt-saver/core/*": ["../core/src/*"],
       "@/*": ["./src/*"]
     }
   },

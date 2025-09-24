@@ -125,7 +125,7 @@ export function AuthProvider(props: AuthProviderProps) {
         },
         logout: () => {
           authStore.remove();
-          localStorage.removeItem("sst-replicache-template.workspace");
+          localStorage.removeItem("prompt-saver.workspace");
           dropAllDatabases();
           location.href = import.meta.env.VITE_APP_URL + `/auth/login`;
         },

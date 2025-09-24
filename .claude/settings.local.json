@@ -7,7 +7,7 @@
       "Bash(timeout 30s bunx electron-vite dev)",
       "Bash(echo:*)",
       "Bash(bun install:*)",
-      "Bash(ELECTRON_ENABLE_LOGGING=1 DEBUG=electron* bun run --filter @sst-replicache-template/desktop dev)",
+      "Bash(ELECTRON_ENABLE_LOGGING=1 DEBUG=electron* bun run --filter @prompt-saver/desktop dev)",
       "Bash(./node_modules/.bin/electron:*)"
     ],
     "deny": [],

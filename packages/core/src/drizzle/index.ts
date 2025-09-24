@@ -1,13 +1,13 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { Resource } from "sst/resource";
+import { Resource } from "sst";
 
 const client = postgres({
-  password: Resource.Database.password,
   user: Resource.Database.user,
-  port: Resource.Database.port,
+  password: Resource.Database.password,
   host: Resource.Database.host,
-  db: "postgres",
+  port: Resource.Database.port,
+  db: Resource.Database.database, // 👈 no hardcoding
 });
 
 export const db = drizzle(client);

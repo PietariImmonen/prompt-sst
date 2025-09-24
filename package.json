@@ -1,5 +1,5 @@
 {
-  "name": "sst-replicache-template",
+  "name": "prompt-saver",
   "version": "0.0.0",
   "workspaces": [
     "packages/*"
@@ -8,16 +8,16 @@
     "build": "sst build",
     "console": "sst console",
     "deploy:dev": "sst deploy --stage dev",
-    "deploy:production": "sst deploy --stage production",
-    "dev": "sst dev",
+    "deploy:prod": "sst deploy --stage production",
+    "dev": "sst dev --stage dev",
     "remove": "sst remove",
-    "sso": "aws sso login --sso-session=sst-replicache-template",
+    "sso": "aws sso login --sso-session=prompt-saver",
     "typecheck": "tsc --noEmit",
     "desktop:env": "node scripts/generate-desktop-env.mjs",
-    "desktop:dev": "sst shell -- node scripts/extract-sst-env.mjs && bun run --filter @sst-replicache-template/desktop dev",
-    "desktop:dev:fallback": "bun run desktop:env && bun run --filter @sst-replicache-template/desktop dev",
-    "desktop:typecheck": "sst shell -- bun run --filter @sst-replicache-template/desktop typecheck",
-    "desktop:build": "bun run desktop:env && bun run --filter @sst-replicache-template/desktop build"
+    "desktop:dev": "sst shell -- node scripts/extract-sst-env.mjs && bun run --filter @prompt-saver/desktop dev",
+    "desktop:dev:fallback": "bun run desktop:env && bun run --filter @prompt-saver/desktop dev",
+    "desktop:typecheck": "sst shell -- bun run --filter @prompt-saver/desktop typecheck",
+    "desktop:build": "bun run desktop:env && bun run --filter @prompt-saver/desktop build"
   },
   "dependencies": {
     "@eslint/js": "^9.23.0",

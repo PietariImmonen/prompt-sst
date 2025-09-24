@@ -11,7 +11,7 @@ type ThemeProviderProps = {
 export function ThemeProvider({
   children,
   defaultTheme = "dark",
-  storageKey = "sst-replicache-template.theme",
+  storageKey = "prompt-saver.theme",
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = React.useState<Theme>(

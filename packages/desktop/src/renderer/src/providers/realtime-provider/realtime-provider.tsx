@@ -48,7 +48,7 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
           for (const workspace of workspaces) {
             console.log('subscribing to', workspace.id)
             await connection.subscribeAsync(
-              `sst-replicache-template/${import.meta.env.VITE_STAGE}/${workspace.id}/all/#`,
+              `prompt-saver/${import.meta.env.VITE_STAGE}/${workspace.id}/all/#`,
               { qos: 1 }
             )
           }

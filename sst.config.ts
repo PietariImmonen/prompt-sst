@@ -5,13 +5,16 @@
 export default $config({
   app(input) {
     return {
-      name: "sst-replicache-template",
+      name: "prompt-saver",
       removal: input?.stage === "production" ? "retain" : "remove",
       home: "aws",
       providers: {
         aws: {
           region: "eu-north-1",
-          profile: "sst-replicache-template-dev",
+          profile:
+            input?.stage === "production"
+              ? "prompt-saver-production"
+              : "prompt-saver-dev",
         },
         supabase: true,
         random: true,

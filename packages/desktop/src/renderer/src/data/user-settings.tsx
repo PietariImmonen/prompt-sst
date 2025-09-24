@@ -1,6 +1,6 @@
 import { ReadTransaction, WriteTransaction } from 'replicache'
 
-import { UserSettings } from '@sst-replicache-template/core/models/UserSettings'
+import { UserSettings } from '@prompt-saver/core/models/UserSettings'
 
 export namespace UserSettingsStore {
   export function get() {

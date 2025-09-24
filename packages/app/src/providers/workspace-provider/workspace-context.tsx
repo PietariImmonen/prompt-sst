@@ -1,23 +1,28 @@
 import * as React from "react";
+import {
+  Workspace,
+  WorkspaceSchema,
+} from "@prompt-saver/core/models/Workspace";
 import { z } from "zod";
-
-import { Workspace, WorkspaceSchema } from "@sst-replicache-template/core/models/Workspace";
 
 const CurrentWorkspaceSchema = WorkspaceSchema;
 
 export const workspaceStore = {
   get() {
-    const raw = localStorage.getItem("sst-replicache-template.workspace");
+    const raw = localStorage.getItem("prompt-saver.workspace");
     if (!raw) return undefined;
     // Parse with the base schema
     return JSON.parse(raw) as z.infer<typeof CurrentWorkspaceSchema>;
   },
   set(input: z.infer<typeof CurrentWorkspaceSchema>) {
     // Set using the base schema
-    return localStorage.setItem("sst-replicache-template.workspace", JSON.stringify(input));
+    return localStorage.setItem(
+      "prompt-saver.workspace",
+      JSON.stringify(input),
+    );
   },
   remove() {
-    return localStorage.removeItem("sst-replicache-template.workspace");
+    return localStorage.removeItem("prompt-saver.workspace");
   },
 };
 

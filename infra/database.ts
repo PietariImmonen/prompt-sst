@@ -6,7 +6,7 @@ sst.Linkable.wrap(supabase.Project, function (item) {
     properties: {
       user: "postgres",
       password: secret.SupabaseDBPassword.value,
-      host: $interpolate`db.${item.id}.supabase.co`,
+      host: $interpolate`aws-0-${item.region}.pooler.supabase.com`,
       port: 5432,
       database: "postgres",
     },
@@ -16,11 +16,11 @@ sst.Linkable.wrap(supabase.Project, function (item) {
 export const database = isPermanentStage
   ? new supabase.Project("Database", {
       name: $interpolate`${$app.name}-${$app.stage}`,
-      region: "eu-north-1",
+      region: "eu-central-1",
       organizationId: process.env.SUPABASE_ORG_ID!,
       databasePassword: secret.SupabaseDBPassword.value,
     })
-  : supabase.Project.get("Database", process.env.SUPABASE_PROJECT_ID!); // REMEMBER: this is gotten from Supabase
+  : supabase.Project.get("Database", "jdwwiziehyecpbfgourc");
 
 const migrator = new sst.aws.Function("DatabaseMigrator", {
   handler: "packages/functions/src/migrator.handler",
@@ -39,3 +39,6 @@ if (!$dev) {
     functionName: migrator.name,
   });
 }
+export const outputs = {
+  database,
+};

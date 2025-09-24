@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 
-import type { Prompt } from '@sst-replicache-template/core/models/Prompt'
+import type { Prompt } from '@prompt-saver/core/models/Prompt'
 import { PromptEditDialog } from '../modals/prompt-edit-dialog'
 
 type PromptsTableProps = {

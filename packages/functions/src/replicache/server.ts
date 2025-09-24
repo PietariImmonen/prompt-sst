@@ -1,8 +1,8 @@
-import { useWorkspaceID } from "@sst-replicache-template/core/actor";
-import { User } from "@sst-replicache-template/core/domain/user";
-import { UserSettings } from "@sst-replicache-template/core/domain/user-settings";
-import { Workspace } from "@sst-replicache-template/core/domain/workspace";
-import { Prompt } from "@sst-replicache-template/core/domain/prompt";
+import { useWorkspaceID } from "@prompt-saver/core/actor";
+import { Prompt } from "@prompt-saver/core/domain/prompt";
+import { User } from "@prompt-saver/core/domain/user";
+import { UserSettings } from "@prompt-saver/core/domain/user-settings";
+import { Workspace } from "@prompt-saver/core/domain/workspace";
 
 import { Server } from "./framework";
 

@@ -1,11 +1,5 @@
 import type { Config } from "drizzle-kit";
-import { Resource } from "sst/resource";
-
-const connection = {
-  user: Resource.Database.user,
-  password: Resource.Database.password,
-  host: Resource.Database.host,
-};
+import { Resource } from "sst";
 
 export default {
   out: "./migrations/",
@@ -13,6 +7,8 @@ export default {
   verbose: true,
   dialect: "postgresql",
   dbCredentials: {
-    url: `postgres://${connection.user}:${encodeURIComponent(connection.password)}@${connection.host}:5432/postgres`,
+    url: `postgres://${Resource.Database.user}:${encodeURIComponent(
+      Resource.Database.password,
+    )}@${Resource.Database.host}:${Resource.Database.port}/${Resource.Database.database}`,
   },
 } satisfies Config;

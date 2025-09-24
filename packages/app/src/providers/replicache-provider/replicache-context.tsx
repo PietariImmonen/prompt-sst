@@ -25,7 +25,7 @@ export function createReplicache(input: {
   rep.puller = async (req) => {
     const result = await fetch(rep.pullURL, {
       headers: {
-        "x-sst-replicache-template-workspace": input.workspaceId,
+        "x-prompt-saver-workspace": input.workspaceId,
         authorization: `Bearer ${input.token}`,
         "content-type": "application/json",
       },
@@ -44,7 +44,7 @@ export function createReplicache(input: {
   rep.pusher = async (req) => {
     const result = await fetch(rep.pushURL, {
       headers: {
-        "x-sst-replicache-template-workspace": input.workspaceId,
+        "x-prompt-saver-workspace": input.workspaceId,
         authorization: `Bearer ${input.token}`,
         "content-type": "application/json",
       },

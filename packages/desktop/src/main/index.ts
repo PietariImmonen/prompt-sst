@@ -7,18 +7,28 @@ import { join } from 'path'
 // Replaced electron-toolkit with native Electron APIs
 import icon from '../../resources/icon.png?asset'
 import { createCaptureService, updateSettings } from './capture-service.js'
+import { TrayService } from './tray-service.js'
+import { BackgroundDataService } from './background-data-service.js'
+import { logger, logServiceStart, logServiceReady, logServiceError, logServiceStop } from './logger.js'
 
 // Check if running in development mode
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
-// Suppress verbose native module errors
-process.on('uncaughtException', (error) => {
+// Enhanced error handling with logging
+process.on('uncaughtException', async (error) => {
   if (error.message.includes('iohook') || error.message.includes('Cannot find module')) {
     console.warn('Native module loading failed (functionality will be limited)')
+    await logger.warn('system', 'Native module loading failed', { error: error.message })
     return
   }
   console.error('Uncaught Exception:', error)
+  await logger.fatal('system', 'Uncaught exception', error)
   process.exit(1)
+})
+
+process.on('unhandledRejection', async (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+  await logger.error('system', 'Unhandled promise rejection', { reason, promise })
 })
 
 const CALLBACK_HOST = '127.0.0.1'
@@ -39,7 +49,10 @@ type AuthRequest = {
 }
 
 let mainWindow: BrowserWindow | null = null
-const captureService = createCaptureService(() => mainWindow)
+let trayService: TrayService | null = null
+let backgroundDataService: BackgroundDataService | null = null
+let captureService: any = null
+let isQuitting = false
 
 const pendingAuthCallbacks: AuthCallbackPayload[] = []
 let rendererReadyForAuthCallbacks = false
@@ -263,7 +276,24 @@ ipcMain.handle('auth:cancel', async (_event, payload: { id: string }) => {
   cancelAuthRequest(payload.id)
 })
 
+// Handler for auth sync from main window to background service
+ipcMain.on('sync-auth-to-background-service', (_event, authData: {
+  token: string | null,
+  workspaceId: string | null,
+  apiEndpoint: string | null
+}) => {
+  console.log('Main process: Syncing auth to background service')
+  if (backgroundDataService) {
+    // Use the background service's IPC handler directly
+    ipcMain.emit('background:set-auth', null, authData)
+  }
+})
+
 function createWindow(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    return // Window already exists
+  }
+
   rendererReadyForAuthCallbacks = false
   mainWindow = new BrowserWindow({
     width: 900,
@@ -286,8 +316,48 @@ function createWindow(): void {
     return { action: 'deny' }
   })
 
+  mainWindow.on('close', (event) => {
+    if (!isQuitting && process.platform !== 'darwin') {
+      // On Windows/Linux, hide to tray instead of closing
+      event.preventDefault()
+      mainWindow?.hide()
+
+      // Show notification about running in background
+      if (process.platform === 'win32' && trayService) {
+        trayService.displayBalloon(
+          'Prompt Desktop',
+          'Application is running in the background. Click the tray icon to access.',
+          'info'
+        )
+      }
+      return false
+    }
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
+  })
+
+  // When main window becomes visible, update background service with auth info
+  mainWindow.on('show', () => {
+    // Request auth info from renderer when window shows
+    if (mainWindow && backgroundDataService) {
+      setTimeout(() => {
+        mainWindow!.webContents.send('request-auth-for-background-service')
+      }, 1000)
+    }
+
+    // Update tray menu
+    if (trayService) {
+      trayService.updateContextMenu()
+    }
+  })
+
+  mainWindow.on('hide', () => {
+    // Update tray menu
+    if (trayService) {
+      trayService.updateContextMenu()
+    }
   })
 
   if (isDev && process.env['ELECTRON_RENDERER_URL']) {
@@ -297,35 +367,150 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(() => {
-  app.setAppUserModelId('com.electron')
+function showMainWindow(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createWindow()
+  } else {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore()
+    }
+    mainWindow.show()
+    mainWindow.focus()
+  }
+}
 
-  app.on('browser-window-created', (_, window) => {
-    // Removed optimizer.watchWindowShortcuts - not essential for basic functionality
-    rendererReadyForAuthCallbacks = false
-  })
+function hideMainWindow(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.hide()
+  }
+}
 
-  ipcMain.on('ping', () => console.log('pong'))
+function toggleMainWindow(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    showMainWindow()
+  } else if (mainWindow.isVisible()) {
+    hideMainWindow()
+  } else {
+    showMainWindow()
+  }
+}
 
-  createWindow()
+function quitApplication(): void {
+  console.log('Quit requested from tray menu')
+  isQuitting = true
+  app.quit()
+}
 
-  // Initialize shortcuts after window is created
-  setTimeout(() => {
-    console.log('Initializing capture service shortcuts...')
-    // The shortcuts will be registered when the renderer calls enable()
-  }, 1000)
+app.whenReady().then(async () => {
+  try {
+    // Initialize logger first
+    await logger.initialize()
+    await logger.logSystemInfo()
+
+    app.setAppUserModelId('com.electron')
+
+    app.on('browser-window-created', (_, window) => {
+      rendererReadyForAuthCallbacks = false
+    })
+
+    ipcMain.on('ping', () => console.log('pong'))
+
+    // Initialize background services
+    await logServiceStart('BackgroundDataService')
+    backgroundDataService = new BackgroundDataService()
+    await backgroundDataService.initialize()
+    await logServiceReady('BackgroundDataService')
+
+    // Initialize capture service
+    await logServiceStart('CaptureService')
+    captureService = createCaptureService(() => mainWindow, backgroundDataService)
+    await logServiceReady('CaptureService')
+
+    // Initialize tray service
+    await logServiceStart('TrayService')
+    trayService = new TrayService({
+      onShowMainWindow: showMainWindow,
+      onHideMainWindow: hideMainWindow,
+      onToggleMainWindow: toggleMainWindow,
+      onQuitApp: quitApplication,
+      getMainWindowVisibility: () => !!mainWindow && mainWindow.isVisible(),
+      getCaptureServiceStatus: () => captureService?.getStatus() || 'idle'
+    })
+
+    await trayService.initialize()
+    trayService.setupDockIntegration()
+    await logServiceReady('TrayService')
+
+    // Create main window
+    createWindow()
+
+    // Log application state
+    await logger.logAppState({
+      trayService: trayService.isInitialized(),
+      backgroundDataService: backgroundDataService.isHealthy(),
+      captureService: captureService?.isListening() || false,
+      mainWindow: !!mainWindow
+    })
+
+    // Initialize shortcuts after all services are ready
+    setTimeout(() => {
+      logger.info('system', 'All services initialized, shortcuts will be registered when renderer is ready')
+    }, 1000)
+
+    await logger.info('system', 'Application startup completed successfully')
+    console.log('✅ All background services initialized successfully')
+  } catch (error) {
+    await logServiceError('ApplicationStartup', error)
+    console.error('❌ Failed to initialize background services:', error)
+    // Continue with limited functionality if services fail
+    createWindow()
+  }
 
   app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (process.platform === 'darwin') {
+      showMainWindow()
+    }
   })
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  // Don't quit when all windows are closed - app should run in background
+  console.log('All windows closed, but keeping app running in background')
 })
 
-app.on('will-quit', () => {
-  captureService.dispose()
+app.on('before-quit', async () => {
+  console.log('Application quitting, cleaning up services...')
+  await logger.info('system', 'Application shutdown initiated')
+  isQuitting = true
+})
+
+app.on('will-quit', async () => {
+  try {
+    // Log final app state
+    await logger.logAppState({
+      trayService: trayService?.isInitialized() || false,
+      backgroundDataService: backgroundDataService?.isHealthy() || false,
+      captureService: captureService?.isListening() || false,
+      mainWindow: !!mainWindow
+    })
+
+    // Dispose services in reverse order
+    if (captureService) {
+      await logServiceStop('CaptureService')
+      captureService.dispose()
+    }
+    if (backgroundDataService) {
+      await logServiceStop('BackgroundDataService')
+      backgroundDataService.dispose()
+    }
+    if (trayService) {
+      await logServiceStop('TrayService')
+      trayService.dispose()
+    }
+
+    await logger.info('system', 'Application shutdown completed successfully')
+  } catch (error) {
+    console.error('Error during app shutdown:', error)
+    await logger.error('system', 'Error during application shutdown', error)
+  }
 })

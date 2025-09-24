@@ -14,15 +14,15 @@ The desktop app shares infrastructure with the Prompt SST web client (OpenAuth, 
 Generate `packages/desktop/.env` (development) from your SST stack so the desktop client hits the correct hosted endpoints when running locally:
 
 ```bash
-bun run --filter @sst-replicache-template/desktop env:generate
+bun run --filter @prompt-saver/desktop env:generate
 ```
 
 The script calls `sst outputs` for the current stage (defaults to `dev`). To target another stage use `SST_STAGE` or the `--stage` flag:
 
 ```bash
-SST_STAGE=production bun run --filter @sst-replicache-template/desktop env:generate
+SST_STAGE=production bun run --filter @prompt-saver/desktop env:generate
 # or
-bun run --filter @sst-replicache-template/desktop env:generate -- --stage production
+bun run --filter @prompt-saver/desktop env:generate -- --stage production
 ```
 
 Environment variables can be overridden ad-hoc with `DESKTOP_API_URL`, `DESKTOP_AUTH_URL`, etc. See `scripts/generate-desktop-env.mjs` for the full list. Pass `--mode production` to write `.env.production`, which the packaging step uses automatically. If the script cannot reach SST outputs it leaves the current files untouched so your manually defined values persist.
@@ -45,7 +45,7 @@ This hoists workspace dependencies (React, Replicache, MQTT, etc.) and native El
    ```
 2. In another terminal launch Electron:
    ```bash
-   bun run --filter @sst-replicache-template/desktop dev
+   bun run --filter @prompt-saver/desktop dev
    ```
 
 The renderer opens in an Electron window. OAuth flows redirect to the same window; tokens are persisted in `localStorage` for future sessions.
@@ -54,8 +54,8 @@ The renderer opens in an Electron window. OAuth flows redirect to the same windo
 
 ```bash
 # Builds always regenerate `.env.production` for the selected stage (default production)
-bun run --filter @sst-replicache-template/desktop build
-bun run --filter @sst-replicache-template/desktop build:mac   # or build:win / build:linux
+bun run --filter @prompt-saver/desktop build
+bun run --filter @prompt-saver/desktop build:mac   # or build:win / build:linux
 ```
 
 - Renderer bundles land in `packages/desktop/dist`.

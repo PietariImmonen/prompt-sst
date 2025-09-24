@@ -39,7 +39,7 @@ bun run dev
 bun run desktop:env
 
 # Start desktop app normally
-bun run --filter @sst-replicache-template/desktop dev
+bun run --filter @prompt-saver/desktop dev
 ```
 
 ## How It Works

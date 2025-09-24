@@ -1,5 +1,5 @@
 {
-  "name": "@sst-replicache-template/functions",
+  "name": "@prompt-saver/functions",
   "version": "0.0.0",
   "scripts": {
     "typecheck": "tsc --noEmit"
@@ -9,7 +9,7 @@
     "@aws-sdk/s3-request-presigner": "^3.730.0",
     "@hono/zod-openapi": "^0.18.3",
     "@openauthjs/openauth": "^0.4.3",
-    "@sst-replicache-template/core": "*",
+    "@prompt-saver/core": "*",
     "hono": "^4.6.16",
     "remeda": "^2.18.0",
     "sst": "^3.9.2",

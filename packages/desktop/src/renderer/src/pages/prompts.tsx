@@ -2,7 +2,7 @@ import { PromptsPageHeader, PromptsTable } from '@/components/prompts-table'
 import { PromptStore } from '@/data/prompt-store'
 import { useSubscribe } from '@/hooks/use-replicache'
 
-import type { Prompt } from '@sst-replicache-template/core/models/Prompt'
+import type { Prompt } from '@prompt-saver/core/models/Prompt'
 
 const PromptsPage = () => {
   const prompts = (useSubscribe(PromptStore.list(), {

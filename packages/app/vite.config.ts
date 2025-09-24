@@ -11,11 +11,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@sst-replicache-template/functions": path.resolve(
-        __dirname,
-        "../functions/src",
-      ),
-      "@sst-replicache-template/core": path.resolve(__dirname, "../core/src"),
+      "@prompt-saver/functions": path.resolve(__dirname, "../functions/src"),
+      "@prompt-saver/core": path.resolve(__dirname, "../core/src"),
       "@": path.resolve(__dirname, "./src"),
     },
   },

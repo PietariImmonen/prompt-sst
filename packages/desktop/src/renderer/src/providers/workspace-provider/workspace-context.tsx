@@ -1,10 +1,10 @@
 import * as React from 'react'
 
-import { Workspace } from '@sst-replicache-template/core/models/Workspace'
+import { Workspace } from '@prompt-saver/core/models/Workspace'
 
 export const workspaceStore = {
   get(): Workspace | undefined {
-    const raw = localStorage.getItem('sst-replicache-template.workspace')
+    const raw = localStorage.getItem('prompt-saver.workspace')
     if (!raw) return undefined
     try {
       const parsed = JSON.parse(raw)
@@ -18,10 +18,10 @@ export const workspaceStore = {
     }
   },
   set(input: Workspace) {
-    return localStorage.setItem('sst-replicache-template.workspace', JSON.stringify(input))
+    return localStorage.setItem('prompt-saver.workspace', JSON.stringify(input))
   },
   remove() {
-    return localStorage.removeItem('sst-replicache-template.workspace')
+    return localStorage.removeItem('prompt-saver.workspace')
   }
 }
 

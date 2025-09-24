@@ -1,8 +1,7 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
-
-import { assertActor } from "@sst-replicache-template/core/actor";
-import { Prompt } from "@sst-replicache-template/core/domain/prompt";
-import { PromptSchema } from "@sst-replicache-template/core/models/Prompt";
+import { assertActor } from "@prompt-saver/core/actor";
+import { Prompt } from "@prompt-saver/core/domain/prompt";
+import { PromptSchema } from "@prompt-saver/core/models/Prompt";
 
 import { Result } from "./common";
 

@@ -1,2 +1,2 @@
 export const isPermanentStage =
-  $app.stage === "production" || $app.stage === "dev";
+  $app.stage === "production";

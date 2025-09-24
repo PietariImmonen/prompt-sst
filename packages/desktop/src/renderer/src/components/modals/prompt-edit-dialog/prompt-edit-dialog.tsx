@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useReplicache } from '@/hooks/use-replicache'
-import { Prompt } from '@sst-replicache-template/core/models/Prompt'
+import { Prompt } from '@prompt-saver/core/models/Prompt'
 
 import { EditDialog } from '../edit-dialog'
 

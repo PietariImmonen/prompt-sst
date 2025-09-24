@@ -149,7 +149,7 @@ export function AuthProvider(props: AuthProviderProps) {
         },
         logout: () => {
           authStore.remove()
-          localStorage.removeItem('sst-replicache-template.workspace')
+          localStorage.removeItem('prompt-saver.workspace')
           dropAllDatabases()
           window.location.hash = '#/auth/login'
         },

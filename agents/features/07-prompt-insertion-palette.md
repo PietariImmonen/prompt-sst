@@ -58,7 +58,7 @@
 - [x] Insert prompt text into inputs/textareas with undo support and guardrails for sensitive fields (e.g., `type="password"`).
 - [x] Mirror the palette in the desktop renderer, confirming parity and shortcut handling within Electron windows.
 - [x] Document fallback trigger UI/icon in shared layout so users discover the feature if shortcuts fail.
-- [ ] Run `bun run --filter app lint`, `bun run typecheck`, and `bun run --filter @sst-replicache-template/desktop dev` smoke test to confirm no regressions.
+- [ ] Run `bun run --filter app lint`, `bun run typecheck`, and `bun run --filter @prompt-saver/desktop dev` smoke test to confirm no regressions.
 
 ## Test & QA Plan
 

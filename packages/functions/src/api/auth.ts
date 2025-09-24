@@ -1,8 +1,8 @@
 import { createClient } from "@openauthjs/openauth/client";
-import { ActorContext } from "@sst-replicache-template/core/actor";
-import { User } from "@sst-replicache-template/core/domain/user";
-import dayjs from "@sst-replicache-template/core/lib/dayjs";
-import { VisibleError } from "@sst-replicache-template/core/util/error";
+import { ActorContext } from "@prompt-saver/core/actor";
+import { User } from "@prompt-saver/core/domain/user";
+import dayjs from "@prompt-saver/core/lib/dayjs";
+import { VisibleError } from "@prompt-saver/core/util/error";
 import type { MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { Resource } from "sst/resource";
@@ -38,7 +38,7 @@ export const auth: MiddlewareHandler = async (c, next) => {
     if (result.err)
       throw new VisibleError("input", "auth.invalid", "Invalid bearer token");
     if (result.subject.type === "account") {
-      const workspaceID = c.req.header("x-sst-replicache-template-workspace");
+      const workspaceID = c.req.header("x-prompt-saver-workspace");
 
       if (!workspaceID) {
         return ActorContext.with(

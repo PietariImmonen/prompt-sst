@@ -18,9 +18,9 @@ GEMINI.MD
 - `bun run build` performs a production-ready SST build; follow with `bun run deploy:dev` or `bun run deploy:production` to publish.
 - `bun run typecheck` runs TypeScript validation across the workspaces.
 - Frontend: `bun run --filter app dev` launches Vite; `bun run --filter app build` emits the static bundle.
-- Desktop: `bun run --filter @sst-replicache-template/desktop dev` launches Electron against the same SST endpoints.
-- Core domain: `bun test --cwd packages/core` executes Bun tests; `bun run --filter @sst-replicache-template/core db:migrate` applies Drizzle migrations via `sst shell`.
-- Scripts: invoke utilities with `bun run --filter @sst-replicache-template/scripts <command>` (e.g., `bun run --filter @sst-replicache-template/scripts users:create`).
+- Desktop: `bun run --filter @prompt-saver/desktop dev` launches Electron against the same SST endpoints.
+- Core domain: `bun test --cwd packages/core` executes Bun tests; `bun run --filter @prompt-saver/core db:migrate` applies Drizzle migrations via `sst shell`.
+- Scripts: invoke utilities with `bun run --filter @prompt-saver/scripts <command>` (e.g., `bun run --filter @prompt-saver/scripts users:create`).
 
 ## Coding Style & Naming Conventions
 

@@ -1,21 +1,18 @@
 import { gzipSync } from "zlib";
-import {
-  ActorContext,
-  useWorkspaceID,
-} from "@sst-replicache-template/core/actor";
-import { Replicache } from "@sst-replicache-template/core/domain/replicache";
+import { ActorContext, useWorkspaceID } from "@prompt-saver/core/actor";
+import { prompt } from "@prompt-saver/core/domain/prompt/prompt.sql";
+import { Replicache } from "@prompt-saver/core/domain/replicache";
 import {
   replicache_client,
   replicache_client_group,
   replicache_cvr,
-} from "@sst-replicache-template/core/domain/replicache/replicache.sql";
-import { userSettings } from "@sst-replicache-template/core/domain/user-settings/user-settings.sql";
-import { prompt } from "@sst-replicache-template/core/domain/prompt/prompt.sql";
-import { user } from "@sst-replicache-template/core/domain/user/user.sql";
-import { workspace } from "@sst-replicache-template/core/domain/workspace/workspace.sql";
-import { db } from "@sst-replicache-template/core/drizzle";
-import { VisibleError } from "@sst-replicache-template/core/util/error";
-import { createTransaction } from "@sst-replicache-template/core/util/transaction";
+} from "@prompt-saver/core/domain/replicache/replicache.sql";
+import { userSettings } from "@prompt-saver/core/domain/user-settings/user-settings.sql";
+import { user } from "@prompt-saver/core/domain/user/user.sql";
+import { workspace } from "@prompt-saver/core/domain/workspace/workspace.sql";
+import { db } from "@prompt-saver/core/drizzle";
+import { VisibleError } from "@prompt-saver/core/util/error";
+import { createTransaction } from "@prompt-saver/core/util/transaction";
 import { and, eq, gt, inArray, isNull, lt, SQL, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { chunk, isDeepEqual, mapValues, omit } from "remeda";

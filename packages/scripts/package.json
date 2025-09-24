@@ -1,5 +1,5 @@
 {
-  "name": "@sst-replicache-template/scripts",
+  "name": "@prompt-saver/scripts",
   "version": "0.0.0",
   "scripts": {
     "document-templates:create:production": "sst shell bun src/document-templates-create.ts --stage production",
@@ -24,7 +24,7 @@
     "@openauthjs/openauth": "^0.4.3",
     "@paralleldrive/cuid2": "^2.2.2",
     "@types/prompt-sync": "^4.2.3",
-    "@sst-replicache-template/core": "*",
+    "@prompt-saver/core": "*",
     "drizzle-orm": "^0.38.3",
     "prompt-sync": "^4.2.0",
     "sst": "^3.9.2",

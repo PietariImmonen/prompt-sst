@@ -1,7 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
-
-import { Client } from "@sst-replicache-template/functions/replicache/framework";
-import { ServerType } from "@sst-replicache-template/functions/replicache/server";
+import { Client } from "@prompt-saver/functions/replicache/framework";
+import { ServerType } from "@prompt-saver/functions/replicache/server";
 
 import { workspaceStore } from "@/providers/workspace-provider/workspace-context";
 import { UserSettingsStore } from "./user-settings";

@@ -1,8 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
+import { ActorContext } from "@prompt-saver/core/actor";
+import { Account } from "@prompt-saver/core/domain/account";
 import prompt from "prompt-sync";
-
-import { ActorContext } from "@sst-replicache-template/core/actor";
-import { Account } from "@sst-replicache-template/core/domain/account";
 
 const question = prompt({ sigint: true });
 

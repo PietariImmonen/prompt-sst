@@ -1,10 +1,13 @@
 # Feature Creation Prompt
 
 ## Purpose
+
 Use this template to brief an AI coding agent on a new feature. The agent will produce a spec file inside `agents/features/` that guides implementation, testing, and documentation updates while staying aligned with product context and design standards.
 
 ## Required Inputs
+
 Provide the following when invoking the template:
+
 - **Feature Name** – Human-readable title.
 - **Problem Statement** – What user or system issue the feature solves.
 - **Success Signals** – Metrics, UX outcomes, or explicit acceptance criteria.
@@ -12,12 +15,14 @@ Provide the following when invoking the template:
 - **Reference Material** – Links to mocks, tickets, API docs, or research assets when available.
 
 ## Agent Instructions
+
 1. Review `AGENTS.md`, `agents/context.md`, and `agents/design-guidelines.md` for up-to-date architecture, product framing, and UI expectations.
 2. Derive a concise feature slug in kebab-case from the name (e.g., `workspace-invite-flow`).
 3. Determine the next sequential ID for `agents/features/` using zero-padded numbering (`01-`, `02-`, …). Example: if `03-billing-sync.md` exists, name the new file `04-workspace-invite-flow.md`.
 4. Create the feature file with the structure below, replacing placeholder text with the real plan.
 
 ## Output Template (copy into the new `agents/features/<id>-<slug>.md`)
+
 ```
 # <Feature Name>
 - ID: <ID-Slug>
@@ -49,7 +54,7 @@ Provide the following when invoking the template:
 - [ ] Update `agents/context.md` if the product narrative, domain surface, or architecture changes.
 - [ ] Create or extend React route folders under `packages/app/src/routes/<area>/<feature>/components/<component>/`, exporting via `index.ts` barrels.
 - [ ] Build UI with Shadcn primitives from `@/components/ui`, keeping files under ~300 LoC and extracting hooks/utilities as needed.
-- [ ] Wire client logic through Replicache or REST helpers in `packages/app/src/data` / `packages/app/src/lib/api`, aligning types with `@sst-replicache-template/core` models.
+- [ ] Wire client logic through Replicache or REST helpers in `packages/app/src/data` / `packages/app/src/lib/api`, aligning types with `@prompt-saver/core` models.
 - [ ] When the backend changes, touch `packages/core` first (schema/domain/service), then expose endpoints in `packages/functions` with zod contracts and auth middleware.
 - [ ] If scripts or infrastructure adjustments are needed, document the exact Bun command (`bun run --filter @...`) and expected environment variables.
 - [ ] Document manual verification steps run via `bun run dev` (or package-specific dev command) and note any feature flags or seed data.
@@ -66,6 +71,7 @@ Provide the following when invoking the template:
 ```
 
 ## Usage Notes
+
 - Use active, direct language—AI agents rely on explicit verbs, file paths, and command names.
 - Break complicated flows into discrete TODO items instead of combined paragraphs.
 - Highlight when shared components should graduate from a route folder into `packages/app/src/components/` for reuse.

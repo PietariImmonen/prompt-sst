@@ -1,6 +1,5 @@
 import * as React from "react";
-
-import dayjs, { ConfigType } from "@sst-replicache-template/core/lib/dayjs";
+import dayjs, { ConfigType } from "@prompt-saver/core/lib/dayjs";
 
 export type Option = {
   label: string;

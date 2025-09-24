@@ -1,6 +1,6 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { WorkspaceSchema } from "@sst-replicache-template/core/models/Workspace";
+import { WorkspaceSchema } from "@prompt-saver/core/models/Workspace";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";

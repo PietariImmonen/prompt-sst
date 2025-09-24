@@ -1,15 +1,18 @@
 # Desktop Prompt Edit Dialog
+
 - ID: 09-desktop-prompt-edit-dialog
 - Owner: TBA
 - Priority: P1
 - Target Release: Sprint 3
 
 ## Context Snapshot
+
 - Product framing pulled from `agents/context.md` that motivates this feature.
 - This feature enhances the desktop application experience by providing a dedicated UI for editing prompt details including name, content, and category.
 - Addresses the need for users to easily modify their captured prompts in a more comprehensive editing interface.
 
 ## Goals & Non-Goals
+
 - **Goals**
   - Provide a full-screen dialog for editing prompt details (name, content, category)
   - Enable users to save or cancel changes to their prompts
@@ -21,12 +24,14 @@
   - Implementing complex validation or error handling beyond basic requirements
 
 ## Dependencies & Risks
+
 - Depends on existing prompt data structures and mutators
 - Requires integration with Replicache for data persistence
 - Risk of conflicting with existing prompt editing flows
 - May need to coordinate with web app team if similar functionality is planned there
 
 ## Implementation Blueprint
+
 - Create a new full-screen dialog component in `packages/desktop/src/renderer/src/components/modals/prompt-edit-dialog/`
 - Implement form with fields for:
   - Prompt title (text input)
@@ -39,6 +44,7 @@
 - Use layout scaffolds from existing components
 
 ## Strict TODO Checklist
+
 - [ ] Create new directory `packages/desktop/src/renderer/src/components/modals/prompt-edit-dialog/`
 - [ ] Implement `PromptEditDialog` component with full-screen dialog
 - [ ] Create form with fields for title, content, and category
@@ -53,6 +59,7 @@
 - [ ] Ensure `bun run --filter app lint` and `bun run typecheck` pass
 
 ## Test & QA Plan
+
 - Manual verification:
   - Open prompt edit dialog from prompts table
   - Edit prompt title, content, and category
@@ -64,11 +71,12 @@
   - Unit tests for form validation logic
   - Integration tests for data flow with Replicache
 - Required checks before PR:
-  - `bun run --filter @sst-replicache-template/desktop lint` passes
+  - `bun run --filter @prompt-saver/desktop lint` passes
   - `bun run typecheck` passes for desktop package
   - Manual testing in desktop app environment
 
 ## Open Questions
+
 - Should we implement category suggestions or autocomplete?
 - Do we need to handle very large prompt content differently?
 - Should we add any analytics or tracking for prompt edits?

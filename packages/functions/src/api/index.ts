@@ -1,5 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { VisibleError } from "@sst-replicache-template/core/util/error";
+import { VisibleError } from "@prompt-saver/core/util/error";
 import { handle } from "hono/aws-lambda";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
@@ -104,7 +104,7 @@ const routes = app
 app.doc("/doc", () => ({
   openapi: "3.0.0",
   info: {
-    title: "sst-replicache-template API",
+    title: "prompt-saver API",
     version: "0.0.1",
   },
 }));

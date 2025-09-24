@@ -1,6 +1,5 @@
+import { Workspace } from "@prompt-saver/core/models/Workspace";
 import { ReadTransaction, WriteTransaction } from "replicache";
-
-import { Workspace } from "@sst-replicache-template/core/models/Workspace";
 
 export namespace WorkspaceStore {
   export function list() {

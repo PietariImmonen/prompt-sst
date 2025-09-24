@@ -1,6 +1,5 @@
 import * as React from "react";
-
-import { Workspace } from "@sst-replicache-template/core/models/Workspace";
+import { Workspace } from "@prompt-saver/core/models/Workspace";
 
 import { WorkspaceContext } from "./workspace-context";
 

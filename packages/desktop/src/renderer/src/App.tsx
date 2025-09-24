@@ -8,6 +8,7 @@ import { RealtimeProvider } from '@/providers/realtime-provider'
 import { ReplicacheProvider } from '@/providers/replicache-provider'
 import { AuthProvider } from '@/providers/auth-provider'
 import { ThemeProvider } from '@/providers/theme-provider'
+import { BackgroundSyncProvider } from '@/providers/background-sync-provider'
 
 import AuthPage from '@/pages/auth'
 import PromptsPage from '@/pages/prompts'
@@ -120,11 +121,13 @@ function App(): JSX.Element {
     <HashRouter>
       <ThemeProvider defaultTheme="system" storageKey="prompt-desktop-theme">
         <AuthProvider>
-          <Toaster richColors position="top-right" />
-          <Routes>
-            <Route path="/auth/callback" element={<CallbackPage />} />
-            <Route path="/*" element={<Content />} />
-          </Routes>
+          <BackgroundSyncProvider>
+            <Toaster richColors position="top-right" />
+            <Routes>
+              <Route path="/auth/callback" element={<CallbackPage />} />
+              <Route path="/*" element={<Content />} />
+            </Routes>
+          </BackgroundSyncProvider>
         </AuthProvider>
       </ThemeProvider>
     </HashRouter>

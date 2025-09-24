@@ -1,9 +1,8 @@
 import { ScryptHasher } from "@openauthjs/openauth/provider/password";
 import { DynamoStorage } from "@openauthjs/openauth/storage/dynamo";
+import { Account } from "@prompt-saver/core/domain/account";
 import prompt from "prompt-sync";
 import { Resource } from "sst/resource";
-
-import { Account } from "@sst-replicache-template/core/domain/account";
 
 const question = prompt({ sigint: true });
 

@@ -1,8 +1,8 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { assertActor, useAccountID } from "@sst-replicache-template/core/actor";
-import { Account } from "@sst-replicache-template/core/domain/account";
-import { AccountSchema } from "@sst-replicache-template/core/models/Account";
-import { WorkspaceSchema } from "@sst-replicache-template/core/models/Workspace";
+import { assertActor, useAccountID } from "@prompt-saver/core/actor";
+import { Account } from "@prompt-saver/core/domain/account";
+import { AccountSchema } from "@prompt-saver/core/models/Account";
+import { WorkspaceSchema } from "@prompt-saver/core/models/Workspace";
 
 import { Result } from "./common";
 

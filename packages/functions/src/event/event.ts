@@ -1,6 +1,6 @@
-import { ActorContext } from "@sst-replicache-template/core/actor";
-import { User } from "@sst-replicache-template/core/domain/user";
-import { UserSettings } from "@sst-replicache-template/core/domain/user-settings";
+import { ActorContext } from "@prompt-saver/core/actor";
+import { User } from "@prompt-saver/core/domain/user";
+import { UserSettings } from "@prompt-saver/core/domain/user-settings";
 import { bus } from "sst/aws/bus";
 
 export const handler = bus.subscriber(

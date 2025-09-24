@@ -20,8 +20,8 @@ export default defineConfig({
         '@renderer': resolve(__dirname, 'src/renderer/src'),
         '@desktop': resolve(__dirname, 'src/renderer/src'),
         '@': resolve(__dirname, 'src/renderer/src'),
-        '@sst-replicache-template/core': resolve(__dirname, '../core/src'),
-        '@sst-replicache-template/functions': resolve(__dirname, '../functions/src')
+        '@prompt-saver/core': resolve(__dirname, '../core/src'),
+        '@prompt-saver/functions': resolve(__dirname, '../functions/src')
       }
     },
     optimizeDeps: {

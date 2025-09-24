@@ -1,6 +1,5 @@
+import { User } from "@prompt-saver/core/models/User";
 import { ReadTransaction, WriteTransaction } from "replicache";
-
-import { User } from "@sst-replicache-template/core/models/User";
 
 export namespace UserStore {
   export function list() {

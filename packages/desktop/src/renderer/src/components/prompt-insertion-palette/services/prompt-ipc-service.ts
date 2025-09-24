@@ -23,8 +23,17 @@ class PromptIPCServiceImpl implements IPCPromptService {
     this.isLoading = true
 
     try {
-      console.log('Requesting prompts from main window...')
-      const prompts = await window.electron.ipcRenderer.invoke('overlay:get-prompts')
+      console.log('Requesting prompts from background data service...')
+
+      // First try the background data service directly
+      let prompts = await window.electron.ipcRenderer.invoke('background:get-prompts')
+
+      if (!prompts || prompts.length === 0) {
+        console.log('Background service empty, trying overlay handler...')
+        // Fallback to overlay handler (which may try main window)
+        prompts = await window.electron.ipcRenderer.invoke('overlay:get-prompts')
+      }
+
       console.log('Received prompts:', prompts?.length || 0)
 
       // Only retry if we get absolutely no data (null/undefined)

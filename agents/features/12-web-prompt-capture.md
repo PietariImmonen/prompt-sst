@@ -35,11 +35,25 @@
   - Implement a background script that coordinates with the Replicache system
   - Add manifest permissions for relevant AI provider domains
   - Use a robust detection system that works with various website layouts and loading states
-- **Content Script Detection**
-  - Identify prompt submission elements using multiple selectors and strategies
-  - Extract prompt text using a combination of direct DOM access and MutationObserver patterns
-  - Handle dynamic content loading and single-page application navigation
-  - Implement fallback methods for different website versions/layouts
+- **Auto-Detection and Capture Strategy**
+  - **Layer 1: Resilient Element Identification**. The content script must locate two key elements: the prompt input area (typically a `<textarea>`) and the submission button.
+    - It will use a prioritized list of resilient selectors, starting with stable, semantic attributes and falling back to heuristics. This list should be remotely configurable to adapt to UI changes without a full extension update.
+    - **Selector Strategy (Example for ChatGPT):**
+      1. **Primary:** `textarea#prompt-textarea` (most stable)
+      2. **Secondary:** `textarea[data-testid="prompt-textarea"]` (framework-specific test attribute)
+      3. **Heuristic:** `textarea[placeholder*="Message ChatGPT"]` (resilient to class name changes)
+      4. **Button:** `button[data-testid="send-button"]` or `button[aria-label*="Send message"]`
+    - Similar selector hierarchies will be defined for Claude, Gemini, and other supported providers.
+  - **Layer 2: Event Binding**. Once identified, the script will attach event listeners to these elements.
+    - A `keydown` listener on the `textarea` will detect `Enter` key presses (while checking that the `Shift` key is not also pressed).
+    - A `click` listener on the submission `button`.
+  - **Layer 3: Capture Confirmation with MutationObserver**. This is the core of the reliability mechanism, preventing the capture of unsent or failed prompts.
+    - When a submission event from Layer 2 is triggered, the script captures the text from the input area but **does not** immediately send it to the backend.
+    - Instead, it instantiates a `MutationObserver` to watch the main chat log container for changes (specifically, `childList` and `subtree` mutations).
+    - The capture is only confirmed and sent to the background script when the `MutationObserver` detects a new node added to the chat log that (a) is identified as a user-submitted message and (b) its content matches the text that was captured from the input area.
+  - **Layer 4: SPA Navigation & Dynamic Loading**.
+    - The script must account for Single-Page Application (SPA) behavior where chat elements don't exist on initial page load.
+    - A `setTimeout` or `setInterval` retry mechanism will be used to repeatedly attempt to find the target elements (from Layer 1) until they are found, at which point the listeners and observers are attached.
 - **Data Processing**
   - Clean and normalize captured prompts before sending to backend
   - Associate prompts with the correct workspace and user context

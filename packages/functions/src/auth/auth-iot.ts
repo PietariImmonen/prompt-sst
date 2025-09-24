@@ -1,13 +1,12 @@
 import { createClient } from "@openauthjs/openauth/client";
+import { ActorContext, assertActor } from "@prompt-saver/core/actor";
+import { user } from "@prompt-saver/core/domain/user/user.sql";
+import { db } from "@prompt-saver/core/drizzle";
+import dayjs from "@prompt-saver/core/lib/dayjs";
+import { VisibleError } from "@prompt-saver/core/util/error";
 import { eq } from "drizzle-orm";
 import { Resource } from "sst";
 import { realtime } from "sst/aws/realtime";
-
-import { ActorContext, assertActor } from "@sst-replicache-template/core/actor";
-import { user } from "@sst-replicache-template/core/domain/user/user.sql";
-import { db } from "@sst-replicache-template/core/drizzle";
-import dayjs from "@sst-replicache-template/core/lib/dayjs";
-import { VisibleError } from "@sst-replicache-template/core/util/error";
 
 import { subjects } from "./subjects";
 

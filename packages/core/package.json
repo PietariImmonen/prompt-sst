@@ -1,13 +1,13 @@
 {
-  "name": "@sst-replicache-template/core",
+  "name": "@prompt-saver/core",
   "version": "0.0.0",
   "scripts": {
-    "db:check": "sst shell drizzle-kit check",
-    "db:drop": "sst shell drizzle-kit drop",
-    "db:generate": "sst shell drizzle-kit generate",
-    "db:migrate": "sst shell drizzle-kit migrate",
-    "db:push": "sst shell drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
+    "db:check": "sst shell --target DatabaseMigrator drizzle-kit check",
+    "db:drop": "sst shell --target DatabaseMigrator drizzle-kit drop",
+    "db:generate": "sst shell --target DatabaseMigrator drizzle-kit generate",
+    "db:migrate": "sst shell --target DatabaseMigrator drizzle-kit migrate",
+    "db:push": "sst shell --target DatabaseMigrator drizzle-kit push",
+    "db:studio": "sst shell --target DatabaseMigrator drizzle-kit studio",
     "test": "bun test",
     "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit"

@@ -16,7 +16,7 @@ import { Shell } from '@desktop/components/layout/shell'
 import { useReplicache, useSubscribe } from '@/hooks/use-replicache'
 
 import { UserSettingsStore } from '@/data/user-settings'
-import { UserSettings } from '@sst-replicache-template/core/models/UserSettings'
+import { UserSettings } from '@prompt-saver/core/models/UserSettings'
 
 const SettingsPage = () => {
   const rep = useReplicache()

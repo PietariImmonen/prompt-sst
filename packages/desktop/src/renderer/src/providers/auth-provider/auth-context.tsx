@@ -1,6 +1,6 @@
 import * as React from 'react'
-import { Account as CoreAccount } from '@sst-replicache-template/core/models/Account'
-import { Workspace } from '@sst-replicache-template/core/models/Workspace'
+import { Account as CoreAccount } from '@prompt-saver/core/models/Account'
+import { Workspace } from '@prompt-saver/core/models/Workspace'
 
 export type Account = CoreAccount & {
   token: string
@@ -22,15 +22,15 @@ interface AuthStorage {
 
 export const authStore = {
   get() {
-    const raw = localStorage.getItem('sst-replicache-template.auth')
+    const raw = localStorage.getItem('prompt-saver.auth')
     if (!raw) return null
     return JSON.parse(raw) as AuthStorage
   },
   set(input: AuthStorage) {
-    return localStorage.setItem('sst-replicache-template.auth', JSON.stringify(input))
+    return localStorage.setItem('prompt-saver.auth', JSON.stringify(input))
   },
   remove() {
-    return localStorage.removeItem('sst-replicache-template.auth')
+    return localStorage.removeItem('prompt-saver.auth')
   }
 }
 

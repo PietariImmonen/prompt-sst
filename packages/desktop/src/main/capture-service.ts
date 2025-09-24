@@ -172,9 +172,7 @@ async function readHighlightedText(): Promise<{
   }
 }
 
-function pushStatus(window: BrowserWindow | null, status: CaptureStatus, message?: string) {
-  window?.webContents.send('prompt:capture:status', { status, message })
-}
+// This function will be defined inside createCaptureService where captureStatus is in scope
 
 function notifySystem(result: CaptureResult) {
   if (Notification.isSupported()) {
@@ -192,13 +190,20 @@ function notifySystem(result: CaptureResult) {
   }
 }
 
-export function createCaptureService(getWindow: WindowGetter) {
+export function createCaptureService(getWindow: WindowGetter, backgroundDataService: any) {
   let captureListening = false
   let paletteListening = false
   let paletteWindow: BrowserWindow | null = null
 
   // Simplified overlay state - no global keyboard capture
   let overlayVisible = false
+  let captureStatus: CaptureStatus = 'idle'
+
+  function pushStatus(window: BrowserWindow | null, status: CaptureStatus, message?: string) {
+    captureStatus = status
+    window?.webContents.send('prompt:capture:status', { status, message })
+    // Also notify any other listeners (like tray service) of status changes
+  }
 
   // Removed global keyboard capture functions - using standard input handling
 
@@ -364,8 +369,9 @@ export function createCaptureService(getWindow: WindowGetter) {
       focusable: true,
       fullscreenable: false,
       hasShadow: true,
-      vibrancy: 'under-window',
-      type: process.platform === 'darwin' ? 'panel' : undefined, // Don't steal focus on macOS
+      vibrancy: process.platform === 'darwin' ? 'under-window' : undefined,
+      // Use different window type based on platform to avoid NSWindow warnings
+      type: process.platform === 'darwin' ? 'textured' : undefined,
       webPreferences: {
         preload: join(__dirname, '../preload/index.mjs'),
         sandbox: false,
@@ -437,18 +443,58 @@ export function createCaptureService(getWindow: WindowGetter) {
     if (bookmarkUrl) metadata.url = bookmarkUrl
     if (bookmarkTitle) metadata.bookmarkTitle = bookmarkTitle
 
-    window.webContents.send('prompt:capture', {
-      content,
-      title,
-      source,
-      categoryPath: `inbox/${source}`,
-      visibility: 'private',
-      isFavorite: false,
-      metadata: {
-        ...metadata,
-        captureMethod: method
+    // First try to capture via background data service
+    try {
+      const result = await backgroundDataService.capturePrompt({
+        content,
+        title,
+        source,
+        categoryPath: `inbox/${source}`,
+        visibility: 'private',
+        isFavorite: false,
+        metadata: {
+          ...metadata,
+          captureMethod: method
+        }
+      })
+
+      if (result.success) {
+        notifySystem(result)
+        pushStatus(window, 'success', result.message)
+        setTimeout(() => {
+          pushStatus(window, captureListening ? 'listening' : 'idle')
+        }, 1500)
+        return
+      } else {
+        console.warn('Background capture failed, falling back to main window:', result.message)
       }
-    } satisfies PromptCapturePayload)
+    } catch (error) {
+      console.warn('Background capture error, falling back to main window:', error)
+    }
+
+    // Fallback to main window handling if background service fails
+    if (window) {
+      window.webContents.send('prompt:capture', {
+        content,
+        title,
+        source,
+        categoryPath: `inbox/${source}`,
+        visibility: 'private',
+        isFavorite: false,
+        metadata: {
+          ...metadata,
+          captureMethod: method
+        }
+      } satisfies PromptCapturePayload)
+    } else {
+      // No main window available and background service failed
+      const failure = {
+        success: false,
+        message: 'Unable to save prompt - service unavailable'
+      }
+      notifySystem(failure)
+      pushStatus(window, 'failed', failure.message)
+    }
 
   }
 
@@ -478,26 +524,34 @@ export function createCaptureService(getWindow: WindowGetter) {
     }
 
     try {
-      // Get the current frontmost application and window information
-      const appInfo = execSync(
-        `osascript -e '
-        tell application "System Events"
-          set frontApp to name of first application process whose frontmost is true
-          set appWindows to windows of first application process whose frontmost is true
-          if (count of appWindows) > 0 then
-            set frontWindow to name of first window of first application process whose frontmost is true
-            return frontApp & "|" & frontWindow
-          else
-            return frontApp & "|"
-          end if
-        end tell'`,
-        { encoding: 'utf8', timeout: 1000 }
-      ).trim()
+      // First try to get just the frontmost application (simpler, more reliable)
+      let appInfo = ''
+      try {
+        appInfo = execSync(
+          `osascript -e 'tell application "System Events" to return name of first application process whose frontmost is true'`,
+          { encoding: 'utf8', timeout: 500 }
+        ).trim()
 
-      const [appName, windowName] = appInfo.split('|')
-      return { appName, windowName: windowName || '' }
-    } catch (error) {
-      console.log('Failed to detect focused element:', error)
+        // If we got the app name, try to get window info (this might fail due to permissions)
+        let windowName = ''
+        try {
+          const windowInfo = execSync(
+            `osascript -e 'tell application "System Events" to return name of first window of first application process whose frontmost is true'`,
+            { encoding: 'utf8', timeout: 500 }
+          ).trim()
+          windowName = windowInfo
+        } catch (windowError: any) {
+          // Window detection failed, but we still have the app name
+          console.log('Window detection failed (likely permissions), using app only:', windowError?.message || windowError)
+        }
+
+        return { appName: appInfo, windowName: windowName || '' }
+      } catch (appError: any) {
+        console.log('App detection failed (accessibility permissions required):', appError?.message || appError)
+        return null
+      }
+    } catch (error: any) {
+      console.log('Focus detection failed:', error?.message || error)
       return null
     }
   }
@@ -672,29 +726,37 @@ export function createCaptureService(getWindow: WindowGetter) {
   })
 
 
-  // Handle prompts data request from overlay
+  // Handle prompts data request from overlay - now uses background data service
   ipcMain.handle('overlay:get-prompts', async () => {
-    console.log('Overlay requesting prompts data')
-    const window = getWindow()
-    if (!window) {
-      console.warn('Main window not available for prompts request')
-      return []
-    }
+    console.log('Overlay requesting prompts data from background service')
 
     try {
-      // Send a message to the main window to get prompts via its provider context
-      console.log('Requesting prompts from main window via IPC')
+      // First try background data service
+      const prompts = backgroundDataService.getPrompts()
+      if (prompts && prompts.length > 0) {
+        console.log('Retrieved prompts from background service:', prompts.length)
+        return prompts
+      }
+
+      // Fallback to main window if background service has no data
+      const window = getWindow()
+      if (!window) {
+        console.warn('No prompts in background service and main window not available')
+        return []
+      }
+
+      console.log('Background service empty, requesting from main window...')
       window.webContents.send('overlay:request-prompts')
 
-      // Wait for the response - this will be sent back via a separate IPC handler
-      const prompts = await new Promise<any[]>((resolve) => {
+      // Wait for the response from main window
+      const windowPrompts = await new Promise<any[]>((resolve) => {
         const timeout = setTimeout(() => {
           console.warn('Timeout waiting for prompts from main window')
           resolve([])
-        }, 5000)
+        }, 3000) // Shorter timeout since background service should be primary
 
         const handler = (_event: any, data: any[]) => {
-          console.log('Capture service: Received prompts response from main window:', data?.length || 0)
+          console.log('Received prompts response from main window:', data?.length || 0)
           clearTimeout(timeout)
           ipcMain.removeListener('overlay:prompts-response', handler)
           resolve(data || [])
@@ -703,8 +765,7 @@ export function createCaptureService(getWindow: WindowGetter) {
         ipcMain.once('overlay:prompts-response', handler)
       })
 
-      console.log('Retrieved prompts for overlay:', prompts?.length || 0)
-      return prompts || []
+      return windowPrompts
     } catch (error) {
       console.error('Failed to get prompts for overlay:', error)
       return []
@@ -739,6 +800,12 @@ export function createCaptureService(getWindow: WindowGetter) {
   })
 
   return {
+    getStatus() {
+      return captureStatus
+    },
+    isListening() {
+      return captureListening
+    },
     dispose() {
       unregisterShortcuts()
       if (paletteWindow && !paletteWindow.isDestroyed()) {

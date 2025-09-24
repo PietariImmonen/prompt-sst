@@ -51,7 +51,7 @@ bun run desktop:dev:fallback
 bun run desktop:typecheck
 
 # Without SST (may have some type issues in backend imports)
-bun run --filter @sst-replicache-template/desktop typecheck
+bun run --filter @prompt-saver/desktop typecheck
 ```
 
 ## What Changed
@@ -72,7 +72,7 @@ bun run --filter @sst-replicache-template/desktop typecheck
 
 ## Key Benefits
 
-1. **No Type Issues**: Full access to `@sst-replicache-template/core` and `@sst-replicache-template/functions` packages without any TypeScript errors.
+1. **No Type Issues**: Full access to `@prompt-saver/core` and `@prompt-saver/functions` packages without any TypeScript errors.
 
 2. **Same Backend**: Uses identical API endpoints, authentication, database, and real-time infrastructure as the web application.
 
