@@ -1,17 +1,11 @@
 import type { Config } from "drizzle-kit";
 import { Resource } from "sst";
 
-const connection = {
-  user: Resource.Database.user,
-  password: Resource.Database.password,
-  host: Resource.Database.host,
-};
+// Use Neon database URL with branch support
+const databaseUrl = Resource.Database.url;
 
-const url = `postgres://${connection.user}:${encodeURIComponent(
-  connection.password,
-)}@${connection.host}:5432/postgres`;
-
-console.log("🔗 DATABASE URL:", url);
+console.log("🔗 NEON DATABASE URL:", databaseUrl);
+console.log("🌿 DATABASE BRANCH:", Resource.Database.branch);
 
 export default {
   out: "./migrations/",
@@ -19,6 +13,6 @@ export default {
   verbose: true,
   dialect: "postgresql",
   dbCredentials: {
-    url: `postgres://${connection.user}:${encodeURIComponent(connection.password)}@${connection.host}:5432/postgres`,
+    url: databaseUrl,
   },
 } satisfies Config;

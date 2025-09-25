@@ -1,26 +1,21 @@
-import { isPermanentStage } from "./config";
 import { secret } from "./secret";
 
-sst.Linkable.wrap(supabase.Project, function (_item) {
-  return {
-    properties: {
-      user: "postgres",
-      password: secret.SupabaseDatabasePassword.value,
-      host: $interpolate`aws-0-eu-central-1.pooler.supabase.com`,
-      port: 5432,
-      database: "postgres",
-    },
-  };
-});
+// Neon database configuration with branch support
+// Each stage gets its own branch for isolated development
+const getBranchName = () => {
+  const stage = $app.stage;
+  // Use main branch for production, stage-specific branches for others
+  return stage === "production" ? "main" : `branch-${stage}`;
+};
 
-export const database = isPermanentStage
-  ? new supabase.Project("Database", {
-      name: $interpolate`${$app.name}-${$app.stage}`,
-      region: "eu-central-1",
-      organizationId: process.env.SUPABASE_ORG_ID!,
-      databasePassword: secret.SupabaseDatabasePassword.value,
-    })
-  : supabase.Project.get("Database", "jdwwiziehyecpbfgourc");
+// Create a linkable resource for the Neon database
+export const database = new sst.Linkable("Database", {
+  properties: {
+    url: secret.NeonDatabaseUrl.value,
+    apiKey: secret.NeonApiKey.value,
+    branch: getBranchName(),
+  },
+});
 
 const migrator = new sst.aws.Function("DatabaseMigrator", {
   handler: "packages/functions/src/migrator.handler",

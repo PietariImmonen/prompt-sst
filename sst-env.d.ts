@@ -28,12 +28,10 @@ declare module "sst" {
       "type": "sst.aws.Bus"
     }
     "Database": {
-      "database": string
-      "host": string
-      "password": string
-      "port": number
-      "type": "supabase.index/project.Project"
-      "user": string
+      "apiKey": string
+      "branch": string
+      "type": "sst.sst.Linkable"
+      "url": string
     }
     "DatabaseMigrator": {
       "name": string
@@ -51,14 +49,18 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "NeonApiKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "NeonDatabaseUrl": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Realtime": {
       "authorizer": string
       "endpoint": string
       "type": "sst.aws.Realtime"
-    }
-    "SupabaseDatabasePassword": {
-      "type": "sst.sst.Secret"
-      "value": string
     }
     "Web": {
       "type": "sst.aws.StaticSite"

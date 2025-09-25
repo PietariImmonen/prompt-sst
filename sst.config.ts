@@ -16,7 +16,6 @@ export default $config({
               ? "prompt-saver-production"
               : "prompt-saver-dev",
         },
-        supabase: true,
         random: true,
       },
     };

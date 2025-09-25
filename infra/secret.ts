@@ -1,7 +1,8 @@
 export const secret = {
   GoogleClientID: new sst.Secret("GoogleClientID"),
   GoogleClientSecret: new sst.Secret("GoogleClientSecret"),
-  SupabaseDatabasePassword: new sst.Secret("SupabaseDatabasePassword"),
+  NeonDatabaseUrl: new sst.Secret("NeonDatabaseUrl"),
+  NeonApiKey: new sst.Secret("NeonApiKey"),
 };
 
 export const allSecrets = Object.values(secret);
