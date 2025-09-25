@@ -1,12 +1,12 @@
 import { isPermanentStage } from "./config";
 import { secret } from "./secret";
 
-sst.Linkable.wrap(supabase.Project, function (item) {
+sst.Linkable.wrap(supabase.Project, function (_item) {
   return {
     properties: {
       user: "postgres",
-      password: secret.SupabaseDBPassword.value,
-      host: $interpolate`aws-0-${item.region}.pooler.supabase.com`,
+      password: secret.SupabaseDatabasePassword.value,
+      host: $interpolate`aws-0-eu-central-1.pooler.supabase.com`,
       port: 5432,
       database: "postgres",
     },
@@ -18,7 +18,7 @@ export const database = isPermanentStage
       name: $interpolate`${$app.name}-${$app.stage}`,
       region: "eu-central-1",
       organizationId: process.env.SUPABASE_ORG_ID!,
-      databasePassword: secret.SupabaseDBPassword.value,
+      databasePassword: secret.SupabaseDatabasePassword.value,
     })
   : supabase.Project.get("Database", "jdwwiziehyecpbfgourc");
 
@@ -40,5 +40,5 @@ if (!$dev) {
   });
 }
 export const outputs = {
-  database,
+  Database: database,
 };
