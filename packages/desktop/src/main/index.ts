@@ -317,8 +317,8 @@ function createWindow(): void {
   })
 
   mainWindow.on('close', (event) => {
-    if (!isQuitting && process.platform !== 'darwin') {
-      // On Windows/Linux, hide to tray instead of closing
+    if (!isQuitting) {
+      // Always hide to tray instead of closing, on all platforms
       event.preventDefault()
       mainWindow?.hide()
 
@@ -330,6 +330,8 @@ function createWindow(): void {
           'info'
         )
       }
+
+      console.log('Main window hidden to tray, app continues running in background')
       return false
     }
   })
