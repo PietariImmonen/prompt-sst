@@ -190,7 +190,7 @@ function notifySystem(result: CaptureResult) {
   }
 }
 
-export function createCaptureService(getWindow: WindowGetter, backgroundDataService: any) {
+export function createCaptureService(getWindow: WindowGetter, backgroundDataService: any, trayService?: any) {
   let captureListening = false
   let paletteListening = false
   let paletteWindow: BrowserWindow | null = null
@@ -390,20 +390,44 @@ export function createCaptureService(getWindow: WindowGetter, backgroundDataServ
       })
     }
 
-    // Simple window event handling
+    // Improved window event handling with less aggressive blur behavior
     paletteWindow.on('blur', () => {
-      console.log('Overlay window lost focus - hiding')
+      console.log('Overlay window lost focus')
+      // Less aggressive - only hide if actually clicked outside and not focused on main app
       setTimeout(() => {
         if (paletteWindow && !paletteWindow.isDestroyed() && !paletteWindow.isFocused()) {
-          hideOverlay()
+          // Check if we lost focus to any of our app windows - if so, don't hide
+          const allWindows = BrowserWindow.getAllWindows()
+          const hasAppFocus = allWindows.some(w =>
+            w.isFocused() && w !== paletteWindow &&
+            (w === getWindow() || w.getTitle().includes('Prompt'))
+          )
+
+          if (!hasAppFocus) {
+            console.log('Lost focus to external app, hiding overlay')
+            hideOverlay()
+          } else {
+            console.log('Focus moved to main app window, keeping overlay visible')
+          }
         }
-      }, 100)
+      }, 250) // Longer delay to prevent race conditions
     })
 
     paletteWindow.on('closed', () => {
       console.log('Overlay window closed')
       paletteWindow = null
       overlayVisible = false
+
+      // Ensure tray service is still functional after overlay closes
+      // This is a critical fix to prevent tray icon disappearing
+      setTimeout(() => {
+        if (trayService && !trayService.isHealthy()) {
+          console.log('Detected tray service failure after overlay close, attempting recovery...')
+          trayService.recreateTray().catch((error: any) => {
+            console.error('Failed to recover tray service:', error)
+          })
+        }
+      }, 500) // Give time for any cleanup to complete
     })
 
     // Keep window on top

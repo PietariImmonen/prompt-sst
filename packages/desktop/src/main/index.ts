@@ -421,12 +421,7 @@ app.whenReady().then(async () => {
     await backgroundDataService.initialize()
     await logServiceReady('BackgroundDataService')
 
-    // Initialize capture service
-    await logServiceStart('CaptureService')
-    captureService = createCaptureService(() => mainWindow, backgroundDataService)
-    await logServiceReady('CaptureService')
-
-    // Initialize tray service
+    // Initialize tray service first so it can be passed to capture service
     await logServiceStart('TrayService')
     trayService = new TrayService({
       onShowMainWindow: showMainWindow,
@@ -440,6 +435,11 @@ app.whenReady().then(async () => {
     await trayService.initialize()
     trayService.setupDockIntegration()
     await logServiceReady('TrayService')
+
+    // Initialize capture service with tray service reference
+    await logServiceStart('CaptureService')
+    captureService = createCaptureService(() => mainWindow, backgroundDataService, trayService)
+    await logServiceReady('CaptureService')
 
     // Create main window
     createWindow()
@@ -456,6 +456,58 @@ app.whenReady().then(async () => {
     setTimeout(() => {
       logger.info('system', 'All services initialized, shortcuts will be registered when renderer is ready')
     }, 1000)
+
+    // Set up periodic service health monitoring
+    const healthCheckInterval = setInterval(async () => {
+      try {
+        let needsRecovery = false
+
+        // Check tray service health
+        if (trayService && !trayService.isHealthy()) {
+          console.warn('🔧 Tray service unhealthy, attempting recovery...')
+          await logger.warn('service', 'Tray service unhealthy, attempting recovery')
+          const recovered = await trayService.recreateTray()
+          if (recovered) {
+            console.log('✅ Tray service recovered successfully')
+            await logger.info('service', 'Tray service recovered successfully')
+          } else {
+            console.error('❌ Failed to recover tray service')
+            await logger.error('service', 'Failed to recover tray service')
+          }
+          needsRecovery = true
+        }
+
+        // Check background data service health
+        if (backgroundDataService && !backgroundDataService.isHealthy()) {
+          console.warn('🔧 Background data service unhealthy, attempting restart...')
+          await logger.warn('service', 'Background data service unhealthy, attempting restart')
+          try {
+            await backgroundDataService.initialize()
+            console.log('✅ Background data service restarted successfully')
+            await logger.info('service', 'Background data service restarted successfully')
+          } catch (error) {
+            console.error('❌ Failed to restart background data service:', error)
+            await logger.error('service', 'Failed to restart background data service', error)
+          }
+          needsRecovery = true
+        }
+
+        // Log health check completion only if recovery was needed
+        if (needsRecovery) {
+          await logger.info('system', 'Service health check completed')
+        }
+      } catch (error) {
+        console.error('Health check failed:', error)
+        await logger.error('system', 'Service health check failed', error)
+      }
+    }, 30000) // Check every 30 seconds
+
+    // Clean up health check on app quit
+    app.on('before-quit', () => {
+      if (healthCheckInterval) {
+        clearInterval(healthCheckInterval)
+      }
+    })
 
     await logger.info('system', 'Application startup completed successfully')
     console.log('✅ All background services initialized successfully')
@@ -494,23 +546,33 @@ app.on('will-quit', async () => {
       mainWindow: !!mainWindow
     })
 
-    // Dispose services in reverse order
-    if (captureService) {
-      await logServiceStop('CaptureService')
-      captureService.dispose()
-    }
-    if (backgroundDataService) {
-      await logServiceStop('BackgroundDataService')
-      backgroundDataService.dispose()
-    }
-    if (trayService) {
-      await logServiceStop('TrayService')
-      trayService.dispose()
+    // Helper function to safely dispose each service
+    const disposeService = async (service: any, name: string, disposeFn: () => Promise<void> | void) => {
+      try {
+        if (service) {
+          await logServiceStop(name)
+          console.log(`Disposing ${name}...`)
+          await disposeFn()
+          console.log(`✅ ${name} disposed successfully`)
+        }
+      } catch (error) {
+        console.error(`❌ Error disposing ${name}:`, error)
+        await logger.error('service', `${name} disposal failed`, error)
+        // Continue with other services even if one fails
+      }
     }
 
-    await logger.info('system', 'Application shutdown completed successfully')
+    // Dispose services in reverse order with individual error handling
+    await disposeService(captureService, 'CaptureService', () => captureService?.dispose())
+    await disposeService(backgroundDataService, 'BackgroundDataService', () => backgroundDataService?.dispose())
+    await disposeService(trayService, 'TrayService', () => trayService?.dispose())
+
+    await logger.info('system', 'Application shutdown completed')
+    console.log('✅ Application shutdown completed successfully')
   } catch (error) {
-    console.error('Error during app shutdown:', error)
-    await logger.error('system', 'Error during application shutdown', error)
+    console.error('Critical error during app shutdown:', error)
+    await logger.error('system', 'Critical error during application shutdown', error)
+    // Force quit if disposal fails completely to prevent hanging
+    process.exit(1)
   }
 })

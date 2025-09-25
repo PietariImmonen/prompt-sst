@@ -17,9 +17,15 @@ export class TrayService {
   private tray: Tray | null = null
   private options: TrayServiceOptions
   private eventListenersSetup = false
+  private isAppQuitting = false
 
   constructor(options: TrayServiceOptions) {
     this.options = options
+
+    // Listen for app quit events
+    app.on('before-quit', () => {
+      this.isAppQuitting = true
+    })
   }
 
   async initialize() {
@@ -180,6 +186,48 @@ export class TrayService {
     this.tray?.setToolTip(tooltips[status])
   }
 
+  // Recovery mechanism for tray icon
+  async recreateTray(): Promise<boolean> {
+    if (this.tray && !this.tray.isDestroyed()) {
+      console.log('Tray already exists and is healthy')
+      return true
+    }
+
+    try {
+      console.log('Recreating tray icon after failure...')
+
+      // Clear existing tray reference
+      if (this.tray) {
+        try {
+          this.tray.removeAllListeners()
+          if (!this.tray.isDestroyed()) {
+            this.tray.destroy()
+          }
+        } catch (error) {
+          console.warn('Error cleaning up existing tray:', error)
+        }
+        this.tray = null
+      }
+
+      // Reset event listeners setup flag to allow re-setup
+      this.eventListenersSetup = false
+
+      // Reinitialize tray
+      await this.initialize()
+
+      console.log('✅ Tray icon recreated successfully')
+      return true
+    } catch (error) {
+      console.error('❌ Failed to recreate tray icon:', error)
+      return false
+    }
+  }
+
+  // Check if tray is healthy (exists and not destroyed)
+  isHealthy(): boolean {
+    return this.tray !== null && !this.tray.isDestroyed()
+  }
+
   displayBalloon(title: string, content: string, icon?: 'info' | 'warning' | 'error') {
     if (process.platform === 'win32' && this.tray) {
       this.tray.displayBalloon({
@@ -198,13 +246,28 @@ export class TrayService {
         // Remove all event listeners
         this.tray.removeAllListeners()
 
-        // Destroy the tray icon
-        this.tray.destroy()
-        this.tray = null
-
-        console.log('✅ System tray service disposed successfully')
+        // Only destroy the tray if the app is actually quitting
+        // Otherwise, just hide it so we can recover later
+        if (this.isAppQuitting) {
+          this.tray.destroy()
+          this.tray = null
+          console.log('✅ System tray service disposed (app quitting)')
+        } else {
+          // Hide the tray but keep reference for potential recovery
+          try {
+            this.tray.setImage(nativeImage.createEmpty())
+            console.log('✅ System tray service hidden (recoverable)')
+          } catch (error) {
+            // If hiding fails, destroy it
+            this.tray.destroy()
+            this.tray = null
+            console.log('✅ System tray service disposed (hide failed)')
+          }
+        }
       } catch (error) {
         console.error('❌ Error disposing system tray:', error)
+        // Force cleanup on error
+        this.tray = null
       }
     }
   }
