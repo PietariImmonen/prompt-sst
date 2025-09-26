@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Star, Search, RefreshCw } from 'lucide-react'
+import { Star, Search } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { useOverlayPrompts } from './hooks/use-overlay-prompts'
@@ -161,17 +161,16 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
   }
 
   return (
-    <div className="fixed inset-0 flex items-start justify-center pt-8 bg-black/30 backdrop-blur-sm">
-      <div className="w-full max-w-2xl mx-4 animate-in slide-in-from-top-4 duration-200">
-        <div className="rounded-xl border border-border/50 bg-background/95 backdrop-blur-md shadow-2xl ring-1 ring-white/10">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-xl animate-in slide-in-from-top-8 fade-in-80 duration-200 flex flex-col h-[60vh] max-h-[500px]">
+        <div className="rounded-lg border border-border/60 bg-background/90 backdrop-blur-xl shadow-xl shadow-black/10 flex flex-col h-full">
           {/* Header */}
           <div className="px-4 py-3 border-b border-border/30">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span>Prompt Insertion Palette</span>
-              <div className="ml-auto text-xs">
-                {filteredPrompts.length} prompt{filteredPrompts.length !== 1 ? 's' : ''}
-              </div>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span className="font-medium">Search prompts</span>
+              <span className="text-xs">
+                {filteredPrompts.length} result{filteredPrompts.length !== 1 ? 's' : ''}
+              </span>
             </div>
           </div>
 
@@ -188,37 +187,32 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
                   setSearchQuery(e.target.value)
                   setSelectedIndex(0)
                 }}
-                className="w-full pl-10 pr-12 py-3 bg-background/50 border-border/50 focus:bg-background focus:border-primary/50"
+                className="w-full pl-10 pr-12 py-4 text-base bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               />
-              <button
-                onClick={handleRefresh}
-                disabled={state.isLoading}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${state.isLoading ? 'animate-spin' : ''}`} />
-              </button>
             </div>
           </div>
 
           {/* Results */}
-          <div ref={resultsContainerRef} className="max-h-80 overflow-y-auto">
+          <div ref={resultsContainerRef} className="flex-1 overflow-y-auto">
             {state.isLoading ? (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="p-8 text-center text-muted-foreground flex-1 flex items-center justify-center">
                 <div className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
                 Loading prompts...
               </div>
             ) : state.error ? (
-              <div className="p-8 text-center text-destructive">
-                <p>Error: {state.error}</p>
-                <button
-                  onClick={handleRefresh}
-                  className="mt-2 text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Try again
-                </button>
+              <div className="p-8 text-center text-destructive flex-1 flex items-center justify-center">
+                <div>
+                  <p>Error: {state.error}</p>
+                  <button
+                    onClick={handleRefresh}
+                    className="mt-2 text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    Try again
+                  </button>
+                </div>
               </div>
             ) : filteredPrompts.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="p-8 text-center text-muted-foreground flex-1 flex items-center justify-center">
                 {searchQuery
                   ? 'No prompts match your search'
                   : prompts.length === 0
@@ -232,36 +226,32 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
                     key={prompt.id}
                     ref={index === selectedIndex ? selectedItemRef : null}
                     onClick={() => handlePromptSelect(prompt)}
-                    className={`p-4 rounded-lg mb-2 transition-all duration-200 cursor-pointer ${
-                      index === selectedIndex
-                        ? 'bg-primary/20 border border-primary/30 shadow-sm'
-                        : 'hover:bg-muted/50 border border-transparent'
+                    className={`p-4 transition-all duration-100 cursor-pointer ${index === selectedIndex
+                      ? 'bg-primary/5 border-l-4 border-primary shadow-sm -mx-1 px-1 rounded-sm'
+                      : 'border-l-4 border-transparent hover:bg-muted rounded-sm'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-sm font-semibold leading-tight text-foreground truncate">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-sm font-medium leading-tight text-foreground truncate">
                             {prompt.title}
                           </h3>
                           {prompt.isFavorite && (
                             <Star className="size-3 fill-amber-400 text-amber-500 flex-shrink-0" />
                           )}
-                          {prompt.source && prompt.source !== 'other' && (
-                            <span className="text-xs px-1.5 py-0.5 bg-muted/70 text-muted-foreground rounded uppercase flex-shrink-0">
-                              {prompt.source}
-                            </span>
-                          )}
                         </div>
 
-                        <p className="text-xs text-muted-foreground/90 line-clamp-2 mb-2 leading-relaxed">
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mt-1">
                           {prompt.content}
                         </p>
 
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground/60 truncate">
-                            {prompt.categoryPath}
-                          </span>
+                        <div className="flex items-center justify-between mt-2">
+                          {prompt.categoryPath && (
+                            <span className="text-xs text-muted-foreground/70 truncate">
+                              {prompt.categoryPath}
+                            </span>
+                          )}
                           {prompt.timeUpdated && (
                             <span className="text-xs text-muted-foreground/60 flex-shrink-0 ml-2">
                               {new Date(prompt.timeUpdated).toLocaleDateString()}
@@ -272,7 +262,7 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
 
                       {index === selectedIndex && (
                         <div className="flex-shrink-0 self-start">
-                          <div className="text-xs text-primary font-medium bg-primary/15 px-2 py-1 rounded border border-primary/20">
+                          <div className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded">
                             ENTER
                           </div>
                         </div>
@@ -285,34 +275,25 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
           </div>
 
           {/* Footer */}
-          <div className="px-4 py-3 border-t border-border/30 bg-muted/10">
+          <div className="px-4 py-2 border-t border-border/30 text-xs text-muted-foreground">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">
-                    ↑↓
-                  </kbd>
+                  <kbd className="px-1.5 py-0.5 bg-muted border rounded">↑↓</kbd>
                   <span>navigate</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">
-                    ↵
-                  </kbd>
-                  <span>insert</span>
+                  <kbd className="px-1.5 py-0.5 bg-muted border rounded">↵</kbd>
+                  <span>select</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded">
-                    Esc
-                  </kbd>
+                  <kbd className="px-1.5 py-0.5 bg-muted border rounded">esc</kbd>
                   <span>close</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span>Hotkey:</span>
-                <kbd className="px-1.5 py-0.5 text-xs bg-background border border-border rounded font-mono">
-                  {process.platform === 'darwin' ? '⌘⇧O' : 'Ctrl+Shift+O'}
-                </kbd>
-              </div>
+              <kbd className="px-1.5 py-0.5 bg-muted border rounded text-xs">
+                {process.platform === 'darwin' ? '⌘⇧O' : 'Ctrl+Shift+O'}
+              </kbd>
             </div>
           </div>
         </div>

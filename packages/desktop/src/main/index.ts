@@ -7,6 +7,7 @@ import { join } from 'path'
 // Replaced electron-toolkit with native Electron APIs
 import icon from '../../resources/icon.png?asset'
 import { createCaptureService, updateSettings } from './capture-service.js'
+import { createIntegratedCaptureService } from './integrated-capture-service.js'
 import { TrayService } from './tray-service.js'
 import { BackgroundDataService } from './background-data-service.js'
 import { logger, logServiceStart, logServiceReady, logServiceError, logServiceStop } from './logger.js'
@@ -431,16 +432,22 @@ app.whenReady().then(async () => {
       onToggleMainWindow: toggleMainWindow,
       onQuitApp: quitApplication,
       getMainWindowVisibility: () => !!mainWindow && mainWindow.isVisible(),
-      getCaptureServiceStatus: () => captureService?.getStatus() || 'idle'
+      getCaptureServiceStatus: () => captureService?.getStatus() || 'idle',
+      togglePalette: () => captureService?.togglePalette()
     })
 
     await trayService.initialize()
     trayService.setupDockIntegration()
     await logServiceReady('TrayService')
 
-    // Initialize capture service with tray service reference
+    // Initialize integrated capture service with tray service reference
     await logServiceStart('CaptureService')
-    captureService = createCaptureService(() => mainWindow, backgroundDataService, trayService)
+    captureService = createIntegratedCaptureService(() => mainWindow, backgroundDataService, trayService)
+
+    // Enable the simplified palette
+    const paletteEnabled = captureService.enablePalette()
+    console.log('Simplified palette enabled:', paletteEnabled)
+
     await logServiceReady('CaptureService')
 
     // Create main window

@@ -11,6 +11,7 @@ interface TrayServiceOptions {
   onQuitApp: () => void
   getMainWindowVisibility: () => boolean
   getCaptureServiceStatus: () => 'idle' | 'listening' | 'capturing' | 'success' | 'failed'
+  togglePalette?: () => void
 }
 
 export class TrayService {
@@ -136,6 +137,12 @@ export class TrayService {
         }
       },
       { type: 'separator' },
+      {
+        label: 'Open Prompt Palette',
+        click: () => {
+          this.options.togglePalette?.()
+        }
+      },
       {
         label: 'Capture Settings',
         click: () => {

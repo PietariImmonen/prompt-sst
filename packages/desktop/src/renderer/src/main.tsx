@@ -5,10 +5,20 @@ import ReactDOM from 'react-dom/client'
 
 import App from './App'
 import OverlayApp from './OverlayApp'
+import { SimplePromptPalette } from './components/prompt-insertion-palette/simple-prompt-palette'
 
-// Check if we're in overlay mode based on the URL hash
-const isOverlayMode = window.location.hash === '#overlay'
+// Check the URL hash to determine which component to render
+const hash = window.location.hash
+const isOverlayMode = hash === '#overlay'
+const isPaletteMode = hash === '#palette'
+
+let ComponentToRender: React.ComponentType = App
+if (isOverlayMode) {
+  ComponentToRender = OverlayApp
+} else if (isPaletteMode) {
+  ComponentToRender = SimplePromptPalette
+}
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>{isOverlayMode ? <OverlayApp /> : <App />}</React.StrictMode>
+  <React.StrictMode><ComponentToRender /></React.StrictMode>
 )
