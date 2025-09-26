@@ -58,4 +58,4 @@ Electron client for the Prompt SST stack. The renderer is a custom React app tha
 
 ## Packaging
 
-After running `bun run --filter @prompt-saver/desktop build`, use one of the `build:*` scripts to create platform installers. The build command regenerates `.env.production` for the `production` stage when outputs are available, or reuses the existing file if it cannot reach SST. Adjust `SST_STAGE`, `--stage`, or the `DESKTOP_*` overrides before building if you need different hosted endpoints. Artifacts are written to `packages/desktop/out/` with names like `prompt-sst-desktop-<version>-<os>-<arch>.<ext>`.
+After running `bun run --filter @clyo/desktop build`, use one of the `build:*` scripts to create platform installers. The build command regenerates `.env.production` for the `production` stage when outputs are available, or reuses the existing file if it cannot reach SST. Adjust `SST_STAGE`, `--stage`, or the `DESKTOP_*` overrides before building if you need different hosted endpoints. Artifacts are written to `packages/desktop/out/` with names like `clyo-desktop-<version>-<os>-<arch>.<ext>`.

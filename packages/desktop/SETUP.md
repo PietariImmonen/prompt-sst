@@ -59,7 +59,7 @@ bun run --filter @prompt-saver/desktop build:mac   # or build:win / build:linux
 ```
 
 - Renderer bundles land in `packages/desktop/dist`.
-- Installers are emitted to `packages/desktop/out` with names like `prompt-sst-desktop-<version>-<os>-<arch>.<ext>`.
+- Installers are emitted to `packages/desktop/out` with names like `clyo-desktop-<version>-<os>-<arch>.<ext>`.
 - All `build:*` scripts regenerate `.env`, run TypeScript checks, and then package the Electron app.
 
 ## 6. Troubleshooting

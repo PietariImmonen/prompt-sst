@@ -1,6 +1,6 @@
-appId: io.sstreplicache.prompt
-productName: Prompt SST Desktop
-artifactName: prompt-sst-desktop-${version}-${os}-${arch}.${ext}
+appId: io.sstreplicache.clyo
+productName: Clyo Desktop
+artifactName: clyo-desktop-${version}-${os}-${arch}.${ext}
 directories:
   buildResources: build
 files:
@@ -13,9 +13,9 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: prompt-sst-desktop
+  executableName: clyo-desktop
 nsis:
-  artifactName: prompt-sst-desktop-${version}-windows.${ext}
+  artifactName: clyo-desktop-${version}-windows.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
@@ -28,7 +28,7 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
-  artifactName: prompt-sst-desktop-${version}-mac.${ext}
+  artifactName: clyo-desktop-${version}-mac.${ext}
 linux:
   target:
     - AppImage
@@ -37,7 +37,7 @@ linux:
   maintainer: electronjs.org
   category: Utility
 appImage:
-  artifactName: prompt-sst-desktop-${version}-linux.${ext}
+  artifactName: clyo-desktop-${version}-linux.${ext}
 npmRebuild: false
 publish:
   provider: generic

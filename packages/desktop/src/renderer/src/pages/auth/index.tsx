@@ -84,9 +84,9 @@ export function AuthPage() {
         <CardHeader>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <ShieldCheck className="h-4 w-4" />
-            Secure sign-in via Prompt SST
+            Secure sign-in via Clyo
           </div>
-          <CardTitle className="text-2xl">Sign in to Prompt Desktop</CardTitle>
+          <CardTitle className="text-2xl">Sign in to Clyo Desktop</CardTitle>
           <CardDescription>
             Use the same identity provider as the web app to sync your workspaces locally.
           </CardDescription>

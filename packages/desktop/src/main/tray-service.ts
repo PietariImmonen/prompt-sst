@@ -54,7 +54,7 @@ export class TrayService {
       this.tray = new Tray(resizedIcon)
 
       // Set tooltip
-      this.tray.setToolTip('Prompt Desktop - Click to show/hide')
+      this.tray.setToolTip('Clyo Desktop - Click to show/hide')
 
       // Setup event listeners only once
       if (!this.eventListenersSetup) {
@@ -156,7 +156,7 @@ export class TrayService {
       },
       { type: 'separator' },
       {
-        label: 'Quit Prompt Desktop',
+        label: 'Quit Clyo Desktop',
         click: () => {
           this.options.onQuitApp()
         }
@@ -183,11 +183,11 @@ export class TrayService {
 
     // Update tooltip based on status
     const tooltips = {
-      idle: 'Prompt Desktop - Ready to capture',
-      listening: 'Prompt Desktop - Listening for shortcuts',
-      capturing: 'Prompt Desktop - Capturing prompt',
-      success: 'Prompt Desktop - Prompt captured successfully',
-      failed: 'Prompt Desktop - Capture failed'
+      idle: 'Clyo Desktop - Ready to capture',
+      listening: 'Clyo Desktop - Listening for shortcuts',
+      capturing: 'Clyo Desktop - Capturing prompt',
+      success: 'Clyo Desktop - Prompt captured successfully',
+      failed: 'Clyo Desktop - Capture failed'
     }
 
     this.tray?.setToolTip(tooltips[status])

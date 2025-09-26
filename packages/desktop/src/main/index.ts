@@ -89,7 +89,7 @@ function renderCallbackLanding() {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Prompt Desktop</title>
+    <title>Clyo Desktop</title>
     <style>
       :root { color-scheme: dark; }
       body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0E111A; color: #E4E7F0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
@@ -120,10 +120,10 @@ function renderCallbackLanding() {
               setTimeout(() => window.close(), 1500);
             })
             .catch(() => {
-              document.getElementById('status').textContent = 'Unable to notify the desktop app automatically. You may close this tab and return to Prompt Desktop.';
+              document.getElementById('status').textContent = 'Unable to notify the desktop app automatically. You may close this tab and return to Clyo Desktop.';
             });
         } catch (error) {
-          document.getElementById('status').textContent = 'Something went wrong. Close this tab and retry in Prompt Desktop.';
+          document.getElementById('status').textContent = 'Something went wrong. Close this tab and retry in Clyo Desktop.';
         }
       })();
     </script>
@@ -136,25 +136,19 @@ function renderCallbackComplete() {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Prompt Desktop</title>
+    <title>Clyo Desktop</title>
     <style>
       :root { color-scheme: dark; }
       body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0E111A; color: #E4E7F0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
       .card { max-width: 420px; padding: 32px; border-radius: 16px; background: rgba(255,255,255,0.05); box-shadow: 0 16px 40px rgba(14,17,26,0.45); text-align: center; }
-      h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-      p { margin-bottom: 0; color: rgba(228,231,240,0.75); line-height: 1.5; }
+      h1 { font-size: 1.5rem; margin-bottom: 0; color: rgba(228,231,240,0.75); line-height: 1.5; }
     </style>
   </head>
   <body>
     <div class="card">
-      <h1>Prompt Desktop</h1>
+      <h1>Clyo Desktop</h1>
       <p>You can close this tab and return to the app.</p>
-    </div>
-    <script>
-      setTimeout(() => window.close(), 2000);
-    </script>
-  </body>
-</html>`
+    </div>`
 }
 
 function finalizeAuthRequest(id: string, params: URLSearchParams, request: AuthRequest) {
@@ -326,7 +320,7 @@ function createWindow(): void {
       // Show notification about running in background
       if (process.platform === 'win32' && trayService) {
         trayService.displayBalloon(
-          'Prompt Desktop',
+          'Clyo Desktop',
           'Application is running in the background. Click the tray icon to access.',
           'info'
         )

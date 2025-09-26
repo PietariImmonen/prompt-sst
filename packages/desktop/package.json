@@ -1,7 +1,6 @@
-{
-  "name": "@prompt-saver/desktop",
+  "name": "@clyo/desktop",
   "version": "0.0.0",
-  "description": "Electron desktop shell for Prompt SST",
+  "description": "Electron desktop shell for Clyo",
   "main": "./out/main/index.js",
   "type": "module",
   "scripts": {
@@ -10,7 +9,7 @@
     "typecheck:node": "bunx tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "bunx tsc --noEmit -p tsconfig.web.json",
     "typecheck": "bun run typecheck:node && bun run typecheck:web",
-    "typecheck:sst": "cd ../.. && sst bind -- bun run --filter @prompt-saver/desktop typecheck",
+    "typecheck:sst": "cd ../.. && sst bind -- bun run --filter @clyo/desktop typecheck",
     "env:generate": "node ../../scripts/generate-desktop-env.mjs",
     "start": "bunx electron-vite preview",
     "dev": "electron-vite dev",

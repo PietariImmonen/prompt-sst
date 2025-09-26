@@ -71,7 +71,7 @@ export default function DashboardPage(props: DashboardPageProps) {
             <CardHeader>
               <CardTitle>Workspace Activity</CardTitle>
               <CardDescription>
-                Replicache keeps this view in sync with the Prompt SST backend.
+                Replicache keeps this view in sync with the Clyo backend.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
