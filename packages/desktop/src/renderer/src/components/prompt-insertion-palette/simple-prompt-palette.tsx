@@ -47,10 +47,11 @@ export function SimplePromptPalette() {
     }
 
     const query = searchQuery.toLowerCase()
-    return prompts.filter((prompt) =>
-      prompt.title.toLowerCase().includes(query) ||
-      stripHtml(prompt.content).toLowerCase().includes(query) ||
-      prompt.tags?.some((tag) => tag.toLowerCase().includes(query))
+    return prompts.filter(
+      (prompt) =>
+        prompt.title.toLowerCase().includes(query) ||
+        stripHtml(prompt.content).toLowerCase().includes(query) ||
+        prompt.categoryPath?.toLowerCase().includes(query)
     )
   }, [prompts, searchQuery])
 
@@ -123,7 +124,7 @@ export function SimplePromptPalette() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center">
       <div className="w-full max-w-2xl animate-in slide-in-from-top-4 fade-in-80 duration-150">
         <div className="rounded-lg border border-border/50 bg-black/95 backdrop-blur-sm shadow-xl">
           {/* Header with search */}

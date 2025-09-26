@@ -53,7 +53,7 @@ export class SimplePaletteService {
     const { x: displayX, y: displayY } = currentDisplay.bounds
 
     const windowWidth = 600
-    const windowHeight = 500
+    const windowHeight = 300
 
     const window = new BrowserWindow({
       width: windowWidth,
@@ -165,7 +165,6 @@ export class SimplePaletteService {
       this.window.once('show', () => {
         console.log('📱 Palette window shown')
       })
-
     } catch (error) {
       console.error('Failed to show palette:', error)
     }
