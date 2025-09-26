@@ -14,10 +14,6 @@ const providers = [
   {
     id: 'google' as const,
     label: 'Continue with Google'
-  },
-  {
-    id: 'microsoft' as const,
-    label: 'Continue with Microsoft'
   }
 ]
 

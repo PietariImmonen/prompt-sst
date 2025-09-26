@@ -8,23 +8,9 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { formatDistanceToNow } from 'date-fns'
 
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form'
+import { Form, FormField } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import { Editor as PromptContentEditor } from '@/components/editor/editor'
 import { EditorToolbar } from '@/components/editor/toolbar/editor-toolbar'
 import { useReplicache } from '@/hooks/use-replicache'

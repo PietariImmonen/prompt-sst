@@ -3,6 +3,7 @@ productName: Clyo Desktop
 artifactName: clyo-desktop-${version}-${os}-${arch}.${ext}
 directories:
   buildResources: build
+  output: dist
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -12,6 +13,7 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+icon: build/icon.png
 win:
   executableName: clyo-desktop
 nsis:
