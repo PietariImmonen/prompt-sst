@@ -44,8 +44,8 @@ export function CallbackPage() {
 
   if (error) {
     return (
-      <div className="flex h-dvh w-screen flex-col items-center justify-center gap-4 bg-[#0E111A] text-white">
-        <p className="max-w-lg text-center text-white/70">
+      <div className="flex h-dvh w-screen flex-col items-center justify-center gap-4 bg-background text-foreground">
+        <p className="max-w-lg text-center text-muted-foreground">
           {error === 'access_denied'
             ? 'Access was denied. Please try again.'
             : 'An unknown error occurred. Please try again.'}
@@ -58,10 +58,10 @@ export function CallbackPage() {
   }
 
   return (
-    <div className="flex h-dvh w-screen flex-col items-center justify-center gap-4 bg-[#0E111A] text-white">
+    <div className="flex h-dvh w-screen flex-col items-center justify-center gap-4 bg-background text-foreground">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-white/80" />
-        <p className="text-sm text-white/60">Setting up your workspace...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-foreground/80" />
+        <p className="text-sm text-muted-foreground">Setting up your workspace...</p>
       </div>
     </div>
   )

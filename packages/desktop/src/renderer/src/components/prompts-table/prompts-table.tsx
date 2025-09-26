@@ -41,26 +41,26 @@ export function PromptsTable(props: PromptsTableProps) {
     <>
       <div
         className={cn(
-          'w-full overflow-hidden  border-white/10  backdrop-blur shadow-lg',
+          'w-full overflow-hidden rounded-lg border border-border/60 bg-card/80 shadow-lg backdrop-blur',
           className
         )}
       >
         <div className="overflow-x-auto">
           <Table className="table-fixed w-full">
             <TableHeader>
-              <TableRow className="border-white/10">
-                <TableHead className="w-3/4 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-white/60">
+              <TableRow className="border-border/60">
+                <TableHead className="w-3/4 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Prompt
                 </TableHead>
-                <TableHead className="w-1/4 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-white/60">
+                <TableHead className="w-1/4 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Captured
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {prompts.length === 0 ? (
-                <TableRow className="border-white/5">
-                  <TableCell className="px-4 py-8 text-center text-sm text-white/50" colSpan={3}>
+                <TableRow className="border-border/60">
+                  <TableCell className="px-4 py-8 text-center text-sm text-muted-foreground" colSpan={3}>
                     No prompts captured yet.
                   </TableCell>
                 </TableRow>
@@ -68,25 +68,25 @@ export function PromptsTable(props: PromptsTableProps) {
                 prompts.map((prompt) => (
                   <TableRow
                     key={prompt.id}
-                    className="group border-b border-white/5 bg-transparent text-white transition hover:bg-white/10"
+                    className="group border-b border-border/60 bg-transparent transition hover:bg-muted/20"
                     onClick={() => setEditingPrompt(prompt)}
                   >
                     <TableCell className="px-4 py-3">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition group-hover:border-white/20 group-hover:text-white flex-shrink-0">
+                        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-border/60 bg-muted/30 text-muted-foreground transition group-hover:border-border group-hover:text-foreground">
                           <NotebookPen className="h-3.5 w-3.5" />
                         </span>
                         <div className="min-w-0 flex-1 overflow-hidden">
-                          <p className="truncate text-sm font-medium text-white/90 group-hover:text-white">
+                          <p className="truncate text-sm font-medium text-foreground group-hover:text-foreground">
                             {prompt.title || 'Untitled prompt'}
                           </p>
-                          <p className="truncate text-xs text-white/50 mt-0.5">
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
                             {truncateContent(prompt.content, 60)}
                           </p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-right align-middle text-xs text-white/60 whitespace-nowrap">
+                    <TableCell className="whitespace-nowrap px-4 py-3 text-right text-xs text-muted-foreground">
                       {formatCaptured(prompt.timeCreated)}
                     </TableCell>
                   </TableRow>

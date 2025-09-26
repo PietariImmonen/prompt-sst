@@ -109,7 +109,7 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
         form="prompt-edit-form"
       >
         <div className="flex h-full items-center justify-center p-6">
-          <div className="text-gray-400">Loading prompt data...</div>
+          <div className="text-muted-foreground">Loading prompt data...</div>
         </div>
       </EditDialog>
     )
@@ -122,7 +122,7 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
           id="prompt-edit-form"
           onSubmit={form.handleSubmit(handleSubmit)}
           onKeyDown={handleKeyDown}
-          className="flex h-full flex-col bg-gray-900"
+          className="flex h-full flex-col bg-background"
         >
           <div className="flex-1 overflow-y-auto p-6">
             <div className="space-y-6">
@@ -131,16 +131,11 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Title</FormLabel>
+                    <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter prompt title"
-                        {...field}
-                        className="border-gray-800 bg-gray-800/50 text-gray-200 placeholder:text-gray-500 focus:border-gray-700"
-                        disabled={isLoading}
-                      />
+                      <Input placeholder="Enter prompt title" {...field} disabled={isLoading} />
                     </FormControl>
-                    <FormMessage className="text-red-400" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -150,16 +145,16 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
                 name="content"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Content</FormLabel>
+                    <FormLabel>Content</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Enter prompt content"
-                        className="min-h-[300px] border-gray-800 bg-gray-800/50 text-gray-200 placeholder:text-gray-500 focus:border-gray-700"
+                        className="min-h-[300px] bg-background/70"
                         {...field}
                         disabled={isLoading}
                       />
                     </FormControl>
-                    <FormMessage className="text-red-400" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -169,16 +164,11 @@ export function PromptEditDialog({ prompt, open, onOpenChange }: PromptEditDialo
                 name="categoryPath"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-300">Category</FormLabel>
+                    <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Enter category path"
-                        {...field}
-                        className="border-gray-800 bg-gray-800/50 text-gray-200 placeholder:text-gray-500 focus:border-gray-700"
-                        disabled={isLoading}
-                      />
+                      <Input placeholder="Enter category path" {...field} disabled={isLoading} />
                     </FormControl>
-                    <FormMessage className="text-red-400" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />

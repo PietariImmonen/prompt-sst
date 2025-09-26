@@ -17,12 +17,12 @@ export const AuthLayout = ({
   children
 }: AuthLayoutProps) => {
   return (
-    <div className="min-h-screen bg-[#0E111A] text-[#F5F6F8] flex items-center justify-center px-6 py-12">
-      <Card className={cn('w-full max-w-md border border-white/5 bg-[#1B1F2A]/80 backdrop-blur', className)}>
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12 text-foreground">
+      <Card className={cn('w-full max-w-md border border-border/60 bg-card/80 backdrop-blur', className)}>
         <CardHeader className="space-y-2">
           {hero}
-          <CardTitle className="text-2xl font-semibold tracking-tight text-white">{title}</CardTitle>
-          <CardDescription className="text-sm text-white/60">{description}</CardDescription>
+          <CardTitle className="text-2xl font-semibold tracking-tight">{title}</CardTitle>
+          <CardDescription className="text-sm">{description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">{children}</CardContent>
       </Card>

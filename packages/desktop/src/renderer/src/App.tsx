@@ -20,10 +20,10 @@ import OnboardingPage from '@/routes/onboarding'
 
 const SplashScreen = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0E111A] text-white">
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-white/80" />
-        <p className="text-sm text-white/60">Loading workspace…</p>
+        <Loader2 className="h-8 w-8 animate-spin text-foreground/80" />
+        <p className="text-sm text-muted-foreground">Loading workspace…</p>
       </div>
     </div>
   )
@@ -67,10 +67,10 @@ const AuthenticatedApp = () => {
   const workspace = activeAccount?.workspaces?.find((w) => w.id === workspaceID)
   if (!workspace) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0E111A] text-white">
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-semibold">Workspace not found</h1>
-          <p className="text-sm text-white/60">Select a different workspace from the menu.</p>
+          <p className="text-sm text-muted-foreground">Select a different workspace from the menu.</p>
         </div>
       </div>
     )

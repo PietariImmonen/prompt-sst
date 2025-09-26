@@ -31,26 +31,22 @@ export function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gray-950 p-4">
-      <div className="w-full max-w-md rounded-lg bg-gray-900 p-8 shadow-xl border border-gray-800">
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4 text-foreground">
+      <div className="w-full max-w-md rounded-lg border border-border/60 bg-card p-8 shadow-xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-white">Welcome to Prompt</h1>
-          <p className="mt-1 text-sm text-gray-400">Let's set up your workspace.</p>
+          <h1 className="text-2xl font-semibold">Welcome to Prompt</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Let's set up your workspace.</p>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
-            <div className="flex items-center justify-between rounded-lg bg-gray-800/50 p-4 transition-all hover:bg-gray-800">
+            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 p-4 transition-colors hover:bg-muted/30">
               <div>
-                <h3 className="font-medium text-white">Auto-capture prompts</h3>
-                <p className="mt-1 text-sm text-gray-400">
+                <h3 className="font-medium">Auto-capture prompts</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
                   Automatically capture prompts from your AI applications
                 </p>
               </div>
-              <Switch
-                checked={autoCapture}
-                onCheckedChange={setAutoCapture}
-                className="data-[state=checked]:bg-purple-500 data-[state=unchecked]:bg-gray-700"
-              />
+              <Switch checked={autoCapture} onCheckedChange={setAutoCapture} />
             </div>
           </div>
           <div className="mt-8">

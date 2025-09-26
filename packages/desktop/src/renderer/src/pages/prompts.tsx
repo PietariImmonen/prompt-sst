@@ -10,8 +10,8 @@ const PromptsPage = () => {
   }) ?? []) as Prompt[]
 
   return (
-    <div className="flex min-h-screen flex-col text-white">
-      <div className="flex flex-1 flex-col gap-4  max-w-full overflow-hidden">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <div className="flex flex-1 flex-col gap-4 max-w-full overflow-hidden">
         <PromptsPageHeader />
         <PromptsTable prompts={prompts} />
       </div>

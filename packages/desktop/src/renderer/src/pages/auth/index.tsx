@@ -24,11 +24,11 @@ const providers = [
 export function AuthPage() {
   if (!issuer) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0E111A] px-4 text-white">
-        <Card className="max-w-md border-red-500/40 bg-red-500/10">
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+        <Card className="max-w-md border-destructive/30 bg-destructive/10">
           <CardHeader>
             <CardTitle className="text-2xl">Missing configuration</CardTitle>
-            <CardDescription className="text-white/70">
+            <CardDescription className="text-muted-foreground">
               Set <code className="font-mono">VITE_AUTH_URL</code> in{' '}
               <code>packages/desktop/.env</code> so the desktop app knows which OpenAuth issuer to
               use.
@@ -79,21 +79,21 @@ export function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0E111A] px-4 text-white">
-      <Card className="max-w-md border-white/10 bg-white/5 backdrop-blur">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+      <Card className="max-w-md border-border/60 bg-card/80 backdrop-blur">
         <CardHeader>
-          <div className="flex items-center gap-2 text-xs text-white/60">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <ShieldCheck className="h-4 w-4" />
             Secure sign-in via Prompt SST
           </div>
           <CardTitle className="text-2xl">Sign in to Prompt Desktop</CardTitle>
-          <CardDescription className="text-white/60">
+          <CardDescription>
             Use the same identity provider as the web app to sync your workspaces locally.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error ? (
-            <Alert variant="destructive" className="border-red-500/40 bg-red-500/10 text-red-100">
+            <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : null}
@@ -104,7 +104,7 @@ export function AuthPage() {
                 key={provider.id}
                 size="lg"
                 variant="outline"
-                className="w-full border-white/20 bg-white/5 text-white hover:bg-white/10"
+                className="w-full"
                 disabled={loading !== null}
                 onClick={() => handleProviderClick(provider.id)}
               >
@@ -114,9 +114,9 @@ export function AuthPage() {
             ))}
           </div>
 
-          <Separator className="bg-white/10" />
+          <Separator />
 
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-muted-foreground">
             After completing authentication in the browser window, you'll return here automatically.
             We never store provider passwords or additional scopes.
           </p>
