@@ -41,7 +41,7 @@ export function PromptsTable(props: PromptsTableProps) {
     <>
       <div
         className={cn(
-          'w-full overflow-hidden rounded-lg border border-border/60 bg-card/80 shadow-lg backdrop-blur',
+          'w-full overflow-hidden rounded-lg  bg-card/80 shadow-lg backdrop-blur',
           className
         )}
       >
@@ -60,7 +60,10 @@ export function PromptsTable(props: PromptsTableProps) {
             <TableBody>
               {prompts.length === 0 ? (
                 <TableRow className="border-border/60">
-                  <TableCell className="px-4 py-8 text-center text-sm text-muted-foreground" colSpan={3}>
+                  <TableCell
+                    className="px-4 py-8 text-center text-sm text-muted-foreground"
+                    colSpan={3}
+                  >
                     No prompts captured yet.
                   </TableCell>
                 </TableRow>

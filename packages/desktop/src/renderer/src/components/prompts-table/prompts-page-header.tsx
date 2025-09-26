@@ -20,7 +20,7 @@ export function PromptsPageHeader(props: PromptsPageHeaderProps) {
         className
       )}
     >
-      <div className="ml-auto flex flex-wrap items-center gap-2 justify-between w-full">
+      <div className="ml-4 flex flex-wrap items-center gap-2 justify-between w-full">
         <div className="relative w-[240px]">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
