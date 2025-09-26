@@ -7,7 +7,6 @@ import { WorkspaceProvider } from '@/providers/workspace-provider'
 import { RealtimeProvider } from '@/providers/realtime-provider'
 import { ReplicacheProvider } from '@/providers/replicache-provider'
 import { AuthProvider } from '@/providers/auth-provider'
-import { ThemeProvider } from '@/providers/theme-provider'
 import { BackgroundSyncProvider } from '@/providers/background-sync-provider'
 
 import AuthPage from '@/pages/auth'
@@ -119,17 +118,15 @@ const Content = () => {
 function App(): JSX.Element {
   return (
     <HashRouter>
-      <ThemeProvider defaultTheme="system" storageKey="prompt-desktop-theme">
-        <AuthProvider>
-          <BackgroundSyncProvider>
-            <Toaster richColors position="top-right" />
-            <Routes>
-              <Route path="/auth/callback" element={<CallbackPage />} />
-              <Route path="/*" element={<Content />} />
-            </Routes>
-          </BackgroundSyncProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <BackgroundSyncProvider>
+          <Toaster richColors position="top-right" />
+          <Routes>
+            <Route path="/auth/callback" element={<CallbackPage />} />
+            <Route path="/*" element={<Content />} />
+          </Routes>
+        </BackgroundSyncProvider>
+      </AuthProvider>
     </HashRouter>
   )
 }

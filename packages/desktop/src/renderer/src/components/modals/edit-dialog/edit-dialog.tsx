@@ -35,7 +35,7 @@ export function EditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          'flex h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none flex-col gap-0 p-0 border-gray-800 bg-gray-900',
+          'flex h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-none flex-col gap-0 p-0 bg-background',
           className
         )}
         aria-describedby={undefined}
@@ -59,11 +59,20 @@ export function EditDialog({
         <div className="flex-1 overflow-y-auto">{children}</div>
         <DialogFooter className="gap-2 border-t border-gray-800 px-6 py-4 sm:space-x-0">
           <DialogClose asChild>
-            <Button variant={'outline'} size={'sm'} className="border-gray-700 text-gray-300 hover:bg-gray-800">
+            <Button
+              variant={'outline'}
+              size={'sm'}
+              className="border-gray-700 text-gray-300 hover:bg-gray-800"
+            >
               Cancel
             </Button>
           </DialogClose>
-          <Button type="submit" form={form} size={'sm'} className="bg-gradient-to-r from-purple-500 to-pink-500 hover:shadow-purple-500/20">
+          <Button
+            type="submit"
+            form={form}
+            size={'sm'}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:shadow-purple-500/20"
+          >
             Save
           </Button>
         </DialogFooter>
