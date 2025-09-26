@@ -6,13 +6,48 @@ import {
   globalShortcut,
   ipcMain,
   shell,
-  screen
+  screen,
+  dialog
 } from 'electron'
 import { execSync } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { join } from 'path'
 // Replaced electron-toolkit with native check
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
+console.log(process.execPath)
+
+// Add function to check and request accessibility permissions
+async function checkAccessibilityPermissions(): Promise<boolean> {
+  if (process.platform !== 'darwin') return true
+
+  try {
+    // Test if we can access System Events
+    execSync('osascript -e "tell application \\"System Events\\" to return name of first process"', {
+      timeout: 1000
+    })
+    return true
+  } catch (error) {
+    console.log('Accessibility permissions not granted')
+
+    // Show dialog to user
+    const result = await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Accessibility Permissions Required',
+      message: 'This app needs Accessibility permissions to capture text.',
+      detail:
+        'Please go to System Preferences > Security & Privacy > Privacy > Accessibility and add this app.',
+      buttons: ['Open System Preferences', 'Cancel']
+    })
+
+    if (result.response === 0) {
+      shell.openExternal(
+        'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'
+      )
+    }
+
+    return false
+  }
+}
 
 // Removed native module dependencies (iohook, robotjs) to prevent crashes
 // Using simple clipboard-based approach for better stability
@@ -22,29 +57,32 @@ let paletteAccelerator = process.platform === 'darwin' ? 'Command+Shift+O' : 'Co
 let enableAutoCapture = true
 
 // Function to update shortcuts from user settings
-export function updateSettings(newSettings: { 
-  shortcutCapture?: string, 
-  shortcutPalette?: string, 
-  enableAutoCapture?: boolean 
+export function updateSettings(newSettings: {
+  shortcutCapture?: string
+  shortcutPalette?: string
+  enableAutoCapture?: boolean
 }) {
-  let needsRestart = false;
-  
+  let needsRestart = false
+
   if (newSettings.shortcutCapture && newSettings.shortcutCapture !== captureAccelerator) {
-    captureAccelerator = newSettings.shortcutCapture;
-    needsRestart = true;
+    captureAccelerator = newSettings.shortcutCapture
+    needsRestart = true
   }
-  
+
   if (newSettings.shortcutPalette && newSettings.shortcutPalette !== paletteAccelerator) {
-    paletteAccelerator = newSettings.shortcutPalette;
-    needsRestart = true;
+    paletteAccelerator = newSettings.shortcutPalette
+    needsRestart = true
   }
-  
-  if (newSettings.enableAutoCapture !== undefined && newSettings.enableAutoCapture !== enableAutoCapture) {
-    enableAutoCapture = newSettings.enableAutoCapture;
-    needsRestart = true;
+
+  if (
+    newSettings.enableAutoCapture !== undefined &&
+    newSettings.enableAutoCapture !== enableAutoCapture
+  ) {
+    enableAutoCapture = newSettings.enableAutoCapture
+    needsRestart = true
   }
-  
-  return needsRestart;
+
+  return needsRestart
 }
 
 type PromptSource = 'chatgpt' | 'claude' | 'gemini' | 'grok' | 'other'
@@ -117,58 +155,51 @@ async function readHighlightedText(): Promise<{
   bookmark: ReturnType<typeof safeReadBookmark>
   method: HighlightMethod
 }> {
-  // Attempt to read the raw highlighted selection first; this does not mutate clipboard
-  const selectionClipboard = clipboard.readText('selection').trim()
-  if (selectionClipboard) {
-    return {
-      content: selectionClipboard,
-      bookmark: safeReadBookmark(),
-      method: 'selection'
-    }
-  }
-
-  // Fallback to the standard clipboard contents, preserving user data
+  // Store current clipboard to restore later
   const previousText = clipboard.readText()
   const previousBookmark = safeReadBookmark()
 
-  let invokedCopy = false
   try {
+    // Force copy the selection on macOS with simplified approach
     if (process.platform === 'darwin') {
+      await checkAccessibilityPermissions()
+      // Use simpler AppleScript command for better reliability
       execSync(
         'osascript -e \'tell application "System Events" to keystroke "c" using {command down}\'',
-        { stdio: 'ignore' }
+        { stdio: 'ignore', timeout: 1000 }
       )
-      invokedCopy = true
     } else if (process.platform === 'win32') {
       execSync(
-        'powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\"^c\")"',
-        { stdio: 'ignore' }
+        'powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\\"^c\\")"',
+        { stdio: 'ignore', timeout: 2000 }
       )
-      invokedCopy = true
+    } else if (process.platform === 'linux') {
+      execSync('xdotool key --clearmodifiers ctrl+c', { stdio: 'ignore', timeout: 2000 })
     }
-  } catch {
-    // Unable to invoke copy programmatically; rely on existing clipboard contents
-  }
 
-  if (invokedCopy) {
-    await delay(120)
-  }
+    // Wait for clipboard to update - slightly longer delay for reliability
+    await delay(150)
 
-  const copiedText = clipboard.readText().trim()
-  const copiedBookmark = safeReadBookmark()
+    const copiedText = clipboard.readText().trim()
+    const copiedBookmark = safeReadBookmark()
 
-  // Restore clipboard for user courtesy
-  if (previousText) {
-    clipboard.writeText(previousText)
-  }
-  if (previousBookmark.url || previousBookmark.title) {
-    clipboard.writeBookmark(previousBookmark.title ?? '', previousBookmark.url ?? '')
-  }
+    // Don't restore clipboard immediately to prevent wiping captured text
+    // Let the capture process complete first
+    console.log('Captured text length:', copiedText.length)
 
-  return {
-    content: copiedText,
-    bookmark: copiedBookmark,
-    method: 'clipboard'
+    return {
+      content: copiedText,
+      bookmark: copiedBookmark,
+      method: 'clipboard'
+    }
+  } catch (error) {
+    console.error('Failed to copy selection:', error)
+
+    return {
+      content: '',
+      bookmark: { title: undefined, url: undefined },
+      method: 'clipboard'
+    }
   }
 }
 
@@ -190,7 +221,11 @@ function notifySystem(result: CaptureResult) {
   }
 }
 
-export function createCaptureService(getWindow: WindowGetter, backgroundDataService: any, trayService?: any) {
+export function createCaptureService(
+  getWindow: WindowGetter,
+  backgroundDataService: any,
+  trayService?: any
+) {
   let captureListening = false
   let paletteListening = false
   let paletteWindow: BrowserWindow | null = null
@@ -398,9 +433,11 @@ export function createCaptureService(getWindow: WindowGetter, backgroundDataServ
         if (paletteWindow && !paletteWindow.isDestroyed() && !paletteWindow.isFocused()) {
           // Check if we lost focus to any of our app windows - if so, don't hide
           const allWindows = BrowserWindow.getAllWindows()
-          const hasAppFocus = allWindows.some(w =>
-            w.isFocused() && w !== paletteWindow &&
-            (w === getWindow() || w.getTitle().includes('Prompt'))
+          const hasAppFocus = allWindows.some(
+            (w) =>
+              w.isFocused() &&
+              w !== paletteWindow &&
+              (w === getWindow() || w.getTitle().includes('Prompt'))
           )
 
           if (!hasAppFocus) {
@@ -519,7 +556,40 @@ export function createCaptureService(getWindow: WindowGetter, backgroundDataServ
       notifySystem(failure)
       pushStatus(window, 'failed', failure.message)
     }
+  }
 
+  // Debug function to test capture functionality
+  async function debugCapture() {
+    console.log('=== Debug Capture Service ===')
+
+    // Test 1: Check if shortcut is registered
+    console.log('Capture listening:', captureListening)
+    console.log('Shortcut registered:', globalShortcut.isRegistered(captureAccelerator))
+
+    // Test 2: Check accessibility permissions
+    try {
+      execSync(
+        'osascript -e "tell application \\"System Events\\" to return name of first process"',
+        { timeout: 1000 }
+      )
+      console.log('✓ Accessibility permissions granted')
+    } catch {
+      console.log('✗ Accessibility permissions needed')
+    }
+
+    // Test 3: Test clipboard operations
+    const testText = 'test-' + Date.now()
+    clipboard.writeText(testText)
+    const readBack = clipboard.readText()
+    console.log('Clipboard test:', readBack === testText ? '✓ Working' : '✗ Failed')
+
+    // Test 4: Test AppleScript
+    try {
+      const result = execSync('osascript -e "return \\"hello\\""', { encoding: 'utf8' })
+      console.log('AppleScript test:', result.trim() === 'hello' ? '✓ Working' : '✗ Failed')
+    } catch (error: any) {
+      console.log('AppleScript test: ✗ Failed -', error?.message || error)
+    }
   }
 
   function registerCaptureShortcut() {
@@ -528,16 +598,30 @@ export function createCaptureService(getWindow: WindowGetter, backgroundDataServ
       console.log('Auto capture is disabled, not registering capture shortcut')
       return
     }
-    
+
     if (captureListening) return
-    const success = globalShortcut.register(captureAccelerator, () => {
+
+    // Unregister first if it exists
+    if (globalShortcut.isRegistered(captureAccelerator)) {
+      globalShortcut.unregister(captureAccelerator)
+    }
+
+    const success = globalShortcut.register(captureAccelerator, async () => {
+      console.log('Capture shortcut triggered')
+      // Check permissions before attempting capture
+      if (!(await checkAccessibilityPermissions())) {
+        return
+      }
       void handleCapture()
     })
+
     if (!success) {
+      console.error(`Failed to register global shortcut ${captureAccelerator}`)
       pushStatus(getWindow(), 'failed', 'Unable to register capture shortcut')
-      console.warn(`Unable to register global shortcut ${captureAccelerator}`)
       return
     }
+
+    console.log(`Successfully registered capture shortcut ${captureAccelerator}`)
     captureListening = true
     pushStatus(getWindow(), 'listening')
   }
@@ -566,12 +650,18 @@ export function createCaptureService(getWindow: WindowGetter, backgroundDataServ
           windowName = windowInfo
         } catch (windowError: any) {
           // Window detection failed, but we still have the app name
-          console.log('Window detection failed (likely permissions), using app only:', windowError?.message || windowError)
+          console.log(
+            'Window detection failed (likely permissions), using app only:',
+            windowError?.message || windowError
+          )
         }
 
         return { appName: appInfo, windowName: windowName || '' }
       } catch (appError: any) {
-        console.log('App detection failed (accessibility permissions required):', appError?.message || appError)
+        console.log(
+          'App detection failed (accessibility permissions required):',
+          appError?.message || appError
+        )
         return null
       }
     } catch (error: any) {
@@ -749,7 +839,6 @@ export function createCaptureService(getWindow: WindowGetter, backgroundDataServ
     submitSelectedPrompt(promptText)
   })
 
-
   // Handle prompts data request from overlay - now uses background data service
   ipcMain.handle('overlay:get-prompts', async () => {
     console.log('Overlay requesting prompts data from background service')
@@ -809,17 +898,29 @@ export function createCaptureService(getWindow: WindowGetter, backgroundDataServ
   })
 
   // Update settings from renderer
-  ipcMain.handle('settings:update', async (_event, newSettings: { 
-    shortcutCapture?: string, 
-    shortcutPalette?: string, 
-    enableAutoCapture?: boolean 
-  }) => {
-    const needsRestart = updateSettings(newSettings)
-    if (needsRestart) {
-      // Re-register shortcuts if they changed
-      unregisterShortcuts()
-      registerShortcuts()
+  ipcMain.handle(
+    'settings:update',
+    async (
+      _event,
+      newSettings: {
+        shortcutCapture?: string
+        shortcutPalette?: string
+        enableAutoCapture?: boolean
+      }
+    ) => {
+      const needsRestart = updateSettings(newSettings)
+      if (needsRestart) {
+        // Re-register shortcuts if they changed
+        unregisterShortcuts()
+        registerShortcuts()
+      }
+      return { success: true }
     }
+  )
+
+  // Debug handler
+  ipcMain.handle('debug:capture', async () => {
+    await debugCapture()
     return { success: true }
   })
 

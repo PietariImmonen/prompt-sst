@@ -6,11 +6,17 @@ import { randomUUID } from 'crypto'
 import { join } from 'path'
 // Replaced electron-toolkit with native Electron APIs
 import icon from '../../resources/icon.png?asset'
-import { createCaptureService, updateSettings } from './capture-service.js'
+
 import { createIntegratedCaptureService } from './integrated-capture-service.js'
 import { TrayService } from './tray-service.js'
 import { BackgroundDataService } from './background-data-service.js'
-import { logger, logServiceStart, logServiceReady, logServiceError, logServiceStop } from './logger.js'
+import {
+  logger,
+  logServiceStart,
+  logServiceReady,
+  logServiceError,
+  logServiceStop
+} from './logger.js'
 
 // Check if running in development mode
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
@@ -272,17 +278,23 @@ ipcMain.handle('auth:cancel', async (_event, payload: { id: string }) => {
 })
 
 // Handler for auth sync from main window to background service
-ipcMain.on('sync-auth-to-background-service', (_event, authData: {
-  token: string | null,
-  workspaceId: string | null,
-  apiEndpoint: string | null
-}) => {
-  console.log('Main process: Syncing auth to background service')
-  if (backgroundDataService) {
-    // Use the background service's IPC handler directly
-    ipcMain.emit('background:set-auth', null, authData)
+ipcMain.on(
+  'sync-auth-to-background-service',
+  (
+    _event,
+    authData: {
+      token: string | null
+      workspaceId: string | null
+      apiEndpoint: string | null
+    }
+  ) => {
+    console.log('Main process: Syncing auth to background service')
+    if (backgroundDataService) {
+      // Use the background service's IPC handler directly
+      ipcMain.emit('background:set-auth', null, authData)
+    }
   }
-})
+)
 
 function createWindow(): void {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -436,7 +448,11 @@ app.whenReady().then(async () => {
 
     // Initialize integrated capture service with tray service reference
     await logServiceStart('CaptureService')
-    captureService = createIntegratedCaptureService(() => mainWindow, backgroundDataService, trayService)
+    captureService = createIntegratedCaptureService(
+      () => mainWindow,
+      backgroundDataService,
+      trayService
+    )
 
     // Enable the simplified palette
     const paletteEnabled = captureService.enablePalette()
@@ -457,7 +473,10 @@ app.whenReady().then(async () => {
 
     // Initialize shortcuts after all services are ready
     setTimeout(() => {
-      logger.info('system', 'All services initialized, shortcuts will be registered when renderer is ready')
+      logger.info(
+        'system',
+        'All services initialized, shortcuts will be registered when renderer is ready'
+      )
     }, 1000)
 
     // Set up periodic service health monitoring
@@ -550,7 +569,11 @@ app.on('will-quit', async () => {
     })
 
     // Helper function to safely dispose each service
-    const disposeService = async (service: any, name: string, disposeFn: () => Promise<void> | void) => {
+    const disposeService = async (
+      service: any,
+      name: string,
+      disposeFn: () => Promise<void> | void
+    ) => {
       try {
         if (service) {
           await logServiceStop(name)
@@ -567,7 +590,9 @@ app.on('will-quit', async () => {
 
     // Dispose services in reverse order with individual error handling
     await disposeService(captureService, 'CaptureService', () => captureService?.dispose())
-    await disposeService(backgroundDataService, 'BackgroundDataService', () => backgroundDataService?.dispose())
+    await disposeService(backgroundDataService, 'BackgroundDataService', () =>
+      backgroundDataService?.dispose()
+    )
     await disposeService(trayService, 'TrayService', () => trayService?.dispose())
 
     await logger.info('system', 'Application shutdown completed')
