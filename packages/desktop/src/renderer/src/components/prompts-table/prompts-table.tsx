@@ -48,7 +48,7 @@ export function PromptsTable(props: PromptsTableProps) {
     <>
       <div
         className={cn(
-          'w-full overflow-hidden rounded-lg  bg-card/80 shadow-lg backdrop-blur',
+          'w-full overflow-hidden rounded-lg bg-card/80 shadow-lg backdrop-blur',
           className
         )}
       >

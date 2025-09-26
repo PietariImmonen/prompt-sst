@@ -150,6 +150,10 @@ function safeReadBookmark() {
 
 type HighlightMethod = 'selection' | 'clipboard'
 
+interface CaptureServiceOptions {
+  registerOverlaySelectionHandler?: boolean
+}
+
 async function readHighlightedText(): Promise<{
   content: string
   bookmark: ReturnType<typeof safeReadBookmark>
@@ -224,8 +228,11 @@ function notifySystem(result: CaptureResult) {
 export function createCaptureService(
   getWindow: WindowGetter,
   backgroundDataService: any,
-  trayService?: any
+  trayService?: any,
+  options: CaptureServiceOptions = {}
 ) {
+  const { registerOverlaySelectionHandler = true } = options
+
   let captureListening = false
   let paletteListening = false
   let paletteWindow: BrowserWindow | null = null
@@ -807,7 +814,7 @@ export function createCaptureService(
   })
 
   // Handle overlay hide requests
-  ipcMain.on('overlay:hide', () => {
+  const overlayHideHandler = () => {
     console.log('Received overlay hide request')
     try {
       if (paletteWindow && !paletteWindow.isDestroyed()) {
@@ -816,10 +823,12 @@ export function createCaptureService(
     } catch (error) {
       console.error('Error hiding overlay window:', error)
     }
-  })
+  }
+
+  ipcMain.on('overlay:hide', overlayHideHandler)
 
   // Handle force close requests (for when overlay gets stuck)
-  ipcMain.on('overlay:force-close', () => {
+  const overlayForceCloseHandler = () => {
     console.log('Received overlay force close request')
     try {
       if (paletteWindow && !paletteWindow.isDestroyed()) {
@@ -831,13 +840,19 @@ export function createCaptureService(
       // Force null the reference even if close failed
       paletteWindow = null
     }
-  })
+  }
+
+  ipcMain.on('overlay:force-close', overlayForceCloseHandler)
 
   // Handle prompt selection from overlay
-  ipcMain.on('overlay:select-prompt', (_event, promptText: string) => {
+  const overlaySelectHandler = (_event: any, promptText: string) => {
     console.log('Received prompt selection:', promptText.substring(0, 50) + '...')
     submitSelectedPrompt(promptText)
-  })
+  }
+
+  if (registerOverlaySelectionHandler) {
+    ipcMain.on('overlay:select-prompt', overlaySelectHandler)
+  }
 
   // Handle prompts data request from overlay - now uses background data service
   ipcMain.handle('overlay:get-prompts', async () => {
@@ -941,9 +956,11 @@ export function createCaptureService(
       ipcMain.removeHandler('prompt:capture:disable')
       ipcMain.removeHandler('prompt:capture:result')
       ipcMain.removeHandler('overlay:get-prompts')
-      ipcMain.removeAllListeners('overlay:hide')
-      ipcMain.removeAllListeners('overlay:force-close')
-      ipcMain.removeAllListeners('overlay:select-prompt')
+      ipcMain.removeListener('overlay:hide', overlayHideHandler)
+      ipcMain.removeListener('overlay:force-close', overlayForceCloseHandler)
+      if (registerOverlaySelectionHandler) {
+        ipcMain.removeListener('overlay:select-prompt', overlaySelectHandler)
+      }
     }
   }
 }

@@ -177,9 +177,9 @@ export function PromptEditor({ prompt, onDismiss }: PromptEditorProps) {
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col overflow-hidden px-8 py-6">
+            <div className="flex flex-1 flex-col overflow-hidden px-6 py-6">
               <EditorToolbar editor={editor} disabled={isLoading} />
-              <div className="mt-6 flex-1 overflow-y-auto rounded-lg border border-border/60 bg-background/80 p-4">
+              <div className="mt-6 flex-1 overflow-y-auto rounded-lg bg-background/80">
                 <PromptContentEditor editor={editor} />
               </div>
             </div>

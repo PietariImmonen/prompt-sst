@@ -16,7 +16,7 @@ export function PromptsPageHeader(props: PromptsPageHeaderProps) {
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-3 border-b border-border/60 pb-4 pt-2 overflow-hidden',
+        'flex flex-wrap items-center gap-3 border-b border-border/60 pb-4 pt-2 overflow-hidden bg-background',
         className
       )}
     >

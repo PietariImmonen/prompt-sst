@@ -11,7 +11,9 @@ export function createIntegratedCaptureService(getWindow: any, backgroundDataSer
   console.log('🔧 Disabled original palette shortcut (set to F12) to prevent conflicts')
 
   // Create the original capture service for prompt capturing functionality ONLY
-  const captureService = createCaptureService(getWindow, backgroundDataService, trayService)
+  const captureService = createCaptureService(getWindow, backgroundDataService, trayService, {
+    registerOverlaySelectionHandler: false
+  })
 
   // Create the simplified palette service with better prompt loading
   const paletteService = new SimplePaletteService({
