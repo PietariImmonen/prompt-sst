@@ -24,7 +24,7 @@ const providers = [
 export function AuthPage() {
   if (!issuer) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+      <div className="flex min-h-screen items-center justify-center bg-black px-4 text-foreground">
         <Card className="max-w-md border-destructive/30 bg-destructive/10">
           <CardHeader>
             <CardTitle className="text-2xl">Missing configuration</CardTitle>
@@ -79,7 +79,7 @@ export function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+    <div className="flex min-h-screen items-center justify-center bg-black px-4 text-foreground">
       <Card className="max-w-md border-border/60 bg-card/80 backdrop-blur">
         <CardHeader>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">

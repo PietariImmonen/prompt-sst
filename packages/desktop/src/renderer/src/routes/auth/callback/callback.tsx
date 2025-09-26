@@ -20,14 +20,14 @@ export function CallbackPage() {
         // Since account, workspace, and user are now created during Google auth,
         // we just need to refresh to get the updated information
         await auth.refresh()
-        
+
         // Redirect to onboarding (workspace and user should already be created)
-        navigate("/onboarding", { replace: true })
+        navigate('/onboarding', { replace: true })
       } catch (err) {
-        console.error("Error completing auth flow", err)
-        navigate("/auth/login")
+        console.error('Error completing auth flow', err)
+        navigate('/auth/login')
       }
-    };
+    }
 
     if (errorDescription === 'no_account') {
       navigate({
@@ -44,7 +44,7 @@ export function CallbackPage() {
 
   if (error) {
     return (
-      <div className="flex h-dvh w-screen flex-col items-center justify-center gap-4 bg-background text-foreground">
+      <div className="flex h-dvh w-screen flex-col items-center justify-center gap-4 bg-black text-foreground">
         <p className="max-w-lg text-center text-muted-foreground">
           {error === 'access_denied'
             ? 'Access was denied. Please try again.'
@@ -58,7 +58,7 @@ export function CallbackPage() {
   }
 
   return (
-    <div className="flex h-dvh w-screen flex-col items-center justify-center gap-4 bg-background text-foreground">
+    <div className="flex h-dvh w-screen flex-col items-center justify-center gap-4 bg-black text-foreground">
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-foreground/80" />
         <p className="text-sm text-muted-foreground">Setting up your workspace...</p>

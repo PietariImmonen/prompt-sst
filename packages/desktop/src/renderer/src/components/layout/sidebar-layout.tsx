@@ -41,7 +41,10 @@ function AppSidebar() {
   const auth = useAuth()
 
   return (
-    <Sidebar variant="inset" className="border-r border-border/60 bg-sidebar text-sidebar-foreground">
+    <Sidebar
+      variant="inset"
+      className="border-r border-border/60 bg-sidebar text-sidebar-foreground"
+    >
       <SidebarHeader className="border-b border-border/60">
         <div className="flex items-center gap-2 px-2 py-1">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-r from-purple-500 to-pink-500 text-primary-foreground">
@@ -59,21 +62,23 @@ function AppSidebar() {
           <SidebarGroupLabel className="text-muted-foreground">Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === item.url}
-                  >
-                    <NavLink to={item.url}>
-                      <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-sidebar-accent-foreground" />
-                      <span className="text-sidebar-foreground group-hover:text-sidebar-accent-foreground">
-                        {item.title}
-                      </span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const isActive =
+                  location.pathname === item.url || location.pathname.startsWith(`${item.url}/`)
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <NavLink to={item.url}>
+                        <item.icon className="h-4 w-4 text-muted-foreground group-hover:text-sidebar-accent-foreground" />
+                        <span className="text-sidebar-foreground group-hover:text-sidebar-accent-foreground">
+                          {item.title}
+                        </span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { useOverlayPrompts } from './hooks/use-overlay-prompts'
 import { usePromptSearch } from './hooks/use-prompt-search'
 import { Prompt } from './types'
+import { stripHtml } from '@/lib/utils'
 
 interface PromptOverlayProps {
   onSelectPrompt?: (prompt: Prompt) => void
@@ -163,7 +164,7 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="w-full max-w-xl animate-in slide-in-from-top-8 fade-in-80 duration-200 flex flex-col h-[60vh] max-h-[500px]">
-        <div className="rounded-lg border border-border/60 bg-background/90 backdrop-blur-xl shadow-xl shadow-black/10 flex flex-col h-full">
+        <div className="rounded-lg border border-border/60 bg-black/90 backdrop-blur-xl shadow-xl shadow-black/10 flex flex-col h-full">
           {/* Header */}
           <div className="px-4 py-3 border-b border-border/30">
             <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -226,9 +227,10 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
                     key={prompt.id}
                     ref={index === selectedIndex ? selectedItemRef : null}
                     onClick={() => handlePromptSelect(prompt)}
-                    className={`p-4 transition-all duration-100 cursor-pointer ${index === selectedIndex
-                      ? 'bg-primary/5 border-l-4 border-primary shadow-sm -mx-1 px-1 rounded-sm'
-                      : 'border-l-4 border-transparent hover:bg-muted rounded-sm'
+                    className={`p-4 transition-all duration-100 cursor-pointer ${
+                      index === selectedIndex
+                        ? 'bg-primary/5 border-l-4 border-primary shadow-sm -mx-1 px-1 rounded-sm'
+                        : 'border-l-4 border-transparent hover:bg-muted rounded-sm'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -243,7 +245,7 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
                         </div>
 
                         <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mt-1">
-                          {prompt.content}
+                          {stripHtml(prompt.content)}
                         </p>
 
                         <div className="flex items-center justify-between mt-2">

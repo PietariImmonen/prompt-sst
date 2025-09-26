@@ -17,10 +17,11 @@ import { Toaster } from '@/components/ui/sonner'
 import { PromptCaptureProvider } from '@/providers/prompt-capture-provider'
 import { CallbackPage } from '@/routes/auth/callback/callback'
 import OnboardingPage from '@/routes/onboarding'
+import PromptEditorPage from '@/pages/prompt-editor'
 
 const SplashScreen = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+    <div className="flex min-h-screen items-center justify-center bg-black text-foreground">
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-foreground/80" />
         <p className="text-sm text-muted-foreground">Loading workspace…</p>
@@ -42,7 +43,10 @@ const AuthenticatedApp = () => {
       return
     }
 
-    if (!workspaceID || !activeAccount.workspaces.some((workspace) => workspace.id === workspaceID)) {
+    if (
+      !workspaceID ||
+      !activeAccount.workspaces.some((workspace) => workspace.id === workspaceID)
+    ) {
       setWorkspaceID(activeAccount.workspaces[0]?.id ?? null)
     }
   }, [activeAccount, workspaceID])
@@ -67,10 +71,12 @@ const AuthenticatedApp = () => {
   const workspace = activeAccount?.workspaces?.find((w) => w.id === workspaceID)
   if (!workspace) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+      <div className="flex min-h-screen items-center justify-center bg-black text-foreground">
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-semibold">Workspace not found</h1>
-          <p className="text-sm text-muted-foreground">Select a different workspace from the menu.</p>
+          <p className="text-sm text-muted-foreground">
+            Select a different workspace from the menu.
+          </p>
         </div>
       </div>
     )
@@ -90,6 +96,7 @@ const AuthenticatedApp = () => {
               <Route path="/" element={<SidebarLayout />}>
                 <Route index element={<Navigate to="/sessions" replace />} />
                 <Route path="sessions" element={<PromptsPage />} />
+                <Route path="sessions/:promptId/edit" element={<PromptEditorPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Routes>

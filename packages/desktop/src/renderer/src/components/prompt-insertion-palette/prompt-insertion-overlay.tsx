@@ -12,6 +12,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { useSubscribe } from '@/hooks/use-replicache'
 import { PromptStore } from '@/data/prompt-store'
+import { stripHtml } from '@/lib/utils'
 
 import { getPromptPaletteShortcutDisplay } from './shortcut'
 
@@ -167,7 +168,7 @@ export function PromptInsertionOverlay() {
     const scored = prompts
       .map((prompt, rank) => {
         const title = prompt.title.toLowerCase()
-        const content = prompt.content.toLowerCase()
+        const content = stripHtml(prompt.content).toLowerCase()
 
         let score = prompt.isFavorite ? 150 : 0
         let matched = false
@@ -262,12 +263,8 @@ export function PromptInsertionOverlay() {
               <CommandGroup heading="Prompts">
                 {filteredPrompts.map((prompt) => (
                   <CommandItem
-                    key={prompt.id}
-                    value={prompt.id}
-                    keywords={[prompt.title, prompt.content.slice(0, 200)]}
-                    className="flex items-start gap-2"
-                    onSelect={handleSelectPrompt}
-                  >
+              key={prompt.id}
+              keywords={[prompt.title, stripHtml(prompt.content).slice(0, 200)]}
                     <div className="flex-1">
                       <p className="text-sm font-medium leading-tight text-foreground">
                         {prompt.title}
@@ -280,7 +277,7 @@ export function PromptInsertionOverlay() {
                           WebkitLineClamp: 2
                         }}
                       >
-                        {prompt.content}
+                        {stripHtml(prompt.content)}
                       </p>
                     </div>
                     {prompt.isFavorite ? (

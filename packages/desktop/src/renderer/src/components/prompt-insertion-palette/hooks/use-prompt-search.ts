@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Prompt, PromptSearchResult } from '../types'
+import { stripHtml } from '@/lib/utils'
 
 interface UsePromptSearchOptions {
   maxResults?: number
@@ -35,7 +36,7 @@ export function usePromptSearch(
     const scored = prompts
       .map((prompt, rank) => {
         const title = prompt.title.toLowerCase()
-        const content = prompt.content.toLowerCase()
+        const content = stripHtml(prompt.content).toLowerCase()
 
         let score = prompt.isFavorite ? 150 : 0
         let matched = false

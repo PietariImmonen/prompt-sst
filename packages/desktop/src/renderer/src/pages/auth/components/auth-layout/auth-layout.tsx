@@ -9,16 +9,15 @@ interface AuthLayoutProps extends PropsWithChildren {
   className?: string
 }
 
-export const AuthLayout = ({
-  title,
-  description,
-  hero,
-  className,
-  children
-}: AuthLayoutProps) => {
+export const AuthLayout = ({ title, description, hero, className, children }: AuthLayoutProps) => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12 text-foreground">
-      <Card className={cn('w-full max-w-md border border-border/60 bg-card/80 backdrop-blur', className)}>
+    <div className="flex min-h-screen items-center justify-center bg-black px-6 py-12 text-foreground">
+      <Card
+        className={cn(
+          'w-full max-w-md border border-border/60 bg-card/80 backdrop-blur',
+          className
+        )}
+      >
         <CardHeader className="space-y-2">
           {hero}
           <CardTitle className="text-2xl font-semibold tracking-tight">{title}</CardTitle>

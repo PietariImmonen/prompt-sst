@@ -38,13 +38,12 @@ export default function DashboardPage(props: DashboardPageProps) {
   }) ?? []) as Prompt[]
 
   return (
-    <div className="flex min-h-screen flex-col gap-6 bg-background px-6 py-8 text-foreground">
+    <div className="flex min-h-screen flex-col gap-6 bg-black px-6 py-8 text-foreground">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold">{workspace.name}</h1>
           <p className="text-sm text-muted-foreground">
-            Workspace slug:{' '}
-            <span className="font-mono text-foreground/80">{workspace.slug}</span>
+            Workspace slug: <span className="font-mono text-foreground/80">{workspace.slug}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">

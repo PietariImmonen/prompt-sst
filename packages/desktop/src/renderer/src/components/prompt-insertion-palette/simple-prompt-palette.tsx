@@ -3,6 +3,7 @@ import { Search, Star } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { promptIPCService } from './services/prompt-ipc-service'
 import { Prompt } from './types'
+import { stripHtml } from '@/lib/utils'
 
 export function SimplePromptPalette() {
   const [prompts, setPrompts] = React.useState<Prompt[]>([])
@@ -41,31 +42,16 @@ export function SimplePromptPalette() {
 
   // Filter prompts based on search
   const filteredPrompts = React.useMemo(() => {
-    if (!searchQuery.trim()) {
-      return prompts.slice(0, 10) // Show first 10 by default
+    if (!searchQuery) {
+      return prompts
     }
 
     const query = searchQuery.toLowerCase()
-    return prompts
-      .filter(prompt =>
-        prompt.title.toLowerCase().includes(query) ||
-        prompt.content.toLowerCase().includes(query) ||
-        prompt.categoryPath?.toLowerCase().includes(query)
-      )
-      .sort((a, b) => {
-        // Prioritize favorites
-        if (a.isFavorite && !b.isFavorite) return -1
-        if (!a.isFavorite && b.isFavorite) return 1
-
-        // Then title matches over content matches
-        const aTitleMatch = a.title.toLowerCase().includes(query)
-        const bTitleMatch = b.title.toLowerCase().includes(query)
-        if (aTitleMatch && !bTitleMatch) return -1
-        if (!aTitleMatch && bTitleMatch) return 1
-
-        return 0
-      })
-      .slice(0, 10) // Limit results
+    return prompts.filter((prompt) =>
+      prompt.title.toLowerCase().includes(query) ||
+      stripHtml(prompt.content).toLowerCase().includes(query) ||
+      prompt.tags?.some((tag) => tag.toLowerCase().includes(query))
+    )
   }, [prompts, searchQuery])
 
   // Reset selection when filtered prompts change
@@ -96,12 +82,12 @@ export function SimplePromptPalette() {
 
         case 'ArrowDown':
           event.preventDefault()
-          setSelectedIndex(prev => Math.min(prev + 1, filteredPrompts.length - 1))
+          setSelectedIndex((prev) => Math.min(prev + 1, filteredPrompts.length - 1))
           break
 
         case 'ArrowUp':
           event.preventDefault()
-          setSelectedIndex(prev => Math.max(prev - 1, 0))
+          setSelectedIndex((prev) => Math.max(prev - 1, 0))
           break
 
         case 'Enter':
@@ -139,8 +125,7 @@ export function SimplePromptPalette() {
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl animate-in slide-in-from-top-4 fade-in-80 duration-150">
-        <div className="rounded-lg border border-border/50 bg-background/95 backdrop-blur-sm shadow-xl">
-
+        <div className="rounded-lg border border-border/50 bg-black/95 backdrop-blur-sm shadow-xl">
           {/* Header with search */}
           <div className="p-3 border-b border-border/30">
             <div className="relative">
@@ -177,9 +162,10 @@ export function SimplePromptPalette() {
                     onClick={() => selectPrompt(prompt)}
                     className={`
                       p-2 mx-1 mb-1 rounded cursor-pointer transition-colors
-                      ${index === selectedIndex
-                        ? 'bg-primary/10 border border-primary/20'
-                        : 'hover:bg-muted/50'
+                      ${
+                        index === selectedIndex
+                          ? 'bg-primary/10 border border-primary/20'
+                          : 'hover:bg-muted/50'
                       }
                     `}
                   >
@@ -202,14 +188,12 @@ export function SimplePromptPalette() {
 
                         {/* Content preview */}
                         <p className="text-xs text-muted-foreground line-clamp-2 mb-1">
-                          {prompt.content}
+                          {stripHtml(prompt.content)}
                         </p>
 
                         {/* Meta info */}
                         <div className="flex items-center justify-between text-xs text-muted-foreground/70">
-                          <span className="truncate">
-                            {prompt.categoryPath}
-                          </span>
+                          <span className="truncate">{prompt.categoryPath}</span>
                           {prompt.timeUpdated && (
                             <span className="flex-shrink-0 ml-2">
                               {new Date(prompt.timeUpdated).toLocaleDateString()}

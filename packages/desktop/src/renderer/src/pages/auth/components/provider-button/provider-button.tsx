@@ -8,18 +8,24 @@ interface ProviderButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   subtle?: boolean
 }
 
-export const ProviderButton = ({ icon, label, subtle, className, ...rest }: ProviderButtonProps) => {
+export const ProviderButton = ({
+  icon,
+  label,
+  subtle,
+  className,
+  ...rest
+}: ProviderButtonProps) => {
   return (
     <Button
       variant="outline"
       className={cn(
-        'w-full justify-start gap-3 border border-border/60 bg-background/80 text-foreground hover:bg-background',
+        'w-full justify-start gap-3 border border-border/60 bg-black/80 text-foreground hover:bg-black',
         subtle && 'bg-transparent text-muted-foreground hover:text-foreground',
         className
       )}
       {...rest}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-background/70">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-black/70">
         {icon}
       </span>
       <span className="text-sm font-medium tracking-tight">{label}</span>

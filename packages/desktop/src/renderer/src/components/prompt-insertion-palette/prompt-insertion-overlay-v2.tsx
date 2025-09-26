@@ -3,6 +3,7 @@ import { Star } from 'lucide-react'
 
 import { useSubscribe } from '@/hooks/use-replicache'
 import { PromptStore } from '@/data/prompt-store'
+import { stripHtml } from '@/lib/utils'
 
 import { getPromptPaletteShortcutDisplay } from './shortcut'
 
@@ -77,7 +78,7 @@ export function PromptInsertionOverlayV2() {
     const scored = prompts
       .map((prompt, rank) => {
         const title = prompt.title.toLowerCase()
-        const content = prompt.content.toLowerCase()
+        const content = stripHtml(prompt.content).toLowerCase()
 
         let score = prompt.isFavorite ? 150 : 0
         let matched = false
@@ -265,7 +266,7 @@ export function PromptInsertionOverlayV2() {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground/90 mt-1 line-clamp-2">
-                          {prompt.content}
+                          {stripHtml(prompt.content)}
                         </p>
                       </div>
                       {index === selectedIndex && (

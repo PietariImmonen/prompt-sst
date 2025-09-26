@@ -13,6 +13,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 
 import { getPromptPaletteShortcutDisplay, PROMPT_INSERTION_PALETTE_OPEN_EVENT } from './shortcut'
+import { stripHtml } from '@/lib/utils'
 
 type EditableSnapshot =
   | {
@@ -515,7 +516,7 @@ export function PromptInsertionPalette() {
     const scored = prompts
       .map((prompt, rank) => {
         const title = prompt.title.toLowerCase()
-        const content = prompt.content.toLowerCase()
+        const content = stripHtml(prompt.content).toLowerCase()
 
         let score = prompt.isFavorite ? 150 : 0
         let matched = false
@@ -629,7 +630,7 @@ export function PromptInsertionPalette() {
               <CommandItem
                 key={prompt.id}
                 value={prompt.id}
-                keywords={[prompt.title, prompt.content.slice(0, 200)]}
+                keywords={[prompt.title, stripHtml(prompt.content).slice(0, 200)]}
                 className="flex items-start gap-2"
                 onSelect={handleSelectPrompt}
               >
@@ -645,7 +646,7 @@ export function PromptInsertionPalette() {
                       WebkitLineClamp: 2
                     }}
                   >
-                    {prompt.content}
+                    {stripHtml(prompt.content)}
                   </p>
                 </div>
                 {prompt.isFavorite ? (

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { format } from 'date-fns'
 import { NotebookPen } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 import {
   Table,
@@ -10,19 +11,19 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { cn } from '@/lib/utils'
+import { cn, stripHtml, truncateString } from '@/lib/utils'
 
 import type { Prompt } from '@prompt-saver/core/models/Prompt'
-import { PromptEditDialog } from '../modals/prompt-edit-dialog'
 
 type PromptsTableProps = {
   prompts: Prompt[]
   className?: string
 }
 
-const truncateContent = (value: string, limit = 160) => {
-  if (value.length <= limit) return value
-  return `${value.slice(0, limit)}…`
+const truncateContent = (value: string, limit = 60) => {
+  const plainText = stripHtml(value)
+  if (plainText.length <= limit) return plainText
+  return truncateString(plainText, limit)
 }
 
 const formatCaptured = (value?: string | null) => {
@@ -34,8 +35,14 @@ const formatCaptured = (value?: string | null) => {
 
 export function PromptsTable(props: PromptsTableProps) {
   const { prompts, className } = props
+  const navigate = useNavigate()
 
-  const [editingPrompt, setEditingPrompt] = React.useState<Prompt | null>(null)
+  const handleRowSelect = React.useCallback(
+    (promptID: string) => {
+      navigate(`/sessions/${promptID}/edit`)
+    },
+    [navigate]
+  )
 
   return (
     <>
@@ -71,8 +78,8 @@ export function PromptsTable(props: PromptsTableProps) {
                 prompts.map((prompt) => (
                   <TableRow
                     key={prompt.id}
-                    className="group border-b border-border/60 bg-transparent transition hover:bg-muted/20"
-                    onClick={() => setEditingPrompt(prompt)}
+                    className="group cursor-pointer border-b border-border/60 bg-transparent transition hover:bg-muted/20"
+                    onClick={() => handleRowSelect(prompt.id)}
                   >
                     <TableCell className="px-4 py-3">
                       <div className="flex items-center gap-2 min-w-0">
@@ -100,11 +107,6 @@ export function PromptsTable(props: PromptsTableProps) {
         </div>
       </div>
 
-      <PromptEditDialog
-        prompt={editingPrompt || undefined}
-        open={!!editingPrompt}
-        onOpenChange={(open) => !open && setEditingPrompt(null)}
-      />
     </>
   )
 }
