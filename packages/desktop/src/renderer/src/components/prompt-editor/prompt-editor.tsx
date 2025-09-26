@@ -185,7 +185,7 @@ export function PromptEditor({ prompt, onDismiss }: PromptEditorProps) {
             </div>
           </div>
 
-          <aside className="hidden w-64 max-w-md flex-shrink-0 border-l border-border/60 bg-muted/10 px-6 py-8 sm:block">
+          {/* <aside className="hidden w-64 max-w-md flex-shrink-0 border-l border-border/60 bg-muted/10 px-6 py-8 sm:block">
             <div className="flex flex-col gap-6">
               <FormField
                 control={form.control}
@@ -228,7 +228,7 @@ export function PromptEditor({ prompt, onDismiss }: PromptEditorProps) {
                 </p>
               </div>
             </div>
-          </aside>
+          </aside> */}
         </form>
       </Form>
     </div>
