@@ -43,7 +43,7 @@ export function createIntegratedCaptureService(getWindow: any, backgroundDataSer
   // Original palette shortcut is now disabled via updateSettings above
 
   return {
-    // Preserve original capture service functionality (for Cmd+Shift+P)
+    // Preserve original capture service functionality (for Cmd+Shift+C)
     getStatus: captureService.getStatus,
     isListening: captureService.isListening,
 

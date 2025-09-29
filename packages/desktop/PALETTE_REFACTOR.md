@@ -91,7 +91,7 @@
 
 ### Shortcuts
 - **Palette**: `Cmd+Shift+O` (macOS) / `Ctrl+Shift+O` (Windows/Linux)
-- **Capture**: `Cmd+Shift+P` (macOS) / `Ctrl+Shift+P` (Windows/Linux) - unchanged
+- **Capture**: `Cmd+Shift+C` (macOS) / `Ctrl+Shift+C` (Windows/Linux)
 
 ### Tray Menu
 - Added "Open Prompt Palette" option

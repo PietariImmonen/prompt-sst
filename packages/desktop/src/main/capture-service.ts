@@ -52,7 +52,7 @@ async function checkAccessibilityPermissions(): Promise<boolean> {
 // Removed native module dependencies (iohook, robotjs) to prevent crashes
 // Using simple clipboard-based approach for better stability
 
-let captureAccelerator = process.platform === 'darwin' ? 'Command+Shift+P' : 'Control+Shift+P'
+let captureAccelerator = process.platform === 'darwin' ? 'Command+Shift+C' : 'Control+Shift+C'
 let paletteAccelerator = process.platform === 'darwin' ? 'Command+Shift+O' : 'Control+Shift+O'
 let enableAutoCapture = true
 
