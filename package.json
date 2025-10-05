@@ -9,7 +9,7 @@
     "console": "sst console",
     "deploy:dev": "sst deploy --stage dev",
     "deploy:prod": "sst deploy --stage production",
-    "dev": "sst dev",
+    "dev": "sst dev & bun run --filter @prompt-saver/chrome-plugin dev",
     "remove": "sst remove",
     "sso": "aws sso login --sso-session=prompt-saver",
     "typecheck": "tsc --noEmit",
@@ -17,7 +17,9 @@
     "desktop:dev": "sst shell -- node scripts/extract-sst-env.mjs && bun run --filter @prompt-saver/desktop dev",
     "desktop:dev:fallback": "bun run desktop:env && bun run --filter @prompt-saver/desktop dev",
     "desktop:typecheck": "sst shell -- bun run --filter @prompt-saver/desktop typecheck",
-    "desktop:build": "bun run desktop:env && bun run --filter @prompt-saver/desktop build"
+    "desktop:build": "bun run desktop:env && bun run --filter @prompt-saver/desktop build",
+    "chrome:dev": "bun run --filter @prompt-saver/chrome-plugin dev",
+    "chrome:build": "bun run --filter @prompt-saver/chrome-plugin build"
   },
   "dependencies": {
     "@eslint/js": "^9.23.0",

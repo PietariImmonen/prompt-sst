@@ -10,7 +10,11 @@
       "Bash(ELECTRON_ENABLE_LOGGING=1 DEBUG=electron* bun run --filter @prompt-saver/desktop dev)",
       "Bash(./node_modules/.bin/electron:*)",
       "Bash(find:*)",
-      "Bash(bun run:*)"
+      "Bash(bun run:*)",
+      "Bash(bun init:*)",
+      "Bash(bun add:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(bun remove:*)"
     ],
     "deny": [],
     "ask": []

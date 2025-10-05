@@ -1,0 +1,56 @@
+{
+  "name": "@prompt-saver/chrome-plugin",
+  "version": "0.0.0",
+  "description": "Chrome extension for Prompt Saver with Replicache sync",
+  "type": "module",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package",
+    "typecheck": "tsc --noEmit",
+    "generate-icons": "bun scripts/generate-icons.mjs"
+  },
+  "dependencies": {
+    "@openauthjs/openauth": "^0.4.3",
+    "@prompt-saver/core": "workspace:*",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "hono": "^4.9.9",
+    "lucide-react": "^0.544.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "replicache": "^15.0.1",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.2.1",
+    "@parcel/watcher": "2.4.1",
+    "@types/chrome": "^0.0.277",
+    "@types/node": "^20.17.6",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.21",
+    "plasmo": "^0.89.5",
+    "postcss": "^8.5.6",
+    "prettier": "^3.3.3",
+    "sharp": "^0.34.4",
+    "tailwindcss": "3",
+    "typescript": "^5.8.2"
+  },
+  "displayName": "Prompt Saver",
+  "manifest": {
+    "name": "Prompt Saver",
+    "host_permissions": [
+      "https://*/*"
+    ],
+    "permissions": [
+      "storage",
+      "tabs",
+      "identity"
+    ]
+  }
+}

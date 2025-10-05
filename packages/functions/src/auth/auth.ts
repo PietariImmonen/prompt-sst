@@ -18,6 +18,14 @@ const DEFAULT_LANGUAGE = "en";
 
 const app = issuer({
   subjects,
+  allow: async (input) => {
+    // Allow web, desktop, and chrome extension clients
+    const allowedClients = ["web", "desktop", "chrome-extension"];
+    if (!allowedClients.includes(input.clientID)) {
+      return false;
+    }
+    return true;
+  },
   providers: {
     google: GoogleProvider({
       clientID: Resource.GoogleClientID.value,

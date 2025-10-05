@@ -18,7 +18,7 @@ This feature addresses the core user need of capturing fleeting ideas and conten
 
 - **Goals**
 
-  - **G1: Frictionless Capture:** Users can save highlighted text from any application on their desktop into the system using a single keyboard shortcut (`Cmd+Shift+P`).
+  - **G1: Frictionless Capture:** Users can save highlighted text from any application on their desktop into the system using a single keyboard shortcut (`Cmd+Shift+C`).
   - **G2: Ambient Feedback:** The system provides clear, non-intrusive feedback confirming the capture was successful.
   - **G3: Reliable Storage:** Captured prompts are reliably stored in the database and associated with the active user and workspace.
   - **G4: Cross-Platform Support:** The shortcut works consistently on supported desktop platforms (macOS, Windows, Linux).
@@ -26,7 +26,7 @@ This feature addresses the core user need of capturing fleeting ideas and conten
 - **Non-Goals**
   - **NG1: Editing Captured Prompts:** This feature is for capture only. Editing will be handled by a dedicated prompt management interface.
   - **NG2: Complex Metadata:** The initial capture will only include the text content. Source application, URL, or other metadata is out of scope for this iteration.
-  - **NG3: Configurable Shortcuts:** The shortcut will be hardcoded to `Cmd+Shift+P` (or `Ctrl+Shift+P` on Windows/Linux). User configuration is not part of this MVP.
+  - **NG3: Configurable Shortcuts:** The shortcut will be hardcoded to `Cmd+Shift+C` (or `Ctrl+Shift+C` on Windows/Linux). User configuration is not part of this MVP.
 
 ## 2. Architecture Planning
 
