@@ -7,29 +7,16 @@ import { useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { formatDistanceToNow } from 'date-fns'
-import { ChevronsUpDown, Plus, X } from 'lucide-react'
 import { createId } from '@paralleldrive/cuid2'
 
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from '@/components/ui/command'
-import { Checkbox } from '@/components/ui/checkbox'
+import { MultiSelectTags } from '@/components/tag/multi-select-tags'
 
 import { Editor as PromptContentEditor } from '@/components/editor/editor'
 import { EditorToolbar } from '@/components/editor/toolbar/editor-toolbar'
 import { useReplicache, useSubscribe } from '@/hooks/use-replicache'
 import { TagStore } from '@/data/tag-store'
-import type { Tag } from '@prompt-saver/core/models/Tag'
 import { PromptWithTags } from '@prompt-saver/core/models/Prompt'
 
 const promptEditSchema = z.object({
@@ -217,13 +204,13 @@ export function PromptEditor({ prompt, onDismiss }: PromptEditorProps) {
                       <FormLabel className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         Tags
                       </FormLabel>
-                      <TagPicker
+                      <MultiSelectTags
                         tags={availableTags}
-                        value={field.value ?? []}
-                        onChange={(next) => field.onChange(next)}
-                        onCreate={handleCreateTag}
-                        disabled={isLoading}
-                        isCreating={isCreatingTag}
+                        selectedTagIds={field.value ?? []}
+                        onSelectionChange={(next) => field.onChange(next)}
+                        onCreateTag={handleCreateTag}
+                        disabled={isLoading || isCreatingTag}
+                        placeholder="Select tags..."
                       />
                       <FormMessage />
                     </FormItem>
@@ -241,142 +228,6 @@ export function PromptEditor({ prompt, onDismiss }: PromptEditorProps) {
           </div>
         </form>
       </Form>
-    </div>
-  )
-}
-
-type TagPickerProps = {
-  tags: Tag[]
-  value: string[]
-  onChange: (value: string[]) => void
-  onCreate: (label: string) => Promise<void>
-  disabled?: boolean
-  isCreating?: boolean
-}
-
-function TagPicker({ tags, value, onChange, onCreate, disabled, isCreating }: TagPickerProps) {
-  const [open, setOpen] = React.useState(false)
-  const [search, setSearch] = React.useState('')
-
-  const selectedTags = React.useMemo(
-    () => tags.filter((tag) => value.includes(tag.id)),
-    [tags, value]
-  )
-
-  const existingNameLookup = React.useMemo(() => {
-    const map = new Map<string, Tag>()
-    for (const tag of tags) {
-      map.set(tag.name.toLowerCase(), tag)
-    }
-    return map
-  }, [tags])
-
-  const normalizedSearch = search.trim()
-  const canCreate =
-    normalizedSearch.length > 0 && !existingNameLookup.has(normalizedSearch.toLowerCase())
-
-  const toggleTag = React.useCallback(
-    (id: string) => {
-      if (disabled) return
-      if (value.includes(id)) {
-        onChange(value.filter((tagID) => tagID !== id))
-      } else {
-        onChange([...value, id])
-      }
-    },
-    [disabled, value, onChange]
-  )
-
-  const handleCreate = React.useCallback(async () => {
-    if (!canCreate || disabled) return
-    await onCreate(normalizedSearch)
-    setSearch('')
-  }, [canCreate, disabled, onCreate, normalizedSearch])
-
-  return (
-    <div className="space-y-2">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            disabled={disabled}
-            className="w-full justify-between"
-          >
-            {value.length ? (
-              <span>
-                {value.length} tag{value.length > 1 ? 's' : ''} selected
-              </span>
-            ) : (
-              <span className="text-muted-foreground">Select tags</span>
-            )}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-0" align="start">
-          <Command>
-            <CommandInput placeholder="Search tags..." value={search} onValueChange={setSearch} />
-            <CommandList>
-              <CommandEmpty>
-                {canCreate ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start gap-2"
-                    onClick={async () => {
-                      await handleCreate()
-                      setOpen(false)
-                    }}
-                    disabled={disabled || isCreating}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Create "{normalizedSearch}"
-                  </Button>
-                ) : (
-                  <span className="px-3 py-2 text-sm text-muted-foreground">No tags found</span>
-                )}
-              </CommandEmpty>
-              <CommandGroup>
-                {tags.map((tag) => {
-                  const checked = value.includes(tag.id)
-                  return (
-                    <CommandItem key={tag.id} value={tag.name} onSelect={() => toggleTag(tag.id)}>
-                      <Checkbox
-                        checked={checked}
-                        className="pointer-events-none mr-2 h-4 w-4"
-                        aria-label={`Toggle ${tag.name}`}
-                      />
-                      <span>{tag.name}</span>
-                    </CommandItem>
-                  )
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-
-      {selectedTags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selectedTags.map((tag) => (
-            <Badge key={tag.id} variant="secondary" className="flex items-center gap-1">
-              {tag.name}
-              <button
-                type="button"
-                onClick={() => toggleTag(tag.id)}
-                className="rounded p-0.5 transition hover:bg-muted"
-                aria-label={`Remove ${tag.name}`}
-                disabled={disabled}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "~/hooks/use-auth";
 import { AuthProvider } from "~/providers/auth-provider/auth-provider";
-import {
-  ReplicacheProvider,
-  useReplicache,
-} from "~/providers/replicache-provider";
 
 import "./style.css";
 
@@ -17,70 +13,42 @@ const providers = [
   },
 ];
 
-// Component for logged-in users with prompt sync
+// Component for logged-in users with prompt sync status
 function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
-  const replicache = useReplicache();
-  const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "synced">(
-    "idle",
-  );
   const [capturedCount, setCapturedCount] = useState(0);
+  const [lastSync, setLastSync] = useState<number | null>(null);
 
-  // Sync captured prompts on mount and periodically
+  // Monitor captured prompts count and sync events
   useEffect(() => {
-    async function syncCapturedPrompts() {
+    async function updateStatus() {
       try {
-        setSyncStatus("syncing");
-
-        // Get captured prompts from background script
+        // Get captured prompts count from background script
         const response = await chrome.runtime.sendMessage({
           type: "GET_CAPTURED_PROMPTS",
         });
         const prompts = response?.prompts || [];
-
-        if (prompts.length === 0) {
-          setSyncStatus("idle");
-          return;
-        }
-
-        console.log("Syncing", prompts.length, "captured prompts");
         setCapturedCount(prompts.length);
-
-        // Create each prompt in Replicache
-        for (const prompt of prompts) {
-          await replicache.mutate.prompt_create({
-            content: prompt.content,
-            title: prompt.title,
-            source: prompt.source,
-            metadata: {
-              url: prompt.url,
-              captureTimestamp: prompt.timestamp,
-            },
-          });
-        }
-
-        // Clear captured prompts from background
-        await chrome.runtime.sendMessage({ type: "CLEAR_CAPTURED_PROMPTS" });
-
-        setSyncStatus("synced");
-        setTimeout(() => setSyncStatus("idle"), 2000);
       } catch (error) {
-        console.error("Failed to sync captured prompts:", error);
-        setSyncStatus("idle");
+        console.error("Failed to get captured prompts status:", error);
       }
     }
 
-    // Sync immediately
-    syncCapturedPrompts();
+    // Update status immediately
+    updateStatus();
 
-    // Sync every 30 seconds
-    const interval = setInterval(syncCapturedPrompts, 30000);
+    // Update status every 5 seconds
+    const interval = setInterval(updateStatus, 5000);
 
-    // Listen for new prompt captures
-    const listener = (message: { type: string }) => {
+    // Listen for sync events from background
+    const listener = (message: { type: string; payload?: { timestamp?: number } }) => {
       if (message.type === "PROMPT_ADDED") {
-        console.log("New prompt captured, will sync soon");
-        // Trigger sync after a short delay to batch multiple captures
-        setTimeout(syncCapturedPrompts, 2000);
+        console.log("New prompt captured");
+        updateStatus();
+      }
+      if (message.type === "PROMPT_SYNCED") {
+        console.log("Prompt synced");
+        setLastSync(Date.now());
+        updateStatus();
       }
     };
 
@@ -90,7 +58,7 @@ function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
       clearInterval(interval);
       chrome.runtime.onMessage.removeListener(listener);
     };
-  }, [replicache]);
+  }, []);
 
   return (
     <div className="text-foreground w-[350px] bg-black">
@@ -103,14 +71,29 @@ function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
         </div>
         <div className="space-y-4">
           <div className="border-border bg-muted/50 rounded-lg border p-4">
-            <p className="text-muted-foreground text-sm">
-              {syncStatus === "syncing" &&
-                `Syncing ${capturedCount} prompts...`}
-              {syncStatus === "synced" && `✓ Synced ${capturedCount} prompts`}
-              {syncStatus === "idle" &&
-                "Extension is synced and ready to capture prompts."}
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium">Capture Status</p>
+              {capturedCount > 0 ? (
+                <span className="text-xs bg-blue-500/10 text-blue-500 px-2 py-1 rounded">
+                  {capturedCount} pending
+                </span>
+              ) : (
+                <span className="text-xs bg-green-500/10 text-green-500 px-2 py-1 rounded">
+                  ✓ Synced
+                </span>
+              )}
+            </div>
+            <p className="text-muted-foreground text-xs">
+              {capturedCount > 0
+                ? `${capturedCount} prompt${capturedCount === 1 ? '' : 's'} will sync automatically in the background.`
+                : "Extension is ready to capture prompts."}
             </p>
-            <p className="text-muted-foreground mt-2 text-xs">
+            {lastSync && (
+              <p className="text-muted-foreground mt-2 text-xs">
+                Last sync: {new Date(lastSync).toLocaleTimeString()}
+              </p>
+            )}
+            <p className="text-muted-foreground mt-2 text-xs border-t border-border/40 pt-2">
               Visit ChatGPT, Claude, or Gemini to auto-capture your prompts.
             </p>
           </div>
@@ -200,29 +183,7 @@ function PopupContent() {
   }
 
   if (auth.current) {
-    // Get first workspace from user's workspaces
-    const workspaceID = auth.current.workspaces?.[0]?.id || "";
-    const token = auth.current.token || "";
-
-    if (!workspaceID || !token) {
-      return (
-        <div className="text-foreground w-[350px] bg-black p-4">
-          <div className="border-destructive/50 text-destructive relative w-full rounded-lg border bg-black px-4 py-3 text-sm">
-            Missing workspace or token. Please log out and try again.
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <ReplicacheProvider
-        token={token}
-        workspaceID={workspaceID}
-        email={auth.current.email}
-      >
-        <LoggedInContent auth={auth} />
-      </ReplicacheProvider>
-    );
+    return <LoggedInContent auth={auth} />;
   }
 
   if (!authUrl) {

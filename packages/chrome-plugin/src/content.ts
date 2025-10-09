@@ -270,6 +270,33 @@ function setupPlatformMonitoring(source: PromptSource) {
   const extractor = platformExtractors[source];
   let lastCapturedContent = "";
   let lastCaptureTime = 0;
+  const MIN_DUPLICATE_INTERVAL = 5000;
+  const MIN_CAPTURE_INTERVAL = 750;
+  let suppressCaptureUntil = 0;
+
+  const captureIfNew = (rawContent: string | null, reason: string) => {
+    const now = Date.now();
+    if (now < suppressCaptureUntil) {
+      console.log(`[Prompt Saver] ⏱️  Capture suppressed (${reason})`);
+      return;
+    }
+
+    const content = rawContent?.trim();
+    if (!content) {
+      return;
+    }
+
+    if (content === lastCapturedContent && now - lastCaptureTime < MIN_DUPLICATE_INTERVAL) {
+      console.log(`[Prompt Saver] ⏭️  Skipping duplicate prompt (${reason})`);
+      suppressCaptureUntil = now + MIN_CAPTURE_INTERVAL;
+      return;
+    }
+
+    lastCapturedContent = content;
+    lastCaptureTime = now;
+    suppressCaptureUntil = now + MIN_CAPTURE_INTERVAL;
+    capturePrompt(content, source);
+  };
 
   console.log(`[Prompt Saver] 🎯 Setting up auto-capture for ${source}`);
   console.log("[Prompt Saver] Submit button selector:", extractor.submitButton);
@@ -295,14 +322,8 @@ function setupPlatformMonitoring(source: PromptSource) {
               const content = parts.join('\\n').trim();
 
               if (content && content.length >= 3) {
-                // Deduplicate
-                const now = Date.now();
-                if (content !== lastCapturedContent || now - lastCaptureTime > 2000) {
-                  console.log('[Prompt Saver] 📝 Intercepted from fetch:', content.substring(0, 50) + '...');
-                  lastCapturedContent = content;
-                  lastCaptureTime = now;
-                  capturePrompt(content, source);
-                }
+                console.log('[Prompt Saver] 📝 Intercepted from fetch:', content.substring(0, 50) + '...');
+                captureIfNew(content, 'fetch intercept');
               }
             }
           }
@@ -340,18 +361,7 @@ function setupPlatformMonitoring(source: PromptSource) {
         content ? `${content.substring(0, 50)}...` : "null",
       );
 
-      if (!content) return;
-
-      // Deduplicate: don't capture the same content within 2 seconds
-      const now = Date.now();
-      if (content === lastCapturedContent && now - lastCaptureTime < 2000) {
-        console.log("[Prompt Saver] ⏭️  Skipping duplicate prompt");
-        return;
-      }
-
-      lastCapturedContent = content;
-      lastCaptureTime = now;
-      capturePrompt(content, source);
+      captureIfNew(content, 'submit button');
     },
     true,
   ); // Use capture phase to catch events early
@@ -370,29 +380,13 @@ function setupPlatformMonitoring(source: PromptSource) {
 
       console.log("[Prompt Saver] Enter key pressed in input field!");
 
-      // Small delay to ensure content is processed before capturing
-      // This helps capture content before it might be cleared by the platform
-      setTimeout(() => {
-        // Capture immediately before the content is sent
-        const content = extractor.getPromptText();
-        console.log(
-          "[Prompt Saver] Extracted content (Enter):",
-          content ? `${content.substring(0, 50)}...` : "null",
-        );
+      const content = extractor.getPromptText();
+      console.log(
+        "[Prompt Saver] Extracted content (Enter):",
+        content ? `${content.substring(0, 50)}...` : "null",
+      );
 
-        if (!content) return;
-
-        // Deduplicate
-        const now = Date.now();
-        if (content === lastCapturedContent && now - lastCaptureTime < 2000) {
-          console.log("[Prompt Saver] ⏭️  Skipping duplicate prompt");
-          return;
-        }
-
-        lastCapturedContent = content;
-        lastCaptureTime = now;
-        capturePrompt(content, source);
-      }, 10); // Small delay to handle platform-specific timing
+      captureIfNew(content, 'enter key');
     },
     true,
   );
@@ -413,14 +407,7 @@ function setupPlatformMonitoring(source: PromptSource) {
           // Small delay to capture content before it's cleared
           setTimeout(() => {
             const content = extractor.getPromptText();
-            if (content) {
-              const now = Date.now();
-              if (content !== lastCapturedContent && now - lastCaptureTime >= 2000) {
-                lastCapturedContent = content;
-                lastCaptureTime = now;
-                capturePrompt(content, source);
-              }
-            }
+            captureIfNew(content, 'form submit');
           }, 10); // Small delay to allow DOM updates before capturing
         }, { once: true }); // Only listen once per form
       }

@@ -3,14 +3,15 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { assertActor, useWorkspaceID } from "../../actor";
-import { TagSchema } from "../../models/Tag";
+import { defineEvent } from "../../event";
 import { PromptSchema } from "../../models/Prompt";
+import { TagSchema } from "../../models/Tag";
+import { VisibleError } from "../../util/error";
 import { removeTimestamps } from "../../util/sql";
 import { useTransaction } from "../../util/transaction";
 import { zod } from "../../util/zod";
-import { VisibleError } from "../../util/error";
-import { prompt } from "./prompt.sql";
 import { promptTag, tag } from "../tag/tag.sql";
+import { prompt } from "./prompt.sql";
 
 const PromptCreateSchema = z
   .object({
@@ -23,6 +24,7 @@ const PromptCreateSchema = z
     isFavorite: PromptSchema.shape.isFavorite.optional(),
     metadata: PromptSchema.shape.metadata.optional(),
     tagIDs: z.array(TagSchema.shape.id).max(20).optional(),
+    skipCategorization: z.boolean().optional(),
   })
   .strict();
 
@@ -86,9 +88,7 @@ type TransactionLike = Parameters<Parameters<typeof useTransaction>[0]>[0];
 const normalizeTagIDs = (tagIDs: string[] | undefined) => {
   if (!tagIDs) return undefined;
   const unique = new Set(
-    tagIDs
-      .map((value) => value.trim())
-      .filter((value) => value.length > 0),
+    tagIDs.map((value) => value.trim()).filter((value) => value.length > 0),
   );
   return Array.from(unique);
 };
@@ -151,7 +151,10 @@ const applyPromptTags = async (
     })
     .from(promptTag)
     .where(
-      and(eq(promptTag.workspaceID, workspaceID), eq(promptTag.promptID, promptID)),
+      and(
+        eq(promptTag.workspaceID, workspaceID),
+        eq(promptTag.promptID, promptID),
+      ),
     )
     .execute();
 
@@ -200,6 +203,17 @@ const applyPromptTags = async (
 };
 
 export namespace Prompt {
+  export const Events = {
+    PromptCreated: defineEvent(
+      "prompt.created",
+      z.object({
+        promptID: z.string().cuid2(),
+        workspaceID: z.string().cuid2(),
+        skipCategorization: z.boolean().optional(),
+      }),
+    ),
+  };
+
   export const create = zod(PromptCreateSchema, (input) =>
     useTransaction(async (tx) => {
       const actor = assertActor("user");
@@ -248,6 +262,15 @@ export namespace Prompt {
 
       if (tagIDs !== undefined) {
         await applyPromptTags(tx, actor.properties.workspaceID, id, tagIDs);
+      }
+
+      // Publish event for auto-categorization after prompt is saved
+      if (!input.skipCategorization && tagIDs === undefined) {
+        await Events.PromptCreated.create({
+          promptID: id,
+          workspaceID: actor.properties.workspaceID,
+          skipCategorization: false,
+        });
       }
 
       return result;

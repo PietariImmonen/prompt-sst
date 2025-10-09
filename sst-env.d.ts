@@ -57,6 +57,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "OpenRouterApiKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "Realtime": {
       "authorizer": string
       "endpoint": string

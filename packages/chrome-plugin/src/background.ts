@@ -1,6 +1,8 @@
 // Background service worker for Chrome extension
+import { createId } from '@paralleldrive/cuid2'
 
 type CapturedPrompt = {
+  id: string
   content: string
   title: string
   source: 'chatgpt' | 'claude' | 'gemini' | 'grok' | 'other'
@@ -55,6 +57,8 @@ function computeCurrentAccount(store: AuthStorage | null): StoredAccount | null 
   return firstKey ? store.accounts[firstKey] : null
 }
 
+// Removed Replicache - using direct API calls instead to avoid service worker issues
+
 async function refreshAuthState() {
   const raw = await new Promise<unknown | null>((resolve) => {
     chrome.storage.local.get([...AUTH_STORAGE_KEYS], (result) => {
@@ -64,6 +68,7 @@ async function refreshAuthState() {
   })
 
   if (!raw) {
+    console.log('No auth state found')
     authState = null
     currentAccount = null
     return
@@ -73,6 +78,7 @@ async function refreshAuthState() {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
     authState = parsed as AuthStorage
     currentAccount = computeCurrentAccount(authState)
+    console.log('Auth state refreshed:', { hasAccount: !!currentAccount, email: currentAccount?.email })
   } catch (error) {
     console.error('Failed to parse auth state from storage', error)
     authState = null
@@ -83,6 +89,13 @@ async function refreshAuthState() {
 async function refreshWorkspaceId() {
   const stored = await getFromStorage<string>(WORKSPACE_STORAGE_KEY)
   cachedWorkspaceId = typeof stored === 'string' && stored.length > 0 ? stored : null
+  console.log('Workspace ID refreshed:', { cachedWorkspaceId })
+
+  // If no cached workspace, try to get from current account
+  if (!cachedWorkspaceId && currentAccount?.workspaces?.length) {
+    cachedWorkspaceId = currentAccount.workspaces[0].id
+    console.log('Using workspace from account:', cachedWorkspaceId)
+  }
 }
 
 async function resolveWorkspaceId(account: StoredAccount | null): Promise<string | null> {
@@ -127,14 +140,23 @@ chrome.storage.local.get('capturedPrompts', (result) => {
   }
 })
 
-void refreshAuthState().then(() => {
+// Initialize auth and workspace on startup
+;(async () => {
+  await Promise.all([refreshAuthState(), refreshWorkspaceId()])
+  console.log('Background initialization complete')
+  void syncCapturedPrompts()
+})()
+
+// Sync prompts when service worker wakes up (instead of interval-based)
+chrome.runtime.onStartup.addListener(() => {
+  console.log('Service worker started, checking for pending prompts...')
   void syncCapturedPrompts()
 })
-void refreshWorkspaceId()
 
-setInterval(() => {
+// Also try to sync when extension icon is clicked (opens popup)
+chrome.action.onClicked.addListener(() => {
   void syncCapturedPrompts()
-}, 30000)
+})
 
 // Save captured prompts to storage
 function savePromptsToStorage() {
@@ -144,7 +166,7 @@ function savePromptsToStorage() {
 }
 
 // Add a captured prompt
-function addCapturedPrompt(prompt: CapturedPrompt) {
+function addCapturedPrompt(prompt: Omit<CapturedPrompt, 'id'>) {
   // Deduplicate: skip if same content was captured recently
   const recentDuplicate = capturedPrompts.find(
     p => p.content === prompt.content &&
@@ -156,7 +178,13 @@ function addCapturedPrompt(prompt: CapturedPrompt) {
     return
   }
 
-  capturedPrompts.push(prompt)
+  // Generate stable ID for this prompt
+  const promptWithId: CapturedPrompt = {
+    ...prompt,
+    id: createId()
+  }
+
+  capturedPrompts.push(promptWithId)
   savePromptsToStorage()
 
   void syncCapturedPrompts()
@@ -164,7 +192,7 @@ function addCapturedPrompt(prompt: CapturedPrompt) {
   // Notify any open popups that a new prompt was captured
   chrome.runtime.sendMessage({
     type: 'PROMPT_ADDED',
-    payload: prompt
+    payload: promptWithId
   }).catch(() => {
     // No listeners, that's fine
   })
@@ -183,62 +211,69 @@ function clearCapturedPrompts() {
 
 async function syncCapturedPrompts() {
   if (isSyncing) {
+    console.log('Sync already in progress, skipping')
     return
   }
 
   if (capturedPrompts.length === 0) {
+    console.log('No captured prompts to sync')
     return
   }
 
-  if (!currentAccount) {
+  // Check auth state
+  if (!currentAccount || !cachedWorkspaceId) {
+    console.log('Refreshing auth and workspace state...')
     await refreshAuthState()
+    await refreshWorkspaceId()
   }
 
-  const account = currentAccount
-  if (!account?.token) {
-    console.warn('Cannot sync prompts: no authenticated account')
-    return
-  }
-
-  const workspaceId = await resolveWorkspaceId(account)
-  if (!workspaceId) {
-    console.warn('Cannot sync prompts: no workspace selected')
+  if (!currentAccount?.token || !cachedWorkspaceId) {
+    console.error('Cannot sync prompts - missing credentials:', {
+      hasToken: !!currentAccount?.token,
+      hasWorkspace: !!cachedWorkspaceId
+    })
+    console.log('Prompts will remain queued and sync on next attempt')
     return
   }
 
   isSyncing = true
+  console.log(`Starting sync of ${capturedPrompts.length} prompts via API...`)
 
   try {
     const queue = [...capturedPrompts]
 
     for (const prompt of queue) {
       try {
+        console.log('Syncing prompt:', { id: prompt.id, title: prompt.title, source: prompt.source })
+
+        // Direct API call instead of Replicache
         const response = await fetch(`${apiBaseUrl}/prompt`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${account.token}`,
-            'x-prompt-saver-workspace': workspaceId
+            'Authorization': `Bearer ${currentAccount.token}`,
+            'x-prompt-saver-workspace': cachedWorkspaceId
           },
           body: JSON.stringify({
-            title: prompt.title,
+            id: prompt.id,
             content: prompt.content,
+            title: prompt.title,
             source: prompt.source,
             categoryPath: `inbox/${prompt.source}`,
-            visibility: 'private',
-            isFavorite: false,
             metadata: {
               url: prompt.url,
-              captureTimestamp: prompt.timestamp,
+              captureTimestamp: prompt.timestamp.toString(),
               captureSource: 'chrome-extension'
             }
           })
         })
 
         if (!response.ok) {
-          const detail = await response.text().catch(() => response.statusText)
-          throw new Error(`Failed with status ${response.status}: ${detail}`)
+          const errorText = await response.text()
+          throw new Error(`API error: ${response.status} ${errorText}`)
         }
+
+        console.log('✅ Successfully synced prompt via API:', prompt.title, 'with ID:', prompt.id)
 
         capturedPrompts = capturedPrompts.filter((item) => item !== prompt)
         savePromptsToStorage()
@@ -250,10 +285,13 @@ async function syncCapturedPrompts() {
           // No listeners, safe to ignore
         })
       } catch (error) {
-        console.error('Failed to sync captured prompt:', error)
-        break
+        console.error('❌ Failed to sync captured prompt via API:', error)
+        // Don't break - try next prompt
+        // break removed to attempt all prompts
       }
     }
+
+    console.log(`Sync complete. Remaining prompts: ${capturedPrompts.length}`)
   } finally {
     isSyncing = false
   }

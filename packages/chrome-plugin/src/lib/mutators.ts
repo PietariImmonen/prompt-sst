@@ -38,7 +38,7 @@ export const mutators = {
       timeDeleted: null
     }
 
-    await tx.set(`prompt/${prompt.id}`, prompt)
+    await tx.set(`/prompt/${prompt.id}`, prompt)
   },
 
   async prompt_update(
@@ -54,7 +54,7 @@ export const mutators = {
       metadata?: Record<string, string | number | boolean | null>
     }
   ) {
-    const existing = await tx.get(`prompt/${input.id}`)
+    const existing = await tx.get(`/prompt/${input.id}`)
     if (!existing) return
 
     const updated = {
@@ -63,7 +63,7 @@ export const mutators = {
       timeUpdated: new Date().toISOString()
     }
 
-    await tx.set(`prompt/${input.id}`, updated)
+    await tx.set(`/prompt/${input.id}`, updated)
   },
 
   async prompt_toggle_favorite(
@@ -73,10 +73,10 @@ export const mutators = {
       isFavorite: boolean
     }
   ) {
-    const existing = await tx.get(`prompt/${input.id}`)
+    const existing = await tx.get(`/prompt/${input.id}`)
     if (!existing) return
 
-    await tx.set(`prompt/${input.id}`, {
+    await tx.set(`/prompt/${input.id}`, {
       ...existing,
       isFavorite: input.isFavorite,
       timeUpdated: new Date().toISOString()
@@ -90,10 +90,10 @@ export const mutators = {
       visibility: 'private' | 'workspace'
     }
   ) {
-    const existing = await tx.get(`prompt/${input.id}`)
+    const existing = await tx.get(`/prompt/${input.id}`)
     if (!existing) return
 
-    await tx.set(`prompt/${input.id}`, {
+    await tx.set(`/prompt/${input.id}`, {
       ...existing,
       visibility: input.visibility,
       timeUpdated: new Date().toISOString()

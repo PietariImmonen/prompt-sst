@@ -12,6 +12,7 @@ export function ReplicacheProvider(props: {
   const [replicache, setReplicache] = React.useState<ReturnType<
     typeof createReplicache
   > | null>(null);
+  const pullTimerRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     const _replicache = createReplicache({
@@ -37,20 +38,33 @@ export function ReplicacheProvider(props: {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pokeHandler = (params: any) => {
-      if (params.actor && params.actor !== props.email) {
-        console.debug("poke handler invoked");
-        replicache.pull();
-      } else {
-        console.debug("poke handler ignored");
+      if (params.workspaceID !== props.workspaceID) {
+        console.debug("poke handler ignored for different workspace");
+        return;
       }
+
+      // Allow self-originated pokes so background captures from other surfaces (e.g. browser extension)
+      // still fan out to the desktop app. A tiny debounce keeps repeated pokes from stacking pulls.
+      console.debug("poke handler pulling", { actor: params.actor });
+      if (pullTimerRef.current) {
+        window.clearTimeout(pullTimerRef.current);
+      }
+      pullTimerRef.current = window.setTimeout(() => {
+        pullTimerRef.current = null;
+        void replicache.pull();
+      }, 100);
     };
 
     bus.on("poke", pokeHandler);
 
     return () => {
       bus.off("poke", pokeHandler);
+      if (pullTimerRef.current) {
+        window.clearTimeout(pullTimerRef.current);
+        pullTimerRef.current = null;
+      }
     };
-  }, [props.email, replicache]);
+  }, [props.email, props.workspaceID, replicache]);
 
   return (
     <ReplicacheContext.Provider value={replicache ?? undefined}>

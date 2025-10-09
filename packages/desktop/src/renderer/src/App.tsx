@@ -12,6 +12,7 @@ import { BackgroundSyncProvider } from '@/providers/background-sync-provider'
 import AuthPage from '@/pages/auth'
 import PromptsPage from '@/pages/prompts'
 import SettingsPage from '@/pages/settings'
+import TagsPage from '@/pages/tags'
 import SidebarLayout from '@/components/layout/sidebar-layout'
 import { Toaster } from '@/components/ui/sonner'
 import { PromptCaptureProvider } from '@/providers/prompt-capture-provider'
@@ -97,6 +98,7 @@ const AuthenticatedApp = () => {
                 <Route index element={<Navigate to="/sessions" replace />} />
                 <Route path="sessions" element={<PromptsPage />} />
                 <Route path="sessions/:promptId/edit" element={<PromptEditorPage />} />
+                <Route path="tags" element={<TagsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Routes>

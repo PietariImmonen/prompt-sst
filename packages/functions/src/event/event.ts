@@ -1,10 +1,12 @@
 import { ActorContext } from "@prompt-saver/core/actor";
+import { LLM } from "@prompt-saver/core/domain/llm";
+import { Prompt } from "@prompt-saver/core/domain/prompt";
 import { User } from "@prompt-saver/core/domain/user";
 import { UserSettings } from "@prompt-saver/core/domain/user-settings";
 import { bus } from "sst/aws/bus";
 
 export const handler = bus.subscriber(
-  [User.Events.UserCreated],
+  [User.Events.UserCreated, Prompt.Events.PromptCreated],
   async (event) => {
     console.log(event.type, event.properties, event.metadata);
     switch (event.type) {
@@ -14,12 +16,27 @@ export const handler = bus.subscriber(
 
           await Promise.all([
             UserSettings.create({
-              fullSentences: false,
-              language: "fi",
               userID,
               inAppOnboardingCompleted: false,
             }),
           ]);
+        });
+        break;
+      }
+      case "prompt.created": {
+        await ActorContext.with(event.metadata.actor, async () => {
+          const { promptID, workspaceID, skipCategorization } =
+            event.properties;
+
+          console.log(
+            `[Event] Processing prompt.created event for prompt ${promptID}`,
+          );
+
+          await LLM.analyzePrompt({
+            promptID,
+            workspaceID,
+            skipCategorization,
+          });
         });
         break;
       }

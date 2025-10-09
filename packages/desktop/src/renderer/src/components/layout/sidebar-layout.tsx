@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LogOut, MessageSquare } from 'lucide-react'
+import { LogOut, MessageSquare, Tag } from 'lucide-react'
 
 import {
   Sidebar,
@@ -28,6 +28,11 @@ const menuItems = [
     title: 'Prompts',
     url: '/sessions',
     icon: MessageSquare
+  },
+  {
+    title: 'Tags',
+    url: '/tags',
+    icon: Tag
   }
   // {
   //   title: 'Settings',
