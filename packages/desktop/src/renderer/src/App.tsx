@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 
 import { useAuth } from '@/hooks/use-auth'
 import { WorkspaceProvider } from '@/providers/workspace-provider'
@@ -8,6 +8,8 @@ import { RealtimeProvider } from '@/providers/realtime-provider'
 import { ReplicacheProvider } from '@/providers/replicache-provider'
 import { AuthProvider } from '@/providers/auth-provider'
 import { BackgroundSyncProvider } from '@/providers/background-sync-provider'
+import { useReplicache } from '@/hooks/use-replicache'
+import { UserSettingsStore } from '@/data/user-settings'
 
 import AuthPage from '@/pages/auth'
 import PromptsPage from '@/pages/prompts'
@@ -20,15 +22,106 @@ import { CallbackPage } from '@/routes/auth/callback/callback'
 import OnboardingPage from '@/routes/onboarding'
 import PromptEditorPage from '@/pages/prompt-editor'
 
-const SplashScreen = () => {
+const SplashScreen = ({ message = 'Loading workspace…' }: { message?: string }) => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-foreground">
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-foreground/80" />
-        <p className="text-sm text-muted-foreground">Loading workspace…</p>
+        <p className="text-sm text-muted-foreground">{message}</p>
       </div>
     </div>
   )
+}
+
+const OnboardingRouter = ({ children }: { children: React.ReactNode }) => {
+  const rep = useReplicache()
+  const auth = useAuth()
+  const location = useLocation()
+  const [onboardingStatus, setOnboardingStatus] = useState<'checking' | 'needed' | 'completed'>(
+    'checking'
+  )
+
+  useEffect(() => {
+    let mounted = true
+
+    const checkOnboarding = async () => {
+      // Wait for auth to be ready
+      if (!auth.current) {
+        return
+      }
+
+      // First, check from auth context (API response) - this is immediate
+      const workspace = auth.current?.workspaces?.[0]
+      const apiSettings = workspace?.userSettings
+
+      if (apiSettings) {
+        console.log('OnboardingRouter - Using user settings from API:', apiSettings)
+        if (apiSettings.inAppOnboardingCompleted) {
+          console.log('OnboardingRouter - User has completed onboarding (from API)')
+          setOnboardingStatus('completed')
+          return
+        } else {
+          console.log('OnboardingRouter - User needs onboarding (from API)')
+          setOnboardingStatus('needed')
+          return
+        }
+      }
+
+      // If no API settings available, wait for Replicache as fallback
+      if (!rep) {
+        return
+      }
+
+      try {
+        // Check onboarding status from Replicache
+        const settings = await rep.query(UserSettingsStore.get())
+        console.log('OnboardingRouter - User settings from Replicache:', settings)
+
+        if (!mounted) return
+
+        if (settings?.inAppOnboardingCompleted) {
+          console.log('OnboardingRouter - User has completed onboarding (from Replicache)')
+          setOnboardingStatus('completed')
+        } else {
+          console.log('OnboardingRouter - User needs onboarding (from Replicache)')
+          setOnboardingStatus('needed')
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status from Replicache:', error)
+        if (!mounted) return
+        // Default to needed if we can't determine
+        setOnboardingStatus('needed')
+      }
+    }
+
+    checkOnboarding()
+
+    return () => {
+      mounted = false
+    }
+  }, [rep, auth.current])
+
+  if (onboardingStatus === 'checking') {
+    return <SplashScreen message="Loading workspace…" />
+  }
+
+  // Handle routing based on onboarding status and current location
+  const isOnOnboardingPage = location.pathname === '/onboarding'
+  const isProtectedRoute = !location.pathname.startsWith('/auth') && !isOnOnboardingPage
+
+  // If user needs onboarding but is on a protected route, redirect to onboarding
+  if (onboardingStatus === 'needed' && isProtectedRoute) {
+    console.log('OnboardingRouter - Redirecting to onboarding from:', location.pathname)
+    return <Navigate to="/onboarding" replace />
+  }
+
+  // If user has completed onboarding but is on the onboarding page, redirect to sessions
+  if (onboardingStatus === 'completed' && isOnOnboardingPage) {
+    console.log('OnboardingRouter - Redirecting to sessions from onboarding')
+    return <Navigate to="/sessions" replace />
+  }
+
+  return <>{children}</>
 }
 
 const AuthenticatedApp = () => {
@@ -92,16 +185,18 @@ const AuthenticatedApp = () => {
       >
         <WorkspaceProvider workspace={workspace}>
           <PromptCaptureProvider>
-            <Routes>
-              <Route path="/onboarding" element={<OnboardingPage />} />
-              <Route path="/" element={<SidebarLayout />}>
-                <Route index element={<Navigate to="/sessions" replace />} />
-                <Route path="sessions" element={<PromptsPage />} />
-                <Route path="sessions/:promptId/edit" element={<PromptEditorPage />} />
-                <Route path="tags" element={<TagsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-              </Route>
-            </Routes>
+            <OnboardingRouter>
+              <Routes>
+                <Route path="/onboarding" element={<OnboardingPage />} />
+                <Route path="/" element={<SidebarLayout />}>
+                  <Route index element={<Navigate to="/sessions" replace />} />
+                  <Route path="sessions" element={<PromptsPage />} />
+                  <Route path="sessions/:promptId/edit" element={<PromptEditorPage />} />
+                  <Route path="tags" element={<TagsPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                </Route>
+              </Routes>
+            </OnboardingRouter>
           </PromptCaptureProvider>
         </WorkspaceProvider>
       </ReplicacheProvider>

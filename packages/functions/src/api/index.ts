@@ -7,6 +7,7 @@ import { ZodError } from "zod";
 
 import { AccountApi } from "./account";
 import { auth } from "./auth";
+import { OnboardingApi } from "./onboarding";
 import { PromptApi } from "./prompt";
 import { ReplicacheApi } from "./replicache";
 import { WorkspaceApi } from "./workspace";
@@ -69,6 +70,7 @@ const routes = app
   .route("/sync", ReplicacheApi.route)
   .route("/prompt", PromptApi.route)
   .route("/workspace", WorkspaceApi.route)
+  .route("/onboarding", OnboardingApi.route)
   .onError((error, c) => {
     if (error instanceof VisibleError) {
       return c.json(

@@ -14,21 +14,6 @@ export function CallbackPage() {
   const errorDescription = searchParams.get('error_description')
 
   React.useEffect(() => {
-    const completeAuthFlow = async () => {
-      try {
-        // Refresh the auth state to get the new token and updated account info
-        // Since account, workspace, and user are now created during Google auth,
-        // we just need to refresh to get the updated information
-        await auth.refresh()
-
-        // Redirect to onboarding (workspace and user should already be created)
-        navigate('/onboarding', { replace: true })
-      } catch (err) {
-        console.error('Error completing auth flow', err)
-        navigate('/auth/login')
-      }
-    }
-
     if (errorDescription === 'no_account') {
       navigate({
         pathname: '/auth/login',
@@ -37,10 +22,28 @@ export function CallbackPage() {
           timestamp: new Date().getTime().toString()
         }).toString()
       })
-    } else if (auth.isReady && auth.current && !error) {
-      completeAuthFlow()
+      return
     }
-  }, [auth, errorDescription, error, navigate])
+
+    // Once auth is ready and we have a current user, check onboarding status and route accordingly
+    if (auth.isReady && auth.current && !error) {
+      console.log('Callback - Auth ready, checking onboarding status')
+
+      // Get the first workspace and its user settings
+      const workspace = auth.current.workspaces?.[0]
+      const userSettings = workspace?.userSettings
+
+      console.log('Callback - User settings:', userSettings)
+
+      if (userSettings?.inAppOnboardingCompleted) {
+        console.log('Callback - User already onboarded, redirecting to /sessions')
+        navigate('/sessions', { replace: true })
+      } else {
+        console.log('Callback - User needs onboarding, redirecting to /onboarding')
+        navigate('/onboarding', { replace: true })
+      }
+    }
+  }, [auth.isReady, auth.current, error, errorDescription, navigate])
 
   if (error) {
     return (

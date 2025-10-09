@@ -1,63 +1,153 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReplicache } from '@/hooks/use-replicache'
-import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
 import { UserSettingsStore } from '@/data/user-settings'
+import { ProgressIndicator } from '@/components/onboarding/progress-indicator'
+import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
+import { StepShortcuts } from '@/components/onboarding/step-shortcuts'
+import { StepChromeExtension } from '@/components/onboarding/step-chrome-extension'
+import { toast } from 'sonner'
+import type { UserRole } from '@prompt-saver/core/domain/onboarding/role-tags'
+
+type OnboardingStep = 1 | 2 | 3
 
 export function OnboardingPage() {
   const navigate = useNavigate()
-  const [autoCapture, setAutoCapture] = React.useState(true)
   const rep = useReplicache()
+  const [currentStep, setCurrentStep] = React.useState<OnboardingStep>(1)
+  const [autoCapture, setAutoCapture] = React.useState(true)
+  const [examplePrompt, setExamplePrompt] = React.useState<{
+    title: string
+    content: string
+  } | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Check if user already completed onboarding and redirect if so
+  React.useEffect(() => {
+    if (!rep) return
 
-    if (rep) {
-      // Get the current user settings
-      const settings = await rep.query(UserSettingsStore.get())
-
-      if (settings) {
-        // Update the autoCapture setting
-        await rep.mutate.user_settings_update({
-          ...settings,
-          inAppOnboardingCompleted: true
-        })
+    const checkOnboardingStatus = async () => {
+      try {
+        const settings = await rep.query(UserSettingsStore.get())
+        if (settings?.inAppOnboardingCompleted) {
+          console.log('Onboarding - User already completed onboarding, redirecting to sessions')
+          navigate('/sessions', { replace: true })
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error)
       }
     }
 
-    // Redirect to the main application
-    navigate('/sessions')
+    checkOnboardingStatus()
+  }, [rep, navigate])
+
+  // Show loading state while Replicache is initializing
+  if (!rep) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-black p-4 text-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const handleRoleSelection = async (role: UserRole, autoCaptureEnabled: boolean) => {
+    setAutoCapture(autoCaptureEnabled)
+
+    // Create tags and example prompt immediately so it's available in the palette
+    if (rep) {
+      try {
+        // Get tags for the selected role and example prompt
+        const { getTagsForRole } = await import('@prompt-saver/core/domain/onboarding/role-tags')
+        const { getExamplePromptForRole } = await import(
+          '@prompt-saver/core/domain/onboarding/example-prompts'
+        )
+
+        const tagNames = getTagsForRole(role)
+        const promptData = getExamplePromptForRole(role)
+        setExamplePrompt(promptData)
+
+        // Create tags via Replicache mutator
+        // @ts-expect-error - tag_create_batch is a custom mutator
+        await rep.mutate.tag_create_batch({
+          tags: tagNames.map((name) => ({ name }))
+        })
+
+        // Wait a bit for tags to be created
+        await new Promise((resolve) => setTimeout(resolve, 200))
+      } catch (error) {
+        console.error('Failed to create example prompt:', error)
+        toast.error('Failed to create example prompt')
+      }
+    }
+
+    setCurrentStep(2)
+  }
+
+  const handleShortcutsNext = () => {
+    setCurrentStep(3)
+  }
+
+  const handleShortcutsSkip = () => {
+    setCurrentStep(3)
+  }
+
+  const handleChromeExtensionNext = async () => {
+    // Complete onboarding after Chrome extension step
+    await completeOnboarding()
+  }
+
+  const completeOnboarding = async () => {
+    if (!rep) {
+      toast.error('Application not ready. Please try again.')
+      throw new Error('Replicache not available')
+    }
+
+    try {
+      // Update user settings to mark onboarding complete
+      const settings = await rep.query(UserSettingsStore.get())
+      if (settings) {
+        await rep.mutate.user_settings_update({
+          ...settings,
+          inAppOnboardingCompleted: true,
+          enableAutoCapture: autoCapture
+        })
+
+        // Wait for the mutation to be pushed to the backend
+        console.log('Onboarding - Waiting for push to complete...')
+        await rep.push()
+        console.log('Onboarding - Push complete')
+      }
+
+      toast.success('Welcome to Clyo! Your workspace is ready.')
+
+      // Navigate to main app
+      navigate('/sessions', { replace: true })
+    } catch (error) {
+      console.error('Failed to complete onboarding:', error)
+      toast.error('Failed to complete onboarding. Please try again.')
+      throw error
+    }
   }
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-black p-4 text-foreground">
-      <div className="w-full max-w-md rounded-lg border border-border/60 bg-card p-8 shadow-xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold">Welcome to Prompt</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Let's set up your workspace.</p>
+      <div className="w-full space-y-8">
+        <ProgressIndicator currentStep={currentStep} totalSteps={3} />
+
+        <div className="flex justify-center">
+          {currentStep === 1 && <StepRoleSelection onNext={handleRoleSelection} />}
+          {currentStep === 2 && examplePrompt && (
+            <StepShortcuts
+              onNext={handleShortcutsNext}
+              onSkip={handleShortcutsSkip}
+              examplePromptTitle={examplePrompt.title}
+              examplePromptContent={examplePrompt.content}
+            />
+          )}
+          {currentStep === 3 && <StepChromeExtension onNext={handleChromeExtensionNext} />}
         </div>
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 p-4 transition-colors hover:bg-muted/30">
-              <div>
-                <h3 className="font-medium">Auto-capture prompts</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Automatically capture prompts from your AI applications
-                </p>
-              </div>
-              <Switch checked={autoCapture} onCheckedChange={setAutoCapture} />
-            </div>
-          </div>
-          <div className="mt-8">
-            <Button
-              type="submit"
-              className="w-full rounded-md bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-purple-500/20 transition-all duration-200 hover:scale-[1.02]"
-            >
-              Continue
-            </Button>
-          </div>
-        </form>
       </div>
     </div>
   )

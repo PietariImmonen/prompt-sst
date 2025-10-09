@@ -81,54 +81,96 @@ const app = issuer({
 
       // If no account exists, create account, workspace, and user
       if (!account) {
-        // Create account
-        const accountID = await Account.create({
-          email: email,
-          name: name,
-          emailLanguage: language,
-        });
+        try {
+          console.log("Creating new account for email:", email);
 
-        // Get the created account
-        account = await Account.fromID(accountID);
+          // Create account
+          const accountID = await Account.create({
+            email: email,
+            name: name,
+            emailLanguage: language,
+          });
 
-        // Create workspace
-        const workspaceName = `${name}'s Workspace`;
-        const workspaceSlug = `${name.toLowerCase().replace(/\s+/g, "-")}-${createId().slice(0, 6)}`;
+          // Get the created account
+          account = await Account.fromID(accountID);
+          console.log("Account created with ID:", accountID);
 
-        const workspaceResult = await Workspace.create({
-          type: "organization",
-          name: workspaceName,
-          slug: workspaceSlug,
-        });
+          // Create workspace
+          const workspaceName = `${name}'s Workspace`;
+          const workspaceSlug = `${name.toLowerCase().replace(/\s+/g, "-")}-${createId().slice(0, 6)}`;
 
-        // Create user in the workspace
-        const userID = await ActorContext.with(
-          {
-            type: "system",
-            properties: {
-              workspaceID: workspaceResult.id,
+          const workspaceResult = await Workspace.create({
+            type: "organization",
+            name: workspaceName,
+            slug: workspaceSlug,
+          });
+          console.log("Workspace created with ID:", workspaceResult.id);
+
+          // Create user in the workspace
+          const userID = await ActorContext.with(
+            {
+              type: "system",
+              properties: {
+                workspaceID: workspaceResult.id,
+              },
             },
-          },
-          () =>
-            User.create({
-              email: email,
-              name: name,
-              role: "admin",
-              status: "active",
-              first: true,
-              workspaceID: workspaceResult.id,
-            }),
-        );
+            () =>
+              User.create({
+                email: email,
+                name: name,
+                role: "admin",
+                status: "active",
+                first: true,
+                workspaceID: workspaceResult.id,
+              }),
+          );
+          console.log("User created with ID:", userID);
 
-        // Create user settings
-        await UserSettings.create({
-          userID: userID,
-          workspaceID: workspaceResult.id,
-          inAppOnboardingCompleted: true,
-          shortcutCapture: "CmdOrCtrl+Shift+P",
-          shortcutPalette: "CmdOrCtrl+Shift+O",
-          enableAutoCapture: true,
-        });
+          // Create user settings
+          await UserSettings.create({
+            userID: userID,
+            workspaceID: workspaceResult.id,
+            inAppOnboardingCompleted: false,
+            shortcutCapture: "CmdOrCtrl+Shift+P",
+            shortcutPalette: "CmdOrCtrl+Shift+O",
+            enableAutoCapture: true,
+          });
+          console.log("User settings created for user:", userID);
+        } catch (error: any) {
+          // If we get a duplicate key error, it means another request created the account
+          // Just fetch the existing account and continue
+          if (
+            error?.code === "23505" ||
+            error?.constraint_name === "account_email"
+          ) {
+            console.log(
+              "Account already exists (race condition), fetching existing account for:",
+              email,
+            );
+            account = await Account.fromEmail(email);
+
+            // Verify account was successfully fetched
+            if (!account) {
+              console.error("Failed to fetch account after race condition");
+              throw new Error(
+                "Account creation race condition - failed to fetch account",
+              );
+            }
+            console.log("Successfully fetched existing account:", account.id);
+          } else {
+            // Log and re-throw other errors
+            console.error("Error creating account/workspace/user:", error);
+            throw error;
+          }
+        }
+      } else {
+        console.log("Account already exists for email:", email);
+      }
+
+      // Final verification that we have a valid account
+      if (!account) {
+        console.error("Account is null after creation/fetch logic");
+        throw new Error("Failed to create or fetch account");
       }
 
       return ctx.subject("account", {

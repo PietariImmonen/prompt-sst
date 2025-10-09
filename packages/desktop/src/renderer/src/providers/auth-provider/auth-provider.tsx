@@ -57,78 +57,101 @@ export function AuthProvider(props: AuthProviderProps) {
     }
   }, [])
 
-  const refresh = React.useCallback(async () => {
-    try {
-      const all = []
-      if (!authStore.get()) return
-      for (const token of [...Object.keys(authStore.get()!.accounts), accessToken]) {
-        if (!token) continue
+  const refresh = React.useCallback(
+    async (retryCount = 0) => {
+      const MAX_RETRIES = 2
+      try {
+        const all = []
+        if (!authStore.get()) return
 
-        const prom = api.account.me
-          .$get({}, { headers: { authorization: `Bearer ${token}` } })
-          .then(async (response) => {
-            if (response.ok) {
-              const info = await response.json()
+        console.log('AuthProvider - Starting refresh, retry count:', retryCount)
 
-              if (
-                !accessToken ||
-                !Object.values(authStore.get()!.accounts).find((a) => a.id === info.result.id)
-              ) {
-                const prevStore = authStore.get()!
-                authStore.set({
-                  ...prevStore,
-                  accounts: {
-                    ...prevStore.accounts,
-                    [token]: {
-                      ...info.result,
-                      token
+        for (const token of [...Object.keys(authStore.get()!.accounts), accessToken]) {
+          if (!token) continue
+
+          const prom = api.account.me
+            .$get({}, { headers: { authorization: `Bearer ${token}` } })
+            .then(async (response) => {
+              if (response.ok) {
+                const info = await response.json()
+                console.log('AuthProvider - Successfully fetched account info:', info.result.id)
+
+                if (
+                  !accessToken ||
+                  !Object.values(authStore.get()!.accounts).find((a) => a.id === info.result.id)
+                ) {
+                  const prevStore = authStore.get()!
+                  authStore.set({
+                    ...prevStore,
+                    accounts: {
+                      ...prevStore.accounts,
+                      [token]: {
+                        ...info.result,
+                        token
+                      }
                     }
-                  }
-                })
+                  })
+                  console.log('AuthProvider - Account stored in authStore')
+                }
               }
-            }
 
-            if (!response.ok) {
-              const prevStore = authStore.get()!
-              delete prevStore.accounts[token]
-              authStore.set(prevStore)
-            }
+              if (!response.ok) {
+                console.warn('AuthProvider - Account fetch failed with status:', response.status)
+                const errorBody = await response.text()
+                console.warn('AuthProvider - Error body:', errorBody)
 
-            if (accessToken === token) {
-              const prevStore = authStore.get()!
-              authStore.set({ ...prevStore, current: token })
+                // Only remove token if it's actually invalid (401), not for other errors
+                if (response.status === 401) {
+                  const prevStore = authStore.get()!
+                  delete prevStore.accounts[token]
+                  authStore.set(prevStore)
+                  console.log('AuthProvider - Removed invalid token from store')
+                } else if (retryCount < MAX_RETRIES) {
+                  // Retry on other errors (like 500)
+                  throw new Error(`HTTP ${response.status}: ${errorBody}`)
+                }
+              }
 
-              const isCallbackRoute =
-                window.location.hash.startsWith('#/auth/callback') ||
-                window.location.pathname === '/auth/callback'
+              if (accessToken === token) {
+                const prevStore = authStore.get()!
+                authStore.set({ ...prevStore, current: token })
+                console.log('AuthProvider - Set current account to new token')
 
-              if (isCallbackRoute) {
-                window.location.hash = '#/sessions'
+                // Clear access token from URL/state
+                setAccessToken(null)
+              }
+            })
+            .catch((error) => {
+              console.warn('AuthProvider - Failed to refresh auth token:', error)
+              // Only remove token on network errors after retries
+              if (retryCount >= MAX_RETRIES && authStore.get()?.accounts[token]) {
+                const prevStore = authStore.get()!
+                delete prevStore.accounts[token]
+                authStore.set(prevStore)
+                console.log('AuthProvider - Removed token after max retries')
               } else {
-                window.location.hash = '#/'
+                // Propagate error for retry
+                throw error
               }
-
-              setAccessToken(null)
-            }
-          })
-          .catch((error) => {
-            console.warn('Failed to refresh auth token:', error)
-            // If there's a network error, just remove the invalid token
-            if (authStore.get()?.accounts[token]) {
-              const prevStore = authStore.get()!
-              delete prevStore.accounts[token]
-              authStore.set(prevStore)
-            }
-          })
-        all.push(prom)
+            })
+          all.push(prom)
+        }
+        await Promise.all(all)
+        console.log('AuthProvider - Refresh completed successfully')
+      } catch (error) {
+        console.error('AuthProvider - Refresh failed, retry count:', retryCount, error)
+        // Retry if we haven't exceeded max retries
+        if (retryCount < MAX_RETRIES) {
+          console.log('AuthProvider - Retrying refresh after 1 second...')
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          return refresh(retryCount + 1)
+        }
+      } finally {
+        setIsReady(true)
       }
-      await Promise.all(all)
-    } catch (error) {
-      console.error('Auth refresh failed:', error)
-    } finally {
-      setIsReady(true)
-    }
-  }, [accessToken])
+    },
+    [accessToken]
+  )
 
   React.useEffect(() => {
     refresh()

@@ -10,11 +10,10 @@ import { promptTag, tag } from "./tag.sql";
 
 type TagInsert = typeof tag.$inferInsert;
 
-type TagUpdate = Partial<
-  Pick<TagInsert, "name" | "slug" | "description">
->;
+type TagUpdate = Partial<Pick<TagInsert, "name" | "slug" | "description">>;
 
-const normalizeWhitespace = (value: string) => value.trim().replace(/\s+/g, " ");
+const normalizeWhitespace = (value: string) =>
+  value.trim().replace(/\s+/g, " ");
 
 const slugify = (value: string) =>
   value
@@ -97,7 +96,7 @@ export namespace Tag {
 
       const slugSource =
         input.slug ??
-        (input.name !== undefined ? updates.name ?? input.name : undefined);
+        (input.name !== undefined ? (updates.name ?? input.name) : undefined);
 
       if (slugSource !== undefined) {
         const slug = slugify(slugSource);
@@ -138,7 +137,10 @@ export namespace Tag {
           timeUpdated: sql`CURRENT_TIMESTAMP`,
         })
         .where(
-          and(eq(tag.id, id), eq(tag.workspaceID, actor.properties.workspaceID)),
+          and(
+            eq(tag.id, id),
+            eq(tag.workspaceID, actor.properties.workspaceID),
+          ),
         )
         .execute();
 
@@ -158,6 +160,70 @@ export namespace Tag {
     }),
   );
 
+  export const createBatch = zod(
+    z.object({
+      tags: z.array(
+        z.object({
+          name: z.string(),
+          description: z.string().optional(),
+        }),
+      ),
+    }),
+    (input) =>
+      useTransaction(async (tx) => {
+        const actor = assertActor("user");
+        const workspaceID = actor.properties.workspaceID;
+        const createdTags: Array<{ id: string; name: string; slug: string }> =
+          [];
+
+        for (const tagInput of input.tags) {
+          const name = normalizeWhitespace(tagInput.name);
+          const slug = slugify(name);
+
+          if (!slug) {
+            console.warn(`Skipping tag with empty slug: ${name}`);
+            continue;
+          }
+
+          const record: TagInsert = {
+            id: createId(),
+            workspaceID,
+            name,
+            slug,
+            description: sanitizeDescription(tagInput.description ?? null),
+          };
+
+          try {
+            const [result] = await tx
+              .insert(tag)
+              .values(record)
+              .onConflictDoUpdate({
+                target: [tag.workspaceID, tag.slug],
+                set: {
+                  name: record.name,
+                  description: record.description,
+                  timeDeleted: sql`NULL`,
+                  timeUpdated: sql`CURRENT_TIMESTAMP`,
+                },
+              })
+              .returning();
+
+            if (result) {
+              createdTags.push({
+                id: result.id,
+                name: result.name,
+                slug: result.slug,
+              });
+            }
+          } catch (error) {
+            console.error(`Failed to create tag: ${name}`, error);
+          }
+        }
+
+        return createdTags;
+      }),
+  );
+
   export const listByWorkspace = zod(z.void(), () =>
     useTransaction((tx) => {
       const actor = assertActor("user");
@@ -165,7 +231,10 @@ export namespace Tag {
         .select()
         .from(tag)
         .where(
-          and(eq(tag.workspaceID, actor.properties.workspaceID), isNull(tag.timeDeleted)),
+          and(
+            eq(tag.workspaceID, actor.properties.workspaceID),
+            isNull(tag.timeDeleted),
+          ),
         )
         .execute();
     }),

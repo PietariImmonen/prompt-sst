@@ -5,6 +5,6 @@ export function getPromptPaletteShortcutDisplay(isCapture?: boolean) {
     typeof navigator !== 'undefined'
       ? /Mac|iPhone|iPod|iPad/i.test(navigator.platform ?? '')
       : false
-  const tokens = isMac ? ['⌘', '⇧', isCapture ? 'P' : 'O'] : ['Ctrl', '⇧', isCapture ? 'P' : 'O']
+  const tokens = isMac ? ['⌘', '⇧', isCapture ? 'C' : 'O'] : ['Ctrl', '⇧', isCapture ? 'C' : 'O']
   return tokens.join(' ')
 }

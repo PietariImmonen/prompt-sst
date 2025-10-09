@@ -64,6 +64,7 @@ let isQuitting = false
 const pendingAuthCallbacks: AuthCallbackPayload[] = []
 let rendererReadyForAuthCallbacks = false
 const activeAuthRequests = new Map<string, AuthRequest>()
+const processedAuthRequests = new Set<string>()
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
 
@@ -158,6 +159,13 @@ function renderCallbackComplete() {
 }
 
 function finalizeAuthRequest(id: string, params: URLSearchParams, request: AuthRequest) {
+  // Prevent processing the same auth request multiple times (race condition)
+  if (processedAuthRequests.has(id)) {
+    console.log('Auth request already processed, ignoring duplicate:', id)
+    return
+  }
+  processedAuthRequests.add(id)
+
   try {
     request.server.close()
   } catch (error) {
@@ -183,6 +191,11 @@ function finalizeAuthRequest(id: string, params: URLSearchParams, request: AuthR
     mainWindow.show()
     mainWindow.focus()
   }
+
+  // Clean up processed auth requests after 1 minute
+  setTimeout(() => {
+    processedAuthRequests.delete(id)
+  }, 60000)
 }
 
 function handleAuthRequest(

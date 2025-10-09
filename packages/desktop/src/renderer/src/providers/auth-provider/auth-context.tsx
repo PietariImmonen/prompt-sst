@@ -1,10 +1,15 @@
 import * as React from 'react'
 import { Account as CoreAccount } from '@prompt-saver/core/models/Account'
+import { UserSettings } from '@prompt-saver/core/models/UserSettings'
 import { Workspace } from '@prompt-saver/core/models/Workspace'
+
+export type WorkspaceWithSettings = Workspace & {
+  userSettings?: UserSettings
+}
 
 export type Account = CoreAccount & {
   token: string
-  workspaces: Workspace[]
+  workspaces: WorkspaceWithSettings[]
 }
 
 export interface AuthContextType {
