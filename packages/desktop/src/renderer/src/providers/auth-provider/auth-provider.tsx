@@ -93,15 +93,15 @@ export function AuthProvider(props: AuthProviderProps) {
                   })
                   console.log('AuthProvider - Account stored in authStore')
                 }
-              }
-
-              if (!response.ok) {
+              } else {
                 console.warn('AuthProvider - Account fetch failed with status:', response.status)
                 const errorBody = await response.text()
                 console.warn('AuthProvider - Error body:', errorBody)
 
                 // Only remove token if it's actually invalid (401), not for other errors
-                if (response.status === 401) {
+                // Cast to number to handle status codes not in the OpenAPI spec (like 401 from auth middleware)
+                const statusCode = response.status as number
+                if (statusCode === 401) {
                   const prevStore = authStore.get()!
                   delete prevStore.accounts[token]
                   authStore.set(prevStore)

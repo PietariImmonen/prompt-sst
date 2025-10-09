@@ -1,6 +1,7 @@
-import { ActorContext } from "@prompt-saver/core/actor";
+import { ActorContext, assertActor } from "@prompt-saver/core/actor";
 import { LLM } from "@prompt-saver/core/domain/llm";
 import { Prompt } from "@prompt-saver/core/domain/prompt";
+import { Replicache } from "@prompt-saver/core/domain/replicache";
 import { User } from "@prompt-saver/core/domain/user";
 import { UserSettings } from "@prompt-saver/core/domain/user-settings";
 import { bus } from "sst/aws/bus";
@@ -37,6 +38,11 @@ export const handler = bus.subscriber(
             workspaceID,
             skipCategorization,
           });
+        });
+        const actor = assertActor("user");
+        Replicache.poke({
+          actor: actor.properties.email,
+          workspaceID: actor.properties.workspaceID,
         });
         break;
       }

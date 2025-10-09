@@ -10,7 +10,7 @@
     "@hono/zod-openapi": "^0.18.3",
     "@openauthjs/openauth": "^0.4.3",
     "@prompt-saver/core": "*",
-    "hono": "^4.6.16",
+    "hono": "^4.9.9",
     "remeda": "^2.18.0",
     "sst": "^3.9.2",
     "valibot": "0.30.0",

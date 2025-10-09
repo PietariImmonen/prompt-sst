@@ -135,19 +135,6 @@ export const mutators = new Client<ServerType>()
       console.error('Failed to create tag locally', error)
     }
   })
-  .mutation(
-    'tag_create_batch',
-    async (tx, input: { tags: Array<{ name: string; description?: string }> }) => {
-      try {
-        for (const tagInput of input.tags) {
-          const tag = buildTagRecord(tagInput)
-          await TagStore.set(tag)(tx)
-        }
-      } catch (error) {
-        console.error('Failed to create tags locally', error)
-      }
-    }
-  )
   .mutation('tag_update', async (tx, input) => {
     const existing = await TagStore.fromID(input.id)(tx)
     if (!existing) return

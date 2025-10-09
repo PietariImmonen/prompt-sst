@@ -1,4 +1,4 @@
-import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { assertActor } from "@prompt-saver/core/actor";
 import { Prompt } from "@prompt-saver/core/domain/prompt";
 import { Replicache } from "@prompt-saver/core/domain/replicache";
@@ -50,6 +50,14 @@ export namespace PromptApi {
             },
           },
         },
+        500: {
+          description: "Internal server error",
+          content: {
+            "application/json": {
+              schema: z.object({ error: z.string() }),
+            },
+          },
+        },
       },
     }),
     async (c) => {
@@ -61,7 +69,9 @@ export namespace PromptApi {
           actor: "system",
           workspaceID: actor.properties.workspaceID,
         });
-        return c.json({ result }, 200);
+        // Parse result to ensure it matches the expected schema
+        const validated = PromptSchema.parse(result);
+        return c.json({ result: validated }, 200);
       } catch (error) {
         console.error(error);
         return c.json({ error: "Internal server error" }, 500);

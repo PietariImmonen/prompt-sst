@@ -68,11 +68,10 @@ export function OnboardingPage() {
         const promptData = getExamplePromptForRole(role)
         setExamplePrompt(promptData)
 
-        // Create tags via Replicache mutator
-        // @ts-expect-error - tag_create_batch is a custom mutator
-        await rep.mutate.tag_create_batch({
-          tags: tagNames.map((name) => ({ name }))
-        })
+        // Create tags via Replicache mutator one by one
+        for (const name of tagNames) {
+          await rep.mutate.tag_create({ name })
+        }
 
         // Wait a bit for tags to be created
         await new Promise((resolve) => setTimeout(resolve, 200))

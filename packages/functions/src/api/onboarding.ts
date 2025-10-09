@@ -4,7 +4,6 @@ import {
   isValidRole,
 } from "@prompt-saver/core/domain/onboarding/role-tags";
 import { Tag } from "@prompt-saver/core/domain/tag";
-import { z } from "zod";
 
 const route = new OpenAPIHono().post("/complete", async (c) => {
   try {
