@@ -53,12 +53,14 @@ Successfully implemented an LLM-powered automatic tag assignment system for prom
 ## Technical Decisions
 
 - **Async Processing:** Prompts save immediately; categorization happens asynchronously via event bus
+- **Transaction Safety:** Event is published using `createTransactionEffect()` to ensure it fires **after** the database transaction commits successfully
 - **Retry Logic:** SST event bus handles retries automatically (5-minute timeout configured in `infra/bus.ts`)
 - **Error Handling:** Silent failure with detailed logging if categorization fails
 - **Tag Limit:** LLM returns 3-5 most relevant tags (validated with max 5)
 - **Model:** Using `openai/gpt-4o-mini` for fast and cost-effective categorization
 - **Skip Flag:** `skipCategorization` parameter allows bypassing auto-categorization
 - **Smart Triggering:** Only triggers categorization if no manual tags were provided during creation
+- **Client Initialization:** OpenRouter client created once as singleton at module level (per OpenRouter documentation)
 
 ## Configuration
 

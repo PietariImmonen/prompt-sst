@@ -1,5 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { Resource } from "sst";
+import { bus } from "sst/aws/bus";
 import { z } from "zod";
 
 import { assertActor, useWorkspaceID } from "../../actor";
@@ -8,7 +10,10 @@ import { PromptSchema } from "../../models/Prompt";
 import { TagSchema } from "../../models/Tag";
 import { VisibleError } from "../../util/error";
 import { removeTimestamps } from "../../util/sql";
-import { useTransaction } from "../../util/transaction";
+import {
+  createTransactionEffect,
+  useTransaction,
+} from "../../util/transaction";
 import { zod } from "../../util/zod";
 import { promptTag, tag } from "../tag/tag.sql";
 import { prompt } from "./prompt.sql";
@@ -264,13 +269,15 @@ export namespace Prompt {
         await applyPromptTags(tx, actor.properties.workspaceID, id, tagIDs);
       }
 
-      // Publish event for auto-categorization after prompt is saved
+      // Publish event for auto-categorization after transaction commits
       if (!input.skipCategorization && tagIDs === undefined) {
-        await Events.PromptCreated.create({
-          promptID: id,
-          workspaceID: actor.properties.workspaceID,
-          skipCategorization: false,
-        });
+        await createTransactionEffect(() =>
+          bus.publish(Resource.Bus, Events.PromptCreated, {
+            promptID: id,
+            workspaceID: actor.properties.workspaceID,
+            skipCategorization: false,
+          }),
+        );
       }
 
       return result;
