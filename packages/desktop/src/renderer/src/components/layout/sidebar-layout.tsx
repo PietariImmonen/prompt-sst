@@ -86,7 +86,7 @@ function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="gap-3 pb-4 bg-sidebar">
-        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-background/80 p-2 pr-1 text-foreground transition-colors hover:bg-background">
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-black/80 p-2 pr-1 text-foreground transition-colors hover:bg-black">
           <div className="leading-tight">
             <p className="text-xs font-semibold text-foreground">Prompt palette</p>
             <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
@@ -94,7 +94,7 @@ function AppSidebar() {
             </p>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-background/80 p-2 pr-1 text-foreground transition-colors hover:bg-background">
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-black/80 p-2 pr-1 text-foreground transition-colors hover:bg-black">
           <div className="leading-tight">
             <p className="text-xs font-semibold text-foreground">Prompt capture</p>
             <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
@@ -119,7 +119,7 @@ const SidebarLayout = () => {
   return (
     <SidebarProvider defaultOpen={true}>
       <PromptInsertionPalette />
-      <div className="flex min-h-screen w-full bg-background text-foreground">
+      <div className="flex min-h-screen w-full bg-black text-foreground">
         <AppSidebar />
         <SidebarInset>
           <div className="flex flex-1 flex-col pt-0">

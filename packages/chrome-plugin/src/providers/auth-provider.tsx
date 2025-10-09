@@ -14,7 +14,8 @@ interface AuthContextValue extends AuthState {
   logout: () => void
 }
 
-const STORAGE_KEY = "prompt-saver-auth"
+const PRIMARY_STORAGE_KEY = "prompt-saver.auth"
+const LEGACY_STORAGE_KEY = "prompt-saver-auth"
 
 export function AuthProvider({
   children
@@ -31,8 +32,8 @@ export function AuthProvider({
 
   // Load auth state from chrome storage on mount
   useEffect(() => {
-    chrome.storage.local.get([STORAGE_KEY], (result) => {
-      const stored = result[STORAGE_KEY]
+    chrome.storage.local.get([PRIMARY_STORAGE_KEY, LEGACY_STORAGE_KEY], (result) => {
+      const stored = result[PRIMARY_STORAGE_KEY] ?? result[LEGACY_STORAGE_KEY]
       if (stored) {
         setAuthState({
           isAuthenticated: true,
@@ -66,8 +67,10 @@ export function AuthProvider({
           const { token, email, workspaceID } = message.payload
 
           // Store auth state
+          const value = { token, email, workspaceID }
           chrome.storage.local.set({
-            [STORAGE_KEY]: { token, email, workspaceID }
+            [PRIMARY_STORAGE_KEY]: value,
+            [LEGACY_STORAGE_KEY]: value
           })
 
           setAuthState({
@@ -92,7 +95,7 @@ export function AuthProvider({
   }
 
   const logout = () => {
-    chrome.storage.local.remove([STORAGE_KEY])
+    chrome.storage.local.remove([PRIMARY_STORAGE_KEY, LEGACY_STORAGE_KEY])
     setAuthState({
       isAuthenticated: false,
       token: null,

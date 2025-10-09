@@ -1,9 +1,10 @@
 import { ReadTransaction, WriteTransaction } from 'replicache'
 
-import { Prompt } from '@prompt-saver/core/models/Prompt'
+import { Prompt, PromptWithTags } from '@prompt-saver/core/models/Prompt'
+import type { PromptTag } from '@prompt-saver/core/models/Tag'
 
 export namespace PromptStore {
-  function sortPrompts(list: Prompt[]) {
+  function sortPrompts(list: PromptWithTags[]) {
     return [...list].sort((a, b) => {
       if (a.isFavorite && !b.isFavorite) return -1
       if (!a.isFavorite && b.isFavorite) return 1
@@ -17,6 +18,20 @@ export namespace PromptStore {
     return async (tx: ReadTransaction) => {
       try {
         const prompts = await tx.scan<Prompt>({ prefix: '/prompt/' }).toArray()
+        const promptTags = await tx
+          .scan<PromptTag>({ prefix: '/prompt_tag/' })
+          .toArray()
+
+        const tagsByPrompt = promptTags.reduce<Record<string, string[]>>(
+          (acc, entry) => {
+            if (!entry.promptID || !entry.tagID || entry.timeDeleted) return acc
+            if (!acc[entry.promptID]) acc[entry.promptID] = []
+            acc[entry.promptID].push(entry.tagID)
+            return acc
+          },
+          {}
+        )
+
         // Filter out any invalid prompts and those marked as deleted
         const validPrompts = prompts.filter((prompt) => {
           // Check if prompt has required fields
@@ -26,7 +41,12 @@ export namespace PromptStore {
           }
           return !prompt.timeDeleted
         })
-        return sortPrompts(validPrompts)
+        const enriched = validPrompts.map((prompt) => ({
+          ...prompt,
+          tagIDs: [...(tagsByPrompt[prompt.id] ?? [])]
+        })) as PromptWithTags[]
+
+        return sortPrompts(enriched)
       } catch (error) {
         console.error('Error fetching prompts from Replicache:', error)
         return []
@@ -44,7 +64,19 @@ export namespace PromptStore {
           console.warn('Invalid prompt found for ID:', id)
           return undefined
         }
-        return prompt && !prompt.timeDeleted ? prompt : undefined
+        if (prompt.timeDeleted) return undefined
+
+        const promptTags = await tx
+          .scan<PromptTag>({ prefix: `/prompt_tag/${prompt.id}/` })
+          .toArray()
+        const tagIDs = promptTags
+          .filter((entry) => !entry.timeDeleted && entry.tagID)
+          .map((entry) => entry.tagID)
+
+        return {
+          ...prompt,
+          tagIDs
+        } satisfies PromptWithTags
       } catch (error) {
         console.error(`Error fetching prompt with ID ${id} from Replicache:`, error)
         return undefined
@@ -52,7 +84,7 @@ export namespace PromptStore {
     }
   }
 
-  export function set(prompt: Prompt) {
+  export function set(prompt: Prompt | PromptWithTags) {
     return async (tx: WriteTransaction) => {
       try {
         // Validate prompt before setting

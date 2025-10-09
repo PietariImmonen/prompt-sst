@@ -1,5 +1,6 @@
 import { useWorkspaceID } from "@prompt-saver/core/actor";
 import { Prompt } from "@prompt-saver/core/domain/prompt";
+import { Tag } from "@prompt-saver/core/domain/tag";
 import { User } from "@prompt-saver/core/domain/user";
 import { UserSettings } from "@prompt-saver/core/domain/user-settings";
 import { Workspace } from "@prompt-saver/core/domain/workspace";
@@ -30,7 +31,11 @@ export const server = new Server()
   .expose("user_settings_update", UserSettings.update)
   .expose("prompt_create", Prompt.create)
   .expose("prompt_update", Prompt.update)
+  .expose("prompt_set_tags", Prompt.setTags)
   .expose("prompt_toggle_favorite", Prompt.setFavorite)
-  .expose("prompt_set_visibility", Prompt.setVisibility);
+  .expose("prompt_set_visibility", Prompt.setVisibility)
+  .expose("tag_create", Tag.create)
+  .expose("tag_update", Tag.update)
+  .expose("tag_remove", Tag.remove);
 
 export type ServerType = typeof server;

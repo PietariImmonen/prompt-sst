@@ -39,6 +39,12 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
     const currentAccount = auth.current
     const currentWorkspace = workspaceStore.get()
 
+    // If authenticated but no workspace yet, wait for workspace selection
+    if (currentAccount && !currentWorkspace) {
+      console.log('Auth ready but waiting for workspace selection...')
+      return
+    }
+
     let authData = {
       token: null as string | null,
       workspaceId: null as string | null,
@@ -76,6 +82,12 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
       const currentAccount = auth.current
       const currentWorkspace = workspaceStore.get()
 
+      // If authenticated but no workspace yet, don't sync yet
+      if (currentAccount && !currentWorkspace) {
+        console.log('Auth ready but waiting for workspace selection...')
+        return
+      }
+
       let authData = {
         token: null as string | null,
         workspaceId: null as string | null,
@@ -110,12 +122,23 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
         setTimeout(() => {
           if (auth.current) {
             const currentWorkspace = workspaceStore.get()
-            const authData = {
-              token: auth.current.token,
-              workspaceId: currentWorkspace?.id || null,
-              apiEndpoint: apiEndpoint || null
+
+            // Only sync if workspace is available
+            if (currentWorkspace) {
+              const authData = {
+                token: auth.current.token,
+                workspaceId: currentWorkspace.id,
+                apiEndpoint: apiEndpoint || null
+              }
+              window.electron?.ipcRenderer.send('sync-auth-to-background-service', authData)
+            } else {
+              console.log('Workspace cleared, clearing background service')
+              window.electron?.ipcRenderer.send('sync-auth-to-background-service', {
+                token: null,
+                workspaceId: null,
+                apiEndpoint: apiEndpoint || null
+              })
             }
-            window.electron?.ipcRenderer.send('sync-auth-to-background-service', authData)
           }
         }, 100)
       }

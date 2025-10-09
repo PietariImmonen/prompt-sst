@@ -9,7 +9,7 @@
     "console": "sst console",
     "deploy:dev": "sst deploy --stage dev",
     "deploy:prod": "sst deploy --stage production",
-    "dev": "sst dev & bun run --filter @prompt-saver/chrome-plugin dev",
+    "dev": "sst dev",
     "remove": "sst remove",
     "sso": "aws sso login --sso-session=prompt-saver",
     "typecheck": "tsc --noEmit",

@@ -2,6 +2,7 @@ import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { prompt } from "../domain/prompt/prompt.sql";
+import { TagSchema } from "./Tag";
 
 export const PromptSchema = createSelectSchema(prompt, {
   id: (schema) => schema.cuid2(),
@@ -27,3 +28,9 @@ export const PromptSchema = createSelectSchema(prompt, {
 });
 
 export type Prompt = z.infer<typeof PromptSchema>;
+
+export const PromptWithTagsSchema = PromptSchema.extend({
+  tagIDs: z.array(TagSchema.shape.id).default([]),
+});
+
+export type PromptWithTags = z.infer<typeof PromptWithTagsSchema>;

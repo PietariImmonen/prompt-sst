@@ -1,44 +1,102 @@
 import type { WriteTransaction } from "replicache"
+import { createId } from "@paralleldrive/cuid2"
 
 // Define the mutators for Replicache
-// These should match the mutations defined in your backend
+// These match the mutations defined in the backend
 export const mutators = {
-  // Example mutators - adjust based on your actual backend implementation
-  async createPrompt(
+  async prompt_create(
     tx: WriteTransaction,
-    args: {
-      id: string
+    input: {
+      id?: string
+      title?: string
       content: string
-      workspaceID: string
+      source?: 'chatgpt' | 'claude' | 'gemini' | 'grok' | 'other'
+      categoryPath?: string
+      visibility?: 'private' | 'workspace'
+      isFavorite?: boolean
+      metadata?: Record<string, string | number | boolean | null>
     }
   ) {
-    await tx.set(`/prompt/${args.id}`, {
-      id: args.id,
-      content: args.content,
-      workspaceID: args.workspaceID,
-      timeCreated: new Date().toISOString(),
+    const now = new Date().toISOString()
+    const content = (input.content ?? '').trim()
+    if (!content) return
+
+    const title = (input.title ?? '').trim() || content.slice(0, 120) || 'Untitled prompt'
+    const source = input.source ?? 'other'
+
+    const prompt = {
+      id: input.id ?? createId(),
+      title,
+      content,
+      source,
+      categoryPath: input.categoryPath ?? `inbox/${source}`,
+      visibility: input.visibility ?? 'private',
+      isFavorite: input.isFavorite ?? false,
+      metadata: input.metadata ?? {},
+      timeCreated: now,
+      timeUpdated: now,
+      timeDeleted: null
+    }
+
+    await tx.set(`prompt/${prompt.id}`, prompt)
+  },
+
+  async prompt_update(
+    tx: WriteTransaction,
+    input: {
+      id: string
+      title?: string
+      content?: string
+      source?: 'chatgpt' | 'claude' | 'gemini' | 'grok' | 'other'
+      categoryPath?: string
+      visibility?: 'private' | 'workspace'
+      isFavorite?: boolean
+      metadata?: Record<string, string | number | boolean | null>
+    }
+  ) {
+    const existing = await tx.get(`prompt/${input.id}`)
+    if (!existing) return
+
+    const updated = {
+      ...existing,
+      ...input,
+      timeUpdated: new Date().toISOString()
+    }
+
+    await tx.set(`prompt/${input.id}`, updated)
+  },
+
+  async prompt_toggle_favorite(
+    tx: WriteTransaction,
+    input: {
+      id: string
+      isFavorite: boolean
+    }
+  ) {
+    const existing = await tx.get(`prompt/${input.id}`)
+    if (!existing) return
+
+    await tx.set(`prompt/${input.id}`, {
+      ...existing,
+      isFavorite: input.isFavorite,
       timeUpdated: new Date().toISOString()
     })
   },
 
-  async updatePrompt(
+  async prompt_set_visibility(
     tx: WriteTransaction,
-    args: {
+    input: {
       id: string
-      content: string
+      visibility: 'private' | 'workspace'
     }
   ) {
-    const existing = await tx.get(`/prompt/${args.id}`)
-    if (existing) {
-      await tx.set(`/prompt/${args.id}`, {
-        ...existing,
-        content: args.content,
-        timeUpdated: new Date().toISOString()
-      })
-    }
-  },
+    const existing = await tx.get(`prompt/${input.id}`)
+    if (!existing) return
 
-  async deletePrompt(tx: WriteTransaction, args: { id: string }) {
-    await tx.del(`/prompt/${args.id}`)
+    await tx.set(`prompt/${input.id}`, {
+      ...existing,
+      visibility: input.visibility,
+      timeUpdated: new Date().toISOString()
+    })
   }
 }

@@ -22,9 +22,12 @@ async function checkAccessibilityPermissions(): Promise<boolean> {
 
   try {
     // Test if we can access System Events
-    execSync('osascript -e "tell application \\"System Events\\" to return name of first process"', {
-      timeout: 1000
-    })
+    execSync(
+      'osascript -e "tell application \\"System Events\\" to return name of first process"',
+      {
+        timeout: 1000
+      }
+    )
     return true
   } catch (error) {
     console.log('Accessibility permissions not granted')
@@ -123,6 +126,7 @@ function resolveSource(url?: string): PromptSource {
   try {
     const hostname = new URL(url).hostname
     if (hostname.includes('chat.openai.com')) return 'chatgpt'
+    if (hostname.includes('chatgpt.com')) return 'chatgpt'
     if (hostname.includes('claude.ai')) return 'claude'
     if (hostname.includes('gemini.google.com')) return 'gemini'
     if (hostname.includes('x.ai')) return 'grok'

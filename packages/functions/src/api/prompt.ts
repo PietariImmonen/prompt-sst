@@ -52,10 +52,15 @@ export namespace PromptApi {
       },
     }),
     async (c) => {
-      assertActor("user");
-      const body = c.req.valid("json");
-      const result = await Prompt.create(body);
-      return c.json({ result }, 200);
+      try {
+        assertActor("user");
+        const body = c.req.valid("json");
+        const result = await Prompt.create(body);
+        return c.json({ result }, 200);
+      } catch (error) {
+        console.error(error);
+        return c.json({ error: "Internal server error" }, 500);
+      }
     },
   );
 }

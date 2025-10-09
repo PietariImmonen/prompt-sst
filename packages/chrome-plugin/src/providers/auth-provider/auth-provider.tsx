@@ -11,6 +11,7 @@ export type AuthProviderProps = {
 
 export function AuthProvider(props: AuthProviderProps) {
   const [isReady, setIsReady] = React.useState<boolean>(false)
+  const [storeInitialized, setStoreInitialized] = React.useState<boolean>(false)
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0)
 
   const [accessToken, setAccessToken] = React.useState<string | null>(() => {
@@ -20,9 +21,13 @@ export function AuthProvider(props: AuthProviderProps) {
   // Initialize storage
   React.useEffect(() => {
     authStore.init().then(() => {
-      if (!authStore.get()) {
+      const store = authStore.get()
+      console.log("Auth store initialized:", store)
+      if (!store) {
         authStore.set({ accounts: {} })
       }
+      setStoreInitialized(true)
+      // Trigger refresh after store is initialized
       forceUpdate()
     })
   }, [])
@@ -41,23 +46,33 @@ export function AuthProvider(props: AuthProviderProps) {
     return () => window.removeEventListener("hashchange", handleHashChange)
   }, [])
 
+  // Only set ready if no auth is needed (after store initialization)
   React.useEffect(() => {
+    if (!storeInitialized) return
     if (accessToken) return
-    if (authStore.get() && Object.keys(authStore.get()!.accounts).length) return
+    const store = authStore.get()
+    if (store && Object.keys(store.accounts).length > 0) return
     setIsReady(true)
-  }, [accessToken])
+  }, [accessToken, storeInitialized])
 
+  // Set default current account if not set
   React.useEffect(() => {
-    if (!authStore.get()) return
-    if (authStore.get()!.current && !authStore.get()!.accounts[authStore.get()!.current!]) {
-      const prevStore = authStore.get()!
-      authStore.set({
-        ...prevStore,
-        current: Object.keys(authStore.get()!.accounts)[0]
-      })
-      forceUpdate()
+    if (!storeInitialized) return
+    const store = authStore.get()
+    if (!store) return
+
+    // If current is not set or points to non-existent account, set to first available
+    if (!store.current || !store.accounts[store.current]) {
+      const accountKeys = Object.keys(store.accounts)
+      if (accountKeys.length > 0) {
+        authStore.set({
+          ...store,
+          current: accountKeys[0]
+        })
+        forceUpdate()
+      }
     }
-  }, [])
+  }, [storeInitialized])
 
   const refresh = React.useCallback(async () => {
     try {
@@ -85,19 +100,25 @@ export function AuthProvider(props: AuthProviderProps) {
             if (response.ok) {
               const info = await response.json()
               console.log("Account info:", info)
+              console.log("Workspaces from API:", info.result?.workspaces)
 
               // Add or update account in store
               const prevStore = authStore.get() || { accounts: {} }
+              const accountData = {
+                ...info.result,
+                token
+              }
+              console.log("Storing account data:", accountData)
+
               authStore.set({
                 ...prevStore,
                 accounts: {
                   ...prevStore.accounts,
-                  [token]: {
-                    ...info.result,
-                    token
-                  }
+                  [token]: accountData
                 }
               })
+
+              console.log("Updated auth store:", authStore.get())
 
               // If this is the new access token, set it as current
               if (accessToken === token) {
@@ -140,9 +161,11 @@ export function AuthProvider(props: AuthProviderProps) {
     }
   }, [accessToken])
 
+  // Call refresh only after store is initialized
   React.useEffect(() => {
+    if (!storeInitialized) return
     refresh()
-  }, [refresh])
+  }, [refresh, storeInitialized])
 
   const contextValue = React.useMemo(
     () => ({

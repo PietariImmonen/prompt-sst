@@ -10,22 +10,21 @@ const PromptsPage = () => {
   const prompts = (useSubscribe(PromptStore.list(), {
     default: [] as Prompt[]
   }) ?? []) as Prompt[]
-  
+
   // Filter prompts based on search query
-  const filteredPrompts = searchQuery 
-    ? prompts.filter(prompt => 
-        prompt.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prompt.content?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredPrompts = searchQuery
+    ? prompts.filter(
+        (prompt) =>
+          prompt.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          prompt.content?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : prompts
 
   return (
     <div className="flex min-h-screen flex-col bg-black text-foreground">
       <div className="flex flex-1 flex-col gap-4 max-w-full overflow-hidden">
-        <div className="sticky top-0 z-10 bg-background shadow-sm">
-          <PromptsPageHeader 
-            onSearch={(value) => setSearchQuery(value)} 
-          />
+        <div className="sticky top-0 z-10 bg-black shadow-sm">
+          <PromptsPageHeader onSearch={(value) => setSearchQuery(value)} />
         </div>
         <PromptsTable prompts={filteredPrompts} />
       </div>

@@ -1,6 +1,7 @@
 import { gzipSync } from "zlib";
 import { ActorContext, useWorkspaceID } from "@prompt-saver/core/actor";
 import { prompt } from "@prompt-saver/core/domain/prompt/prompt.sql";
+import { promptTag, tag } from "@prompt-saver/core/domain/tag/tag.sql";
 import { Replicache } from "@prompt-saver/core/domain/replicache";
 import {
   replicache_client,
@@ -32,6 +33,8 @@ export namespace ReplicacheApi {
     user,
     userSettings,
     prompt,
+    tag,
+    prompt_tag: promptTag,
   };
 
   export const JOIN_TABLES = {};
@@ -147,25 +150,30 @@ export namespace ReplicacheApi {
             const workspaceID = useWorkspaceID();
 
             for (const [name, table] of Object.entries(TABLES)) {
-              const query = tx
-                .select({
-                  name: sql`${name}`,
-                  id: table.id,
-                  version: table.timeUpdated,
-                  key: sql`'/' || COALESCE(${name}, '') || '/' || COALESCE(${table.id}::text, '') AS concatenated_result` as SQL<string>,
-                })
-                .from(table)
-                .where(
-                  and(
-                    eq(
-                      "workspaceID" in table ? table.workspaceID : table.id,
-                      workspaceID,
-                    ),
-                    isNull(table.timeDeleted),
-                  ),
-                );
-              log("getting updated from", name);
-              const rows = await query.execute();
+          const keyExpression =
+            name === "prompt_tag"
+              ? (sql`'/' || ${name} || '/' || ${promptTag.promptID}::text || '/' || ${promptTag.tagID}::text` as SQL<string>)
+              : (sql`'/' || COALESCE(${name}, '') || '/' || COALESCE(${table.id}::text, '')` as SQL<string>);
+
+          const query = tx
+            .select({
+              name: sql`${name}`,
+              id: table.id,
+              version: table.timeUpdated,
+              key: keyExpression,
+            })
+            .from(table)
+            .where(
+              and(
+                eq(
+                  "workspaceID" in table ? table.workspaceID : table.id,
+                  workspaceID,
+                ),
+                isNull(table.timeDeleted),
+              ),
+            );
+          log("getting updated from", name);
+          const rows = await query.execute();
               results.push([name, rows]);
             }
 
