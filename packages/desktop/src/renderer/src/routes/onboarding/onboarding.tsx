@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useReplicache } from '@/hooks/use-replicache'
+import { useReplicache, useSubscribe } from '@/hooks/use-replicache'
 import { UserSettingsStore } from '@/data/user-settings'
 import { ProgressIndicator } from '@/components/onboarding/progress-indicator'
 import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
@@ -12,7 +11,6 @@ import type { UserRole } from '@prompt-saver/core/domain/onboarding/role-tags'
 type OnboardingStep = 1 | 2 | 3
 
 export function OnboardingPage() {
-  const navigate = useNavigate()
   const rep = useReplicache()
   const [currentStep, setCurrentStep] = React.useState<OnboardingStep>(1)
   const [autoCapture, setAutoCapture] = React.useState(true)
@@ -20,25 +18,12 @@ export function OnboardingPage() {
     title: string
     content: string
   } | null>(null)
+  const userSettings = useSubscribe(UserSettingsStore.get(), {
+    dependencies: []
+  })
 
-  // Check if user already completed onboarding and redirect if so
-  React.useEffect(() => {
-    if (!rep) return
-
-    const checkOnboardingStatus = async () => {
-      try {
-        const settings = await rep.query(UserSettingsStore.get())
-        if (settings?.inAppOnboardingCompleted) {
-          console.log('Onboarding - User already completed onboarding, redirecting to sessions')
-          navigate('/sessions', { replace: true })
-        }
-      } catch (error) {
-        console.error('Error checking onboarding status:', error)
-      }
-    }
-
-    checkOnboardingStatus()
-  }, [rep, navigate])
+  // Note: Onboarding completion routing is handled by OnboardingRouter in App.tsx
+  // No need to check and redirect here to avoid race conditions
 
   // Show loading state while Replicache is initializing
   if (!rep) {
@@ -105,24 +90,17 @@ export function OnboardingPage() {
 
     try {
       // Update user settings to mark onboarding complete
-      const settings = await rep.query(UserSettingsStore.get())
-      if (settings) {
+      if (userSettings) {
         await rep.mutate.user_settings_update({
-          ...settings,
+          ...userSettings,
           inAppOnboardingCompleted: true,
           enableAutoCapture: autoCapture
         })
-
-        // Wait for the mutation to be pushed to the backend
-        console.log('Onboarding - Waiting for push to complete...')
-        await rep.push()
-        console.log('Onboarding - Push complete')
+        toast.success('Welcome to Clyo! Your workspace is ready.')
       }
 
-      toast.success('Welcome to Clyo! Your workspace is ready.')
-
-      // Navigate to main app
-      navigate('/sessions', { replace: true })
+      // Navigation will be handled by OnboardingRouter once it detects the updated settings
+      // No need to manually navigate here
     } catch (error) {
       console.error('Failed to complete onboarding:', error)
       toast.error('Failed to complete onboarding. Please try again.')

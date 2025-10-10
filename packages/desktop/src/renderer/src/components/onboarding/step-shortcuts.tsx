@@ -34,90 +34,40 @@ export function StepShortcuts({ onNext, onSkip, examplePromptContent }: StepShor
 
       // Check for Cmd/Ctrl+Shift+C
       if (isModPressed && e.shiftKey && (e.key.toLowerCase() === 'c' || e.code === 'KeyC')) {
+        e.preventDefault()
         console.log('✅ Capture shortcut detected!')
         setCapturePressed(true)
       }
 
       // Check for Cmd/Ctrl+Shift+O
       if (isModPressed && e.shiftKey && (e.key.toLowerCase() === 'o' || e.code === 'KeyO')) {
-        console.log('✅ Palette shortcut keypress detected!')
+        e.preventDefault()
+        console.log('✅ Palette shortcut detected!')
         setPalettePressed(true)
       }
     }
 
-    const handleBlur = () => {
-      console.log(
-        '🎯 Window blur event, capturePressed:',
-        capturePressed,
-        'palettePressed:',
-        palettePressed
-      )
-      // When window loses focus after capture is done, assume palette opened
-      if (capturePressed && !palettePressed) {
-        console.log('✅ Marking palette as opened due to blur!')
-        setPalettePressed(true)
-      }
-    }
-
-    const handleFocus = () => {
-      console.log(
-        '🎯 Window focus event, capturePressed:',
-        capturePressed,
-        'palettePressed:',
-        palettePressed
-      )
-      // When window regains focus after blur, palette was definitely opened
-      if (capturePressed && !palettePressed) {
-        console.log('✅ Marking palette as opened due to focus!')
-        setPalettePressed(true)
-      }
-    }
-
-    const handleVisibilityChange = () => {
-      console.log(
-        '🎯 Visibility changed, hidden:',
-        document.hidden,
-        'capturePressed:',
-        capturePressed
-      )
-      if (document.hidden && capturePressed && !palettePressed) {
-        console.log('✅ Marking palette as opened due to visibility change!')
-        setPalettePressed(true)
-      }
-    }
-
-    // Listen to keyboard events
-    window.addEventListener('keydown', handleKeyDown, true)
+    // Listen to keyboard events with capture phase to ensure we catch them
     document.addEventListener('keydown', handleKeyDown, true)
 
-    // Listen to focus changes
-    window.addEventListener('blur', handleBlur, true)
-    window.addEventListener('focus', handleFocus, true)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
     return () => {
-      window.removeEventListener('keydown', handleKeyDown, true)
       document.removeEventListener('keydown', handleKeyDown, true)
-      window.removeEventListener('blur', handleBlur, true)
-      window.removeEventListener('focus', handleFocus, true)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [isMac, capturePressed, palettePressed])
+  }, [isMac])
 
-  // For now, just require capture to be pressed (palette detection will be fixed later)
-  const allPressed = capturePressed
+  const allPressed = capturePressed && palettePressed
 
   return (
-    <div className="w-full max-w-2xl space-y-5">
+    <div className="w-full max-w-md space-y-5">
       <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold">Try the keyboard shortcuts</h2>
-        <p className="text-muted-foreground">Complete both steps to continue</p>
+        <h2 className="text-xl font-semibold">Try the keyboard shortcuts</h2>
+        <p className="text-sm text-muted-foreground">Press both shortcuts to continue</p>
       </div>
 
-      {/* First Box: Capture Shortcut with Example Prompt */}
+      {/* First Box: Capture Shortcut */}
       <div
         className={`
-          rounded-lg border-2 p-5 transition-all
+          rounded-lg border-2 p-3.5 transition-all
           ${
             capturePressed
               ? 'border-green-500 bg-green-500/10'
@@ -125,35 +75,29 @@ export function StepShortcuts({ onNext, onSkip, examplePromptContent }: StepShor
           }
         `}
       >
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Command className="h-5 w-5 text-purple-400" />
-            <h3 className="font-semibold">Step 1: Capture Prompt</h3>
+            <Command className="h-4 w-4 text-purple-400" />
+            <h3 className="text-sm font-semibold">Capture Prompt</h3>
           </div>
           {capturePressed && (
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
-              <Check className="h-4 w-4 text-white" />
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
+              <Check className="h-3 w-3 text-white" />
             </div>
           )}
         </div>
-        <div className="space-y-3">
-          <div className="rounded bg-black/40 p-4 text-sm text-muted-foreground select-text">
-            {examplePromptContent.split('\n')[0].substring(0, 180)}...
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-sm text-muted-foreground">Press</span>
-            <kbd className="rounded bg-muted px-3 py-1.5 text-sm font-semibold text-foreground">
-              {modKey} + Shift + C
-            </kbd>
-            <span className="text-sm text-muted-foreground">to capture</span>
-          </div>
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-xs text-muted-foreground">Press</span>
+          <kbd className="rounded bg-muted px-2 py-1 text-xs font-semibold text-foreground">
+            {modKey} + Shift + C
+          </kbd>
         </div>
       </div>
 
       {/* Second Box: Palette Shortcut */}
       <div
         className={`
-          rounded-lg border-2 p-5 transition-all
+          rounded-lg border-2 p-3.5 transition-all
           ${
             palettePressed
               ? 'border-green-500 bg-green-500/10'
@@ -163,42 +107,24 @@ export function StepShortcuts({ onNext, onSkip, examplePromptContent }: StepShor
           }
         `}
       >
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Command className="h-5 w-5 text-purple-400" />
-            <h3 className="font-semibold">Step 2: Open Prompt Palette</h3>
+            <Command className="h-4 w-4 text-purple-400" />
+            <h3 className="text-sm font-semibold">Open Prompt Palette</h3>
           </div>
           {palettePressed && (
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
-              <Check className="h-4 w-4 text-white" />
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
+              <Check className="h-3 w-3 text-white" />
             </div>
           )}
         </div>
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Opens the palette to search and insert your saved prompts
-          </p>
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-sm text-muted-foreground">Press</span>
-            <kbd className="rounded bg-muted px-3 py-1.5 text-sm font-semibold text-foreground">
-              {modKey} + Shift + O
-            </kbd>
-            <span className="text-sm text-muted-foreground">to open palette</span>
-          </div>
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-xs text-muted-foreground">Press</span>
+          <kbd className="rounded bg-muted px-2 py-1 text-xs font-semibold text-foreground">
+            {modKey} + Shift + O
+          </kbd>
         </div>
       </div>
-
-      {/* Manual completion option if detection doesn't work */}
-      {capturePressed && !palettePressed && (
-        <div className="text-center">
-          <button
-            onClick={() => setPalettePressed(true)}
-            className="text-xs text-purple-400 hover:text-purple-300 underline"
-          >
-            I already tried the palette shortcut (click to continue)
-          </button>
-        </div>
-      )}
 
       {/* Buttons */}
       <div className="flex gap-3">

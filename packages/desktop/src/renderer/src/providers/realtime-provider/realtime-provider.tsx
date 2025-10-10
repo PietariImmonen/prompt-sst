@@ -3,6 +3,7 @@ import { createId } from '@paralleldrive/cuid2'
 import mqtt, { MqttClient } from 'mqtt'
 
 import { useAuth } from '@/hooks/use-auth'
+import { workspaceStore } from '../workspace-provider/workspace-context'
 import { bus } from './bus'
 
 export function RealtimeProvider(props: { children: React.ReactElement }) {
@@ -28,30 +29,24 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
         const url = new URL(`wss://${endpoint}/mqtt`)
         url.searchParams.set('x-amz-customauthorizer-name', authorizer)
 
-        const workspaces = auth.current?.workspaces || []
-
-        if (workspaces.length > 10) {
-          console.log('too many workspaces to allow realtime updates')
-          return
-        }
+        const workspace = workspaceStore.get()
 
         const connection = mqtt.connect(url.toString(), {
           protocolVersion: 5,
           manualConnect: true,
           username: '', // this must be empty for the authorizer to work
-          password: auth.current?.token || '',
+          password: auth.current.token || '',
           clientId: 'client_' + createId()
         })
 
         connection.on('connect', async () => {
           console.log('WS connected')
-          for (const workspace of workspaces) {
-            console.log('subscribing to', workspace.id)
-            await connection.subscribeAsync(
-              `prompt-saver/${import.meta.env.VITE_STAGE}/${workspace.id}/all/#`,
-              { qos: 1 }
-            )
-          }
+          if (!workspace) return
+          console.log('subscribing to', workspace.id)
+          await connection.subscribeAsync(
+            `prompt-saver/${import.meta.env.VITE_STAGE}/${workspace.id}/all/#`,
+            { qos: 1 }
+          )
         })
 
         connection.on('error', (e) => {
@@ -60,12 +55,11 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
 
         connection.on('message', (fullTopic, payload) => {
           const splits = fullTopic.split('/')
-          const workspaceID = splits[2]
           const message = new TextDecoder('utf8').decode(new Uint8Array(payload))
           const parsed = JSON.parse(message)
           const topic = splits[4]
           if (topic === 'poke') {
-            bus.emit('poke', { workspaceID, ...parsed.properties })
+            bus.emit('poke', { ...parsed.properties })
           }
         })
 

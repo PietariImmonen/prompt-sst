@@ -40,7 +40,10 @@ function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
     const interval = setInterval(updateStatus, 5000);
 
     // Listen for sync events from background
-    const listener = (message: { type: string; payload?: { timestamp?: number } }) => {
+    const listener = (message: {
+      type: string;
+      payload?: { timestamp?: number };
+    }) => {
       if (message.type === "PROMPT_ADDED") {
         console.log("New prompt captured");
         updateStatus();
@@ -61,7 +64,7 @@ function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
   }, []);
 
   return (
-    <div className="text-foreground w-[350px] bg-black">
+    <div className="text-foreground bg-background w-[350px]">
       <div className="p-6">
         <div className="space-y-1.5 pb-6">
           <h2 className="text-xl font-semibold">Prompt Saver</h2>
@@ -70,22 +73,22 @@ function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
           </p>
         </div>
         <div className="space-y-4">
-          <div className="border-border bg-muted/50 rounded-lg border p-4">
-            <div className="flex items-center justify-between mb-2">
+          <div className="border-border bg-card rounded-lg border p-4">
+            <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-medium">Capture Status</p>
               {capturedCount > 0 ? (
-                <span className="text-xs bg-blue-500/10 text-blue-500 px-2 py-1 rounded">
+                <span className="rounded bg-blue-500/10 px-2 py-1 text-xs text-blue-500">
                   {capturedCount} pending
                 </span>
               ) : (
-                <span className="text-xs bg-green-500/10 text-green-500 px-2 py-1 rounded">
+                <span className="rounded bg-green-500/10 px-2 py-1 text-xs text-green-500">
                   ✓ Synced
                 </span>
               )}
             </div>
             <p className="text-muted-foreground text-xs">
               {capturedCount > 0
-                ? `${capturedCount} prompt${capturedCount === 1 ? '' : 's'} will sync automatically in the background.`
+                ? `${capturedCount} prompt${capturedCount === 1 ? "" : "s"} will sync automatically in the background.`
                 : "Extension is ready to capture prompts."}
             </p>
             {lastSync && (
@@ -93,12 +96,12 @@ function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
                 Last sync: {new Date(lastSync).toLocaleTimeString()}
               </p>
             )}
-            <p className="text-muted-foreground mt-2 text-xs border-t border-border/40 pt-2">
+            <p className="text-muted-foreground border-border/40 mt-2 border-t pt-2 text-xs">
               Visit ChatGPT, Claude, or Gemini to auto-capture your prompts.
             </p>
           </div>
           <button
-            className="border-input hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-9 w-full items-center justify-center rounded-md border bg-black px-4 py-2 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50"
+            className="border-input hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring bg-background inline-flex h-9 w-full items-center justify-center rounded-md border px-4 py-2 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50"
             onClick={() => auth.logout()}
           >
             Log out
@@ -176,7 +179,7 @@ function PopupContent() {
 
   if (!auth.isReady) {
     return (
-      <div className="flex h-[400px] w-[350px] items-center justify-center bg-black">
+      <div className="bg-background flex h-[400px] w-[350px] items-center justify-center">
         <div className="border-muted-foreground h-6 w-6 animate-spin rounded-full border-2 border-t-transparent" />
       </div>
     );
@@ -188,8 +191,8 @@ function PopupContent() {
 
   if (!authUrl) {
     return (
-      <div className="text-foreground w-[350px] bg-black p-4">
-        <div className="border-destructive/50 text-destructive relative w-full rounded-lg border bg-black px-4 py-3 text-sm">
+      <div className="text-foreground bg-background w-[350px] p-4">
+        <div className="border-destructive/50 text-destructive bg-destructive/10 relative w-full rounded-lg border px-4 py-3 text-sm">
           Authentication not configured. Set PLASMO_PUBLIC_AUTH_URL in .env
         </div>
       </div>
@@ -197,7 +200,7 @@ function PopupContent() {
   }
 
   return (
-    <div className="text-foreground w-[350px] bg-black">
+    <div className="text-foreground bg-background w-[350px]">
       <div className="p-6">
         <div className="space-y-1.5 pb-6">
           <div className="text-muted-foreground flex items-center gap-2 text-xs">
@@ -219,7 +222,7 @@ function PopupContent() {
         </div>
         <div className="space-y-4">
           {error && (
-            <div className="border-destructive/50 text-destructive relative w-full rounded-lg border bg-black px-4 py-3 text-sm">
+            <div className="border-destructive/50 text-destructive bg-destructive/10 relative w-full rounded-lg border px-4 py-3 text-sm">
               {error}
             </div>
           )}
@@ -228,7 +231,7 @@ function PopupContent() {
             {providers.map((provider) => (
               <button
                 key={provider.id}
-                className="border-input hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border bg-black px-8 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50"
+                className="border-input hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring bg-card inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border px-8 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50"
                 disabled={loading !== null}
                 onClick={() => handleProviderClick(provider.id)}
               >

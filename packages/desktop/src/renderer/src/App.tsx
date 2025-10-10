@@ -8,7 +8,7 @@ import { RealtimeProvider } from '@/providers/realtime-provider'
 import { ReplicacheProvider } from '@/providers/replicache-provider'
 import { AuthProvider } from '@/providers/auth-provider'
 import { BackgroundSyncProvider } from '@/providers/background-sync-provider'
-import { useReplicache } from '@/hooks/use-replicache'
+import { useReplicache, useSubscribe } from '@/hooks/use-replicache'
 import { UserSettingsStore } from '@/data/user-settings'
 
 import AuthPage from '@/pages/auth'
@@ -40,66 +40,45 @@ const OnboardingRouter = ({ children }: { children: React.ReactNode }) => {
   const [onboardingStatus, setOnboardingStatus] = useState<'checking' | 'needed' | 'completed'>(
     'checking'
   )
-
+  const userSettings = useSubscribe(UserSettingsStore.get(), {
+    dependencies: []
+  })
+  // Subscribe to user settings from Replicache to react to changes in real-time
+  console.log('OnboardingRouter - userSettings', userSettings)
   useEffect(() => {
-    let mounted = true
+    // Wait for auth to be ready
+    if (!auth.current) {
+      return
+    }
 
-    const checkOnboarding = async () => {
-      // Wait for auth to be ready
-      if (!auth.current) {
-        return
+    // Check from Replicache subscription (real-time updates)
+    if (userSettings !== null) {
+      console.log('OnboardingRouter - Using user settings from subscription:', userSettings)
+      if (userSettings?.inAppOnboardingCompleted) {
+        console.log('OnboardingRouter - User has completed onboarding')
+        setOnboardingStatus('completed')
+      } else {
+        console.log('OnboardingRouter - User needs onboarding')
+        setOnboardingStatus('needed')
       }
+      return
+    }
 
-      // First, check from auth context (API response) - this is immediate
-      const workspace = auth.current?.workspaces?.[0]
-      const apiSettings = workspace?.userSettings
+    // Fallback: check from auth context (API response) - this is immediate on first load
+    const workspace = auth.current?.workspaces?.[0]
+    const apiSettings = workspace?.userSettings
 
-      if (apiSettings) {
-        console.log('OnboardingRouter - Using user settings from API:', apiSettings)
-        if (apiSettings.inAppOnboardingCompleted) {
-          console.log('OnboardingRouter - User has completed onboarding (from API)')
-          setOnboardingStatus('completed')
-          return
-        } else {
-          console.log('OnboardingRouter - User needs onboarding (from API)')
-          setOnboardingStatus('needed')
-          return
-        }
-      }
-
-      // If no API settings available, wait for Replicache as fallback
-      if (!rep) {
-        return
-      }
-
-      try {
-        // Check onboarding status from Replicache
-        const settings = await rep.query(UserSettingsStore.get())
-        console.log('OnboardingRouter - User settings from Replicache:', settings)
-
-        if (!mounted) return
-
-        if (settings?.inAppOnboardingCompleted) {
-          console.log('OnboardingRouter - User has completed onboarding (from Replicache)')
-          setOnboardingStatus('completed')
-        } else {
-          console.log('OnboardingRouter - User needs onboarding (from Replicache)')
-          setOnboardingStatus('needed')
-        }
-      } catch (error) {
-        console.error('Error checking onboarding status from Replicache:', error)
-        if (!mounted) return
-        // Default to needed if we can't determine
+    if (apiSettings) {
+      console.log('OnboardingRouter - Using user settings from API:', apiSettings)
+      if (apiSettings.inAppOnboardingCompleted) {
+        console.log('OnboardingRouter - User has completed onboarding (from API)')
+        setOnboardingStatus('completed')
+      } else {
+        console.log('OnboardingRouter - User needs onboarding (from API)')
         setOnboardingStatus('needed')
       }
     }
-
-    checkOnboarding()
-
-    return () => {
-      mounted = false
-    }
-  }, [rep, auth.current])
+  }, [auth.current, userSettings])
 
   if (onboardingStatus === 'checking') {
     return <SplashScreen message="Loading workspace…" />

@@ -12,6 +12,8 @@ export function StepChromeExtension({ onNext }: StepChromeExtensionProps) {
   const userEmail = auth.current?.email || 'your account'
   const [isCompleting, setIsCompleting] = React.useState(false)
 
+  const CHROME_STORE_URL = 'https://chrome.google.com/webstore' // TODO: Update with actual extension URL when published
+
   const handleContinue = async () => {
     setIsCompleting(true)
     try {
@@ -22,69 +24,53 @@ export function StepChromeExtension({ onNext }: StepChromeExtensionProps) {
     }
   }
 
+  const handleDownload = () => {
+    window.electron?.openExternal?.(CHROME_STORE_URL)
+  }
+
   return (
-    <div className="w-full max-w-md space-y-6">
+    <div className="w-full max-w-md space-y-5">
       <div className="space-y-2 text-center">
         <div className="flex justify-center">
-          <div className="rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-4">
-            <Chrome className="h-8 w-8 text-purple-400" />
+          <div className="rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-3">
+            <Chrome className="h-6 w-6 text-purple-400" />
           </div>
         </div>
-        <h2 className="text-2xl font-semibold">Install Chrome Extension</h2>
-        <p className="text-muted-foreground">
-          Automatically capture prompts from ChatGPT, Claude, and Gemini
+        <h2 className="text-xl font-semibold">Install Chrome Extension</h2>
+        <p className="text-sm text-muted-foreground">
+          Capture prompts from ChatGPT, Claude, and Gemini
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-4">
-          <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-sm font-semibold text-purple-400">
-              1
-            </div>
-            <div className="space-y-1">
-              <h3 className="font-medium">Download the extension</h3>
-              <p className="text-sm text-muted-foreground">
-                Get the Chrome extension from the Chrome Web Store
-              </p>
-            </div>
+      <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
+        <div className="flex gap-2.5">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-xs font-semibold text-purple-400">
+            1
           </div>
-
-          <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-sm font-semibold text-purple-400">
-              2
-            </div>
-            <div className="space-y-1">
-              <h3 className="font-medium">Sign in with the same email</h3>
-              <div className="rounded bg-muted px-3 py-1.5 text-sm font-mono text-foreground">
-                {userEmail}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Use this email to sync your prompts across devices
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-sm font-semibold text-purple-400">
-              3
-            </div>
-            <div className="space-y-1">
-              <h3 className="font-medium">Start capturing</h3>
-              <p className="text-sm text-muted-foreground">
-                Visit ChatGPT, Claude, or Gemini and your prompts will be automatically saved
-              </p>
-            </div>
+          <div className="space-y-1.5 flex-1">
+            <h3 className="text-sm font-medium">Download the extension</h3>
+            <Button
+              onClick={handleDownload}
+              variant="outline"
+              size="sm"
+              className="w-full text-xs h-8"
+            >
+              <Chrome className="mr-1.5 h-3.5 w-3.5" />
+              Open Chrome Web Store
+            </Button>
           </div>
         </div>
 
-        <div className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3">
-          <p className="text-sm text-blue-400">
-            <strong>Development mode:</strong> Load the extension from{' '}
-            <code className="rounded bg-blue-500/20 px-1 py-0.5 text-xs">
-              packages/chrome-plugin/build/chrome-mv3-prod
-            </code>
-          </p>
+        <div className="flex gap-2.5">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-xs font-semibold text-purple-400">
+            2
+          </div>
+          <div className="space-y-1.5 flex-1">
+            <h3 className="text-sm font-medium">Sign in with your email</h3>
+            <div className="rounded bg-muted px-2.5 py-1.5 text-xs font-mono text-foreground">
+              {userEmail}
+            </div>
+          </div>
         </div>
       </div>
 

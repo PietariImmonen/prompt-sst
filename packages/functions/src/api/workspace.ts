@@ -1,5 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { ActorContext, assertActor } from "@prompt-saver/core/actor";
+import { Replicache } from "@prompt-saver/core/domain/replicache";
 import { User } from "@prompt-saver/core/domain/user";
 import { UserSettings } from "@prompt-saver/core/domain/user-settings";
 import {
@@ -98,6 +99,10 @@ export namespace WorkspaceApi {
             ]);
           },
         );
+        Replicache.poke({
+          actor: "system",
+          workspaceID: workspace.id,
+        });
 
         return c.json(
           {

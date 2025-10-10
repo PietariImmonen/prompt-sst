@@ -73,8 +73,15 @@ export namespace ReplicacheApi {
         })
         .onConflictDoNothing();
 
-      const resp = await createTransaction(
-        async (tx): Promise<PullResponseV1 | undefined> => {
+      // Retry logic for serialization errors
+      let attempts = 0;
+      const maxAttempts = 3;
+      let resp: PullResponseV1 | undefined;
+
+      while (attempts < maxAttempts) {
+        try {
+          resp = await createTransaction(
+            async (tx): Promise<PullResponseV1 | undefined> => {
           const patch: PatchOperation[] = [];
 
           const group = await tx
@@ -346,6 +353,31 @@ export namespace ReplicacheApi {
         },
       );
 
+          // Success - break out of retry loop
+          break;
+        } catch (error: any) {
+          attempts++;
+
+          // Check if it's a serialization error (40001)
+          const isSerializationError =
+            error?.code === "40001" ||
+            error?.message?.includes("could not serialize access");
+
+          if (isSerializationError && attempts < maxAttempts) {
+            // Exponential backoff: 50ms, 100ms, 200ms
+            const delay = 50 * Math.pow(2, attempts - 1);
+            console.log(
+              `Pull serialization error, retrying in ${delay}ms (attempt ${attempts}/${maxAttempts})`
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+
+          // Not a serialization error or out of retries - throw
+          throw error;
+        }
+      }
+
       const isGzip = c.req.header("accept-encoding")?.includes("gzip");
 
       if (isGzip && resp) {
@@ -372,7 +404,13 @@ export namespace ReplicacheApi {
         return c.json({}, 307, { location: "/sync/push" });
 
       for (const mutation of body.mutations) {
-        await createTransaction(async (tx) => {
+        // Retry logic for serialization errors
+        let attempts = 0;
+        const maxAttempts = 3;
+
+        while (attempts < maxAttempts) {
+          try {
+            await createTransaction(async (tx) => {
           const group = await tx
             .select({
               id: replicache_client_group.id,
@@ -474,7 +512,32 @@ export namespace ReplicacheApi {
               },
             })
             .execute();
-        });
+            });
+
+            // Success - break out of retry loop
+            break;
+          } catch (error: any) {
+            attempts++;
+
+            // Check if it's a serialization error (40001)
+            const isSerializationError =
+              error?.code === "40001" ||
+              error?.message?.includes("could not serialize access");
+
+            if (isSerializationError && attempts < maxAttempts) {
+              // Exponential backoff: 50ms, 100ms, 200ms
+              const delay = 50 * Math.pow(2, attempts - 1);
+              console.log(
+                `Serialization error on mutation ${mutation.id}, retrying in ${delay}ms (attempt ${attempts}/${maxAttempts})`
+              );
+              await new Promise((resolve) => setTimeout(resolve, delay));
+              continue;
+            }
+
+            // Not a serialization error or out of retries - throw
+            throw error;
+          }
+        }
       }
 
       if (actor.type === "user")
