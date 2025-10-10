@@ -54,9 +54,9 @@ export function OnboardingPage() {
         setExamplePrompt(promptData)
 
         // Create tags via Replicache mutator one by one
-        for (const name of tagNames) {
-          await rep.mutate.tag_create({ name })
-        }
+        // for (const name of tagNames) {
+        //   await rep.mutate.tag_create({ name })
+        // }
 
         // Wait a bit for tags to be created
         await new Promise((resolve) => setTimeout(resolve, 200))

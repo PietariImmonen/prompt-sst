@@ -40,36 +40,26 @@ const OnboardingRouter = ({ children }: { children: React.ReactNode }) => {
   const [onboardingStatus, setOnboardingStatus] = useState<'checking' | 'needed' | 'completed'>(
     'checking'
   )
+
+  // Subscribe to user settings from Replicache to react to changes in real-time
   const userSettings = useSubscribe(UserSettingsStore.get(), {
     dependencies: []
   })
-  // Subscribe to user settings from Replicache to react to changes in real-time
-  console.log('OnboardingRouter - userSettings', userSettings)
+
   useEffect(() => {
-    // Wait for auth to be ready
-    if (!auth.current) {
+    // Wait for auth and Replicache to be ready
+    if (!auth.current || !rep) {
       return
     }
 
-    // Check from Replicache subscription (real-time updates)
-    if (userSettings !== null) {
-      console.log('OnboardingRouter - Using user settings from subscription:', userSettings)
-      if (userSettings?.inAppOnboardingCompleted) {
-        console.log('OnboardingRouter - User has completed onboarding')
-        setOnboardingStatus('completed')
-      } else {
-        console.log('OnboardingRouter - User needs onboarding')
-        setOnboardingStatus('needed')
-      }
-      return
-    }
-
-    // Fallback: check from auth context (API response) - this is immediate on first load
+    // While userSettings is undefined, we're still loading from Replicache
+    // Check API settings first to avoid flashing onboarding screen
     const workspace = auth.current?.workspaces?.[0]
     const apiSettings = workspace?.userSettings
 
-    if (apiSettings) {
-      console.log('OnboardingRouter - Using user settings from API:', apiSettings)
+    // If we have API settings, use them immediately while Replicache loads
+    if (apiSettings && userSettings === undefined) {
+      console.log('OnboardingRouter - Using user settings from API (initial):', apiSettings)
       if (apiSettings.inAppOnboardingCompleted) {
         console.log('OnboardingRouter - User has completed onboarding (from API)')
         setOnboardingStatus('completed')
@@ -77,8 +67,28 @@ const OnboardingRouter = ({ children }: { children: React.ReactNode }) => {
         console.log('OnboardingRouter - User needs onboarding (from API)')
         setOnboardingStatus('needed')
       }
+      return
     }
-  }, [auth.current, userSettings])
+
+    // Once Replicache subscription returns data (even if null), use that as source of truth
+    if (userSettings !== undefined) {
+      console.log(
+        'OnboardingRouter - Using user settings from Replicache subscription:',
+        userSettings
+      )
+      if (userSettings?.inAppOnboardingCompleted) {
+        console.log('OnboardingRouter - User has completed onboarding (from Replicache)')
+        setOnboardingStatus('completed')
+      } else {
+        console.log('OnboardingRouter - User needs onboarding (from Replicache)')
+        setOnboardingStatus('needed')
+      }
+      return
+    }
+
+    // If no API settings and userSettings is still undefined, keep checking
+    console.log('OnboardingRouter - Still loading user settings...')
+  }, [auth.current, rep, userSettings])
 
   if (onboardingStatus === 'checking') {
     return <SplashScreen message="Loading workspace…" />
