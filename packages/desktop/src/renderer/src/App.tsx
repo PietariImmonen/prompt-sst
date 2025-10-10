@@ -13,8 +13,8 @@ import { UserSettingsStore } from '@/data/user-settings'
 
 import AuthPage from '@/pages/auth'
 import PromptsPage from '@/pages/prompts'
-import SettingsPage from '@/pages/settings'
 import TagsPage from '@/pages/tags'
+import AccountSettingsPage from '@/pages/account-settings'
 import SidebarLayout from '@/components/layout/sidebar-layout'
 import { Toaster } from '@/components/ui/sonner'
 import { PromptCaptureProvider } from '@/providers/prompt-capture-provider'
@@ -182,7 +182,7 @@ const AuthenticatedApp = () => {
                   <Route path="sessions" element={<PromptsPage />} />
                   <Route path="sessions/:promptId/edit" element={<PromptEditorPage />} />
                   <Route path="tags" element={<TagsPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="account-settings" element={<AccountSettingsPage />} />
                 </Route>
               </Routes>
             </OnboardingRouter>

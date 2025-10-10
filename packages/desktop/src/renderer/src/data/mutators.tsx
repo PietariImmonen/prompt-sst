@@ -272,4 +272,27 @@ export const mutators = new Client<ServerType>()
       timeUpdated: new Date().toISOString()
     })(tx)
   })
+  .mutation('prompt_remove', async (tx, input: string) => {
+    const existing = await PromptStore.fromID(input)(tx)
+    if (!existing) return
+    const now = new Date().toISOString()
+
+    // Soft-delete the prompt
+    await PromptStore.set({
+      ...existing,
+      timeDeleted: now,
+      timeUpdated: now
+    })(tx)
+
+    // Soft-delete associated prompt tags
+    const promptTags = await tx.scan<PromptTag>({ prefix: `/prompt_tag/${input}/` }).toArray()
+    for (const entry of promptTags) {
+      if (entry.timeDeleted) continue
+      await PromptTagStore.set({
+        ...entry,
+        timeDeleted: now,
+        timeUpdated: now
+      })(tx)
+    }
+  })
   .build()

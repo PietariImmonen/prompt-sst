@@ -14,7 +14,8 @@
       "Bash(bun init:*)",
       "Bash(bun add:*)",
       "WebFetch(domain:github.com)",
-      "Bash(bun remove:*)"
+      "Bash(bun remove:*)",
+      "WebFetch(domain:soniox.com)"
     ],
     "deny": [],
     "ask": []

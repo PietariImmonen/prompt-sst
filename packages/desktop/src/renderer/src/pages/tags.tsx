@@ -1,11 +1,8 @@
 import * as React from 'react'
 import { toast } from 'sonner'
-import { Plus, Trash2, Edit2, Tag as TagIcon } from 'lucide-react'
 import { createId } from '@paralleldrive/cuid2'
-import { formatDistanceToNow } from 'date-fns'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -26,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
+import { TagsTable, TagsPageHeader } from '@/components/tags-table'
 import { useReplicache, useSubscribe } from '@/hooks/use-replicache'
 import { TagStore } from '@/data/tag-store'
 import type { Tag } from '@prompt-saver/core/models/Tag'
@@ -152,87 +149,15 @@ export default function TagsPage() {
   }, [])
 
   return (
-    <div className="flex min-h-screen flex-col gap-6 bg-background px-6 py-8">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Tags</h1>
-          <p className="text-sm text-muted-foreground">
-            Organize your prompts with tags for better discoverability
-          </p>
+    <div className="flex min-h-screen flex-col bg-black text-foreground">
+      <div className="flex flex-1 flex-col gap-4 overflow-hidden">
+        <div className="sticky top-0 z-10 bg-black shadow-sm">
+          <TagsPageHeader onCreateTag={() => setIsCreateOpen(true)} />
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Tag
-        </Button>
-      </header>
-
-      <main className="grid gap-4">
-        {tags.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <TagIcon className="mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="mb-2 text-lg font-medium">No tags yet</p>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Create your first tag to start organizing prompts
-              </p>
-              <Button onClick={() => setIsCreateOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Tag
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {tags.map((tag) => (
-              <Card key={tag.id} className="relative">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{tag.name}</CardTitle>
-                      {tag.description && (
-                        <CardDescription className="mt-1">{tag.description}</CardDescription>
-                      )}
-                    </div>
-                    <Badge variant="outline" className="ml-2 shrink-0">
-                      {tag.slug}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
-                      Updated{' '}
-                      {tag.timeUpdated
-                        ? formatDistanceToNow(new Date(tag.timeUpdated), { addSuffix: true })
-                        : 'recently'}
-                    </span>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => openEditDialog(tag)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                        <span className="sr-only">Edit {tag.name}</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => openDeleteDialog(tag)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete {tag.name}</span>
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
+        <div className="flex-1 overflow-y-auto">
+          <TagsTable tags={tags} onEdit={openEditDialog} onDelete={openDeleteDialog} />
+        </div>
+      </div>
 
       {/* Create Tag Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -342,7 +267,7 @@ export default function TagsPage() {
 
       {/* Delete Tag Dialog */}
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-black border-border">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Tag</AlertDialogTitle>
             <AlertDialogDescription>
@@ -352,8 +277,12 @@ export default function TagsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTag} disabled={isSubmitting}>
-              Delete
+            <AlertDialogAction
+              onClick={handleDeleteTag}
+              disabled={isSubmitting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isSubmitting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

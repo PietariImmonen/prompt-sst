@@ -34,6 +34,7 @@ export const server = new Server()
   .expose("prompt_set_tags", Prompt.setTags)
   .expose("prompt_toggle_favorite", Prompt.setFavorite)
   .expose("prompt_set_visibility", Prompt.setVisibility)
+  .expose("prompt_remove", Prompt.remove)
   .expose("tag_create", Tag.create)
   .expose("tag_update", Tag.update)
   .expose("tag_remove", Tag.remove);

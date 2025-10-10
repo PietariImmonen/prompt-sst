@@ -8,9 +8,11 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { formatDistanceToNow } from 'date-fns'
 import { createId } from '@paralleldrive/cuid2'
+import { Save, X } from 'lucide-react'
 
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { MultiSelectTags } from '@/components/tag/multi-select-tags'
 
 import { Editor as PromptContentEditor } from '@/components/editor/editor'
@@ -178,24 +180,44 @@ export function PromptEditor({ prompt, onDismiss }: PromptEditorProps) {
         >
           <div className="flex flex-1 flex-col overflow-hidden">
             <div className="flex flex-col gap-4 border-b border-border/60 bg-black/80 px-8 py-6">
-              <div className="flex flex-col gap-6">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <div className="flex flex-col gap-2">
-                      <Input
-                        {...field}
-                        autoFocus
-                        placeholder="Untitled prompt"
-                        className="w-full border-none bg-transparent px-0 text-3xl font-semibold tracking-tight focus-visible:ring-0"
-                        disabled={isLoading}
-                      />
-                      <p className="text-xs text-muted-foreground">Last updated {lastUpdated}</p>
-                    </div>
-                  )}
-                />
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <div className="flex flex-col gap-2">
+                        <Input
+                          {...field}
+                          autoFocus
+                          placeholder="Untitled prompt"
+                          className="w-full border-none bg-transparent px-0 text-3xl font-semibold tracking-tight focus-visible:ring-0"
+                          disabled={isLoading}
+                        />
+                        <p className="text-xs text-muted-foreground">Last updated {lastUpdated}</p>
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="flex gap-2 ml-4">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancel}
+                    disabled={isLoading}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                  </Button>
+                  <Button type="submit" size="sm" disabled={isLoading || !form.formState.isDirty}>
+                    <Save className="mr-2 h-4 w-4" />
+                    {isLoading ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+              </div>
 
+              <div className="flex flex-col gap-6">
                 <FormField
                   control={form.control}
                   name="tagIDs"

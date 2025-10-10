@@ -11,6 +11,7 @@ import { TagSchema } from "../../models/Tag";
 import { VisibleError } from "../../util/error";
 import { removeTimestamps } from "../../util/sql";
 import {
+  createTransaction,
   createTransactionEffect,
   useTransaction,
 } from "../../util/transaction";
@@ -372,24 +373,32 @@ export namespace Prompt {
   );
 
   export const setTags = zod(PromptSetTagsSchema, (input) =>
-    useTransaction(async (tx) => {
-      const actor = assertActor("user");
-      const tagIDs = normalizeTagIDs(input.tagIDs) ?? [];
+    createTransaction(
+      async (tx) => {
+        const actor = assertActor("user");
+        const tagIDs = normalizeTagIDs(input.tagIDs) ?? [];
 
-      await ensureTagsExist(tx, actor.properties.workspaceID, tagIDs);
-      await applyPromptTags(tx, actor.properties.workspaceID, input.id, tagIDs);
+        await ensureTagsExist(tx, actor.properties.workspaceID, tagIDs);
+        await applyPromptTags(
+          tx,
+          actor.properties.workspaceID,
+          input.id,
+          tagIDs,
+        );
 
-      await tx
-        .update(prompt)
-        .set({ timeUpdated: sql`CURRENT_TIMESTAMP` })
-        .where(
-          and(
-            eq(prompt.id, input.id),
-            eq(prompt.workspaceID, actor.properties.workspaceID),
-          ),
-        )
-        .execute();
-    }),
+        await tx
+          .update(prompt)
+          .set({ timeUpdated: sql`CURRENT_TIMESTAMP` })
+          .where(
+            and(
+              eq(prompt.id, input.id),
+              eq(prompt.workspaceID, actor.properties.workspaceID),
+            ),
+          )
+          .execute();
+      },
+      { isolationLevel: "read committed" },
+    ),
   );
 
   export const listByWorkspace = zod(z.void(), () =>

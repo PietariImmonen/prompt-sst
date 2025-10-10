@@ -117,11 +117,33 @@ export namespace LLM {
           `[LLM] Applying ${validTagIDs.length} tags to prompt ${input.promptID}`,
         );
 
-        // Apply tags to prompt
-        await Prompt.setTags({
-          id: input.promptID,
-          tagIDs: validTagIDs,
-        });
+        // Apply tags to prompt with retry logic for serialization errors
+        let retries = 0;
+        const maxRetries = 3;
+        while (retries < maxRetries) {
+          try {
+            await Prompt.setTags({
+              id: input.promptID,
+              tagIDs: validTagIDs,
+            });
+            break;
+          } catch (error: unknown) {
+            // PostgreSQL serialization failure error code
+            const pgError = error as { code?: string };
+            if (pgError?.code === "40001" && retries < maxRetries - 1) {
+              retries++;
+              console.log(
+                `[LLM] Serialization error on attempt ${retries}, retrying...`,
+              );
+              // Exponential backoff: 100ms, 200ms, 400ms
+              await new Promise((resolve) =>
+                setTimeout(resolve, 100 * Math.pow(2, retries - 1)),
+              );
+              continue;
+            }
+            throw error;
+          }
+        }
 
         console.log(
           `[LLM] Successfully categorized prompt ${input.promptID} with tags: ${validTagIDs.join(", ")}`,

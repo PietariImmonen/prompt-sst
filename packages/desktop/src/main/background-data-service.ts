@@ -257,7 +257,7 @@ export class BackgroundDataService {
             }
           }
         }
-        
+
         // Sort prompts: favorites first, then by creation time (newest first)
         this.prompts = prompts.sort((a, b) => {
           if (a.isFavorite && !b.isFavorite) return -1
@@ -266,7 +266,7 @@ export class BackgroundDataService {
           const timeB = (b as any).timeCreated ? new Date((b as any).timeCreated).getTime() : 0
           return timeB - timeA
         })
-        
+
         this.lastSyncTime = new Date()
         console.log('✅ Prompts synced successfully via Replicache, count:', this.prompts.length)
       } else {

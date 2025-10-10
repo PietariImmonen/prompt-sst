@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LogOut, MessageSquare, Tag } from 'lucide-react'
+import { LogOut, MessageSquare, Tag, User } from 'lucide-react'
 
 import {
   Sidebar,
@@ -33,12 +33,12 @@ const menuItems = [
     title: 'Tags',
     url: '/tags',
     icon: Tag
+  },
+  {
+    title: 'Account',
+    url: '/account-settings',
+    icon: User
   }
-  // {
-  //   title: 'Settings',
-  //   url: '/settings',
-  //   icon: Settings
-  // }
 ]
 
 function AppSidebar() {
