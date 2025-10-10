@@ -4,6 +4,7 @@ export const secret = {
   NeonDatabaseUrl: new sst.Secret("NeonDatabaseUrl"),
   NeonApiKey: new sst.Secret("NeonApiKey"),
   OpenRouterApiKey: new sst.Secret("OpenRouterApiKey"),
+  SonioxApiKey: new sst.Secret("SonioxApiKey"),
 };
 
 export const allSecrets = Object.values(secret);

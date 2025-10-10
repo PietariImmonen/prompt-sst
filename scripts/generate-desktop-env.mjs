@@ -26,9 +26,11 @@ const mode =
   process.env.DESKTOP_MODE ??
   (process.env.NODE_ENV === "production" ? "production" : "development");
 
-const stage = getFlag("--stage") ?? process.env.DESKTOP_STAGE ?? process.env.SST_STAGE;
+const stage =
+  getFlag("--stage") ?? process.env.DESKTOP_STAGE ?? process.env.SST_STAGE;
 
-const profile = getFlag("--profile") ?? process.env.SST_PROFILE ?? process.env.AWS_PROFILE;
+const profile =
+  getFlag("--profile") ?? process.env.SST_PROFILE ?? process.env.AWS_PROFILE;
 
 const defaultStage = mode === "production" ? "production" : "dev";
 const requestedStage = stage ?? defaultStage;
@@ -87,6 +89,7 @@ try {
         DesktopStage: "dev",
         DesktopRealtimeEndpoint: "localhost",
         DesktopAuthorizer: "dev-authorizer",
+        DesktopSonioxApiKey: "",
       };
     }
   }
@@ -98,14 +101,29 @@ try {
 
   const resolvedStage = outputs.DesktopStage ?? requestedStage;
 
+  // Ensure API URL has trailing slash for proper URL construction with sync endpoints
+  const apiUrl =
+    (
+      process.env.DESKTOP_API_URL ??
+      outputs.DesktopApiUrl ??
+      "http://localhost:3001/api"
+    ).replace(/\/$/, "") + "/";
+  // Auth URL should NOT have trailing slash - OpenAuth client will add paths like /authorize
+  const authUrl = (
+    process.env.DESKTOP_AUTH_URL ??
+    outputs.DesktopAuthUrl ??
+    "http://localhost:3001/auth"
+  ).replace(/\/$/, "");
+
   const envVars = [
-    `VITE_API_URL=${process.env.DESKTOP_API_URL ?? outputs.DesktopApiUrl ?? "http://localhost:3001/api"}`,
-    `VITE_AUTH_URL=${process.env.DESKTOP_AUTH_URL ?? outputs.DesktopAuthUrl ?? "http://localhost:3001/auth"}`,
+    `VITE_API_URL=${apiUrl}`,
+    `VITE_AUTH_URL=${authUrl}`,
     `VITE_STAGE=${resolvedStage}`,
     `VITE_REALTIME_ENDPOINT=${process.env.DESKTOP_REALTIME_ENDPOINT ?? outputs.DesktopRealtimeEndpoint ?? "localhost"}`,
     `VITE_AUTHORIZER=${process.env.DESKTOP_AUTHORIZER ?? outputs.DesktopAuthorizer ?? "dev-authorizer"}`,
     `VITE_APP_URL=${process.env.DESKTOP_APP_URL ?? "http://localhost:3000"}`,
     `VITE_PUBLIC_APP_URL=${process.env.DESKTOP_PUBLIC_APP_URL ?? "http://localhost:3001"}`,
+    `VITE_SONIOX_API_KEY=${process.env.DESKTOP_SONIOX_API_KEY ?? outputs.DesktopSonioxApiKey ?? ""}`,
   ];
 
   const envContent = [

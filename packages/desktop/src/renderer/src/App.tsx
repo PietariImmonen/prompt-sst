@@ -21,6 +21,9 @@ import { PromptCaptureProvider } from '@/providers/prompt-capture-provider'
 import { CallbackPage } from '@/routes/auth/callback/callback'
 import OnboardingPage from '@/routes/onboarding'
 import PromptEditorPage from '@/pages/prompt-editor'
+import AudioCapturePage from '@/pages/audio-capture'
+import TranscriptionOverlayPage from '@/pages/transcription-overlay'
+import TranscriptionTestPage from '@/pages/transcription-test'
 
 const SplashScreen = ({ message = 'Loading workspace…' }: { message?: string }) => {
   return (
@@ -182,6 +185,7 @@ const AuthenticatedApp = () => {
                   <Route path="sessions" element={<PromptsPage />} />
                   <Route path="sessions/:promptId/edit" element={<PromptEditorPage />} />
                   <Route path="tags" element={<TagsPage />} />
+                  <Route path="transcription-test" element={<TranscriptionTestPage />} />
                   <Route path="account-settings" element={<AccountSettingsPage />} />
                 </Route>
               </Routes>
@@ -209,6 +213,17 @@ const Content = () => {
 }
 
 function App(): JSX.Element {
+  const location = window.location.hash
+
+  // Handle special routes for transcription features
+  if (location === '#audio-capture') {
+    return <AudioCapturePage />
+  }
+
+  if (location === '#transcription-overlay') {
+    return <TranscriptionOverlayPage />
+  }
+
   return (
     <HashRouter>
       <AuthProvider>

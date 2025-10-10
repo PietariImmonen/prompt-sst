@@ -75,10 +75,16 @@ export class BackgroundDataService {
     }
   }
 
+  private normalizeApiUrl(url: string | null): string | null {
+    if (!url) return null
+    // Remove trailing slash for consistent URL construction
+    return url.endsWith('/') ? url.slice(0, -1) : url
+  }
+
   private async loadEnvironmentConfig() {
     // In production builds, load from environment variables that were injected during build
     if (!isDev) {
-      this.apiEndpoint = process.env.VITE_API_URL || null
+      this.apiEndpoint = this.normalizeApiUrl(process.env.VITE_API_URL || null)
       this.realtimeEndpoint = process.env.VITE_REALTIME_ENDPOINT || null
       this.authorizer = process.env.VITE_AUTHORIZER || null
       this.stage = process.env.VITE_STAGE || null
@@ -113,7 +119,7 @@ export class BackgroundDataService {
         this.authToken = authData.token
         this.workspaceId = authData.workspaceId
         if (authData.apiEndpoint) {
-          this.apiEndpoint = authData.apiEndpoint
+          this.apiEndpoint = this.normalizeApiUrl(authData.apiEndpoint)
         }
         if (authData.realtimeEndpoint) {
           this.realtimeEndpoint = authData.realtimeEndpoint
@@ -171,24 +177,29 @@ export class BackgroundDataService {
     this.connectionStatus = 'connecting'
 
     try {
-      // Initial sync
+      // Initial sync to populate cache
       await this.syncPrompts()
       this.connectionStatus = 'connected'
 
       // Set up MQTT connection for realtime poke notifications
       this.connectToRealtime()
 
-      // Set up periodic sync every 30 seconds as fallback
-      this.syncInterval = setInterval(async () => {
-        try {
-          await this.syncPrompts()
-        } catch (error) {
-          console.warn('Periodic sync failed:', error)
-          this.connectionStatus = 'error'
-        }
-      }, 30000)
+      // DISABLED: Periodic sync is not needed - Replicache in renderer handles all sync
+      // The background service only needs data for offline prompt capture
+      // Set up periodic sync every 5 minutes as fallback (only to keep cache fresh)
+      this.syncInterval = setInterval(
+        async () => {
+          try {
+            await this.syncPrompts()
+          } catch (error) {
+            console.warn('Periodic sync failed:', error)
+            this.connectionStatus = 'error'
+          }
+        },
+        5 * 60 * 1000
+      ) // 5 minutes instead of 30 seconds
 
-      console.log('Data sync started successfully')
+      console.log('Data sync started successfully (5 minute interval)')
     } catch (error) {
       console.error('Failed to start data sync:', error)
       this.connectionStatus = 'error'
@@ -373,6 +384,13 @@ export class BackgroundDataService {
       return
     }
 
+    // Skip MQTT connection in development when using fallback localhost values
+    if (this.realtimeEndpoint === 'localhost' || this.realtimeEndpoint.includes('127.0.0.1')) {
+      console.log('⚠️  Skipping MQTT connection - using development fallback configuration')
+      console.log('   Start SST backend and regenerate .env for realtime updates')
+      return
+    }
+
     // Disconnect existing connection if any
     this.disconnectFromRealtime()
 
@@ -515,7 +533,7 @@ export class BackgroundDataService {
     this.authToken = authData.token
     this.workspaceId = authData.workspaceId
     if (authData.apiEndpoint) {
-      this.apiEndpoint = authData.apiEndpoint
+      this.apiEndpoint = this.normalizeApiUrl(authData.apiEndpoint)
     }
     if (authData.realtimeEndpoint) {
       this.realtimeEndpoint = authData.realtimeEndpoint

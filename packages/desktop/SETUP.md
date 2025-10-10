@@ -1,6 +1,6 @@
 # Desktop Setup Guide
 
-The desktop app shares infrastructure with the Prompt SST web client (OpenAuth, Hono APIs, Replicache, MQTT). Only the UI differs. Follow these steps to get a local environment running.
+The desktop app shares infrastructure with the Prompt SST web client (OpenAuth, Hono APIs, Replicache, MQTT). Only the UI differs. It also includes a universal transcription tool for voice-to-text input. Follow these steps to get a local environment running.
 
 ## 1. Prerequisites
 
@@ -50,7 +50,27 @@ This hoists workspace dependencies (React, Replicache, MQTT, etc.) and native El
 
 The renderer opens in an Electron window. OAuth flows redirect to the same window; tokens are persisted in `localStorage` for future sessions.
 
-## 5. Production Builds
+## 5. Transcription Feature (Optional)
+
+To enable the universal transcription tool (voice-to-text with `Cmd+Shift+T`):
+
+1. Set your Soniox API key in SST secrets:
+
+   ```bash
+   bunx sst secret set SonioxApiKey "your-soniox-api-key-here"
+   ```
+
+2. Regenerate environment file:
+
+   ```bash
+   bun run --filter @prompt-saver/desktop env:generate
+   ```
+
+3. Restart the desktop app
+
+See [TRANSCRIPTION.md](./TRANSCRIPTION.md) for detailed usage and troubleshooting.
+
+## 6. Production Builds
 
 ```bash
 # Builds always regenerate `.env.production` for the selected stage (default production)

@@ -14,13 +14,23 @@ export function ReplicacheProvider(props: {
   )
 
   React.useEffect(() => {
+    let isSubscribed = true
+    
     const _replicache = createReplicache({
       token: props.token,
       workspaceId: props.workspaceID
     })
-    setReplicache(_replicache)
+    
+    // Only set replicache if the component is still mounted
+    // This prevents double-mounting in React StrictMode from creating multiple instances
+    if (isSubscribed) {
+      setReplicache(_replicache)
+    } else {
+      _replicache.close()
+    }
 
     return () => {
+      isSubscribed = false
       _replicache.close()
     }
   }, [props.token, props.workspaceID])

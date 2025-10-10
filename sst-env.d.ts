@@ -66,6 +66,10 @@ declare module "sst" {
       "endpoint": string
       "type": "sst.aws.Realtime"
     }
+    "SonioxApiKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { LogOut, MessageSquare, Tag, User } from 'lucide-react'
+import { LogOut, MessageSquare, Tag, User, Mic } from 'lucide-react'
 
 import {
   Sidebar,
@@ -33,6 +33,11 @@ const menuItems = [
     title: 'Tags',
     url: '/tags',
     icon: Tag
+  },
+  {
+    title: 'Transcription',
+    url: '/transcription-test',
+    icon: Mic
   },
   {
     title: 'Account',

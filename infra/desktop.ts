@@ -1,6 +1,7 @@
 import { api } from "./api";
 import { auth } from "./auth";
 import { realtime } from "./realtime";
+import { secret } from "./secret";
 
 // Desktop app configuration - provides the same environment variables as the web app
 // This allows the desktop app to connect to the same SST resources
@@ -13,6 +14,7 @@ export const desktopConfig = {
     VITE_STAGE: $app.stage,
     VITE_REALTIME_ENDPOINT: realtime.endpoint,
     VITE_AUTHORIZER: realtime.authorizer,
+    VITE_SONIOX_API_KEY: secret.SonioxApiKey.value,
   },
 };
 
@@ -23,4 +25,5 @@ export const outputs = {
   DesktopStage: $app.stage,
   DesktopRealtimeEndpoint: realtime.endpoint,
   DesktopAuthorizer: realtime.authorizer,
+  DesktopSonioxApiKey: secret.SonioxApiKey.value,
 };

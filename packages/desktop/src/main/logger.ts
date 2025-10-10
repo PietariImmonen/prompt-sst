@@ -56,13 +56,16 @@ export class ProductionLogger {
       // In development, just use console
       const color = {
         debug: '\x1b[36m', // cyan
-        info: '\x1b[32m',  // green
-        warn: '\x1b[33m',  // yellow
+        info: '\x1b[32m', // green
+        warn: '\x1b[33m', // yellow
         error: '\x1b[31m', // red
-        fatal: '\x1b[41m'  // red background
+        fatal: '\x1b[41m' // red background
       }[entry.level]
 
-      console.log(`${color}[${entry.level.toUpperCase()}] ${entry.category}: ${entry.message}\x1b[0m`, entry.data || '')
+      console.log(
+        `${color}[${entry.level.toUpperCase()}] ${entry.category}: ${entry.message}\x1b[0m`,
+        entry.data || ''
+      )
       return
     }
 
@@ -105,8 +108,8 @@ export class ProductionLogger {
       const fs = await import('fs')
       const files = fs.readdirSync(this.logDir)
       const logFiles = files
-        .filter(file => file.endsWith('.log'))
-        .map(file => ({
+        .filter((file) => file.endsWith('.log'))
+        .map((file) => ({
           name: file,
           path: join(this.logDir, file),
           mtime: fs.statSync(join(this.logDir, file)).mtime
@@ -210,6 +213,7 @@ export class ProductionLogger {
     trayService?: boolean
     backgroundDataService?: boolean
     captureService?: boolean
+    transcriptionService?: boolean
     mainWindow?: boolean
   }) {
     await this.info('app-state', 'Application state snapshot', {
@@ -217,7 +221,9 @@ export class ProductionLogger {
       services,
       windows: {
         allWindows: require('electron').BrowserWindow.getAllWindows().length,
-        visibleWindows: require('electron').BrowserWindow.getAllWindows().filter((w: any) => w.isVisible()).length
+        visibleWindows: require('electron')
+          .BrowserWindow.getAllWindows()
+          .filter((w: any) => w.isVisible()).length
       }
     })
   }
@@ -245,5 +251,4 @@ export const logIpcCall = (channel: string, direction: 'send' | 'receive', data?
 export const logCaptureEvent = (event: string, details?: any) =>
   logger.info('capture', event, details)
 
-export const logTrayEvent = (event: string, details?: any) =>
-  logger.debug('tray', event, details)
+export const logTrayEvent = (event: string, details?: any) => logger.debug('tray', event, details)

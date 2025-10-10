@@ -10,6 +10,7 @@ import icon from '../../resources/icon.png?asset'
 import { createIntegratedCaptureService } from './integrated-capture-service.js'
 import { TrayService } from './tray-service.js'
 import { BackgroundDataService } from './background-data-service.js'
+import { TranscriptionService } from './transcription-service.js'
 import {
   logger,
   logServiceStart,
@@ -59,6 +60,7 @@ let mainWindow: BrowserWindow | null = null
 let trayService: TrayService | null = null
 let backgroundDataService: BackgroundDataService | null = null
 let captureService: any = null
+let transcriptionService: TranscriptionService | null = null
 let isQuitting = false
 
 const pendingAuthCallbacks: AuthCallbackPayload[] = []
@@ -485,6 +487,18 @@ app.whenReady().then(async () => {
 
     await logServiceReady('CaptureService')
 
+    // Initialize transcription service
+    await logServiceStart('TranscriptionService')
+    transcriptionService = new TranscriptionService()
+    const transcriptionEnabled = await transcriptionService.initialize()
+    await logServiceReady('TranscriptionService')
+
+    if (transcriptionEnabled) {
+      console.log('✅ Transcription service enabled (Cmd+Shift+T)')
+    } else {
+      console.log('⚠️  Transcription service disabled (no API key configured)')
+    }
+
     // Create main window
     createWindow()
 
@@ -493,6 +507,7 @@ app.whenReady().then(async () => {
       trayService: trayService.isInitialized(),
       backgroundDataService: backgroundDataService.isHealthy(),
       captureService: captureService?.isListening() || false,
+      transcriptionService: transcriptionService?.isEnabled() || false,
       mainWindow: !!mainWindow
     })
 
@@ -590,6 +605,7 @@ app.on('will-quit', async () => {
       trayService: trayService?.isInitialized() || false,
       backgroundDataService: backgroundDataService?.isHealthy() || false,
       captureService: captureService?.isListening() || false,
+      transcriptionService: transcriptionService?.isEnabled() || false,
       mainWindow: !!mainWindow
     })
 
@@ -614,6 +630,9 @@ app.on('will-quit', async () => {
     }
 
     // Dispose services in reverse order with individual error handling
+    await disposeService(transcriptionService, 'TranscriptionService', () =>
+      transcriptionService?.dispose()
+    )
     await disposeService(captureService, 'CaptureService', () => captureService?.dispose())
     await disposeService(backgroundDataService, 'BackgroundDataService', () =>
       backgroundDataService?.dispose()

@@ -133,11 +133,26 @@ const desktopAuth: DesktopAuthAPI = {
   }
 }
 
+interface TranscriptionAPI {
+  getStatus: () => Promise<{
+    status: string
+    isRecording: boolean
+    hasApiKey: boolean
+  }>
+}
+
+const transcription: TranscriptionAPI = {
+  getStatus() {
+    return ipcRenderer.invoke('transcription:get-status')
+  }
+}
+
 declare global {
   interface Window {
     electron: typeof electronAPI
     promptCapture: PromptCaptureAPI
     desktopAuth: DesktopAuthAPI
+    transcription: TranscriptionAPI
   }
 }
 
@@ -146,6 +161,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('electron', electronAPI)
     contextBridge.exposeInMainWorld('promptCapture', promptCapture)
     contextBridge.exposeInMainWorld('desktopAuth', desktopAuth)
+    contextBridge.exposeInMainWorld('transcription', transcription)
   } catch (error) {
     console.error('Failed to expose preload API', error)
   }
@@ -156,4 +172,6 @@ if (process.contextIsolated) {
   window.promptCapture = promptCapture
   // @ts-expect-error fallback when context isolation disabled
   window.desktopAuth = desktopAuth
+  // @ts-expect-error fallback when context isolation disabled
+  window.transcription = transcription
 }
