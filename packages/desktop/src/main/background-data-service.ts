@@ -1,5 +1,7 @@
 import { app, ipcMain } from 'electron'
 import type { IpcMainInvokeEvent } from 'electron'
+import { createId } from '@paralleldrive/cuid2'
+import mqtt, { MqttClient } from 'mqtt'
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
@@ -40,6 +42,10 @@ export class BackgroundDataService {
   private syncInterval: NodeJS.Timeout | null = null
   private lastSyncTime: Date | null = null
   private connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error' = 'disconnected'
+  private mqttClient: MqttClient | null = null
+  private realtimeEndpoint: string | null = null
+  private authorizer: string | null = null
+  private stage: string | null = null
 
   constructor() {
     this.setupIpcHandlers()
@@ -73,7 +79,15 @@ export class BackgroundDataService {
     // In production builds, load from environment variables that were injected during build
     if (!isDev) {
       this.apiEndpoint = process.env.VITE_API_URL || null
-      console.log('Loaded API endpoint for production:', this.apiEndpoint ? 'configured' : 'missing')
+      this.realtimeEndpoint = process.env.VITE_REALTIME_ENDPOINT || null
+      this.authorizer = process.env.VITE_AUTHORIZER || null
+      this.stage = process.env.VITE_STAGE || null
+      console.log('Loaded configuration for production:', {
+        apiEndpoint: this.apiEndpoint ? 'configured' : 'missing',
+        realtimeEndpoint: this.realtimeEndpoint ? 'configured' : 'missing',
+        authorizer: this.authorizer ? 'configured' : 'missing',
+        stage: this.stage ? 'configured' : 'missing'
+      })
     } else {
       // In development, these will be provided by the main window when it starts
       console.log('Development mode - waiting for configuration from main window')
@@ -82,26 +96,44 @@ export class BackgroundDataService {
 
   private setupIpcHandlers() {
     // Handle authentication updates from main window
-    ipcMain.handle('background:set-auth', async (_event: IpcMainInvokeEvent, authData: {
-      token: string | null
-      workspaceId: string | null
-      apiEndpoint: string | null
-    }) => {
-      console.log('Background service: Updating auth configuration')
-      this.authToken = authData.token
-      this.workspaceId = authData.workspaceId
-      if (authData.apiEndpoint) {
-        this.apiEndpoint = authData.apiEndpoint
-      }
+    ipcMain.handle(
+      'background:set-auth',
+      async (
+        _event: IpcMainInvokeEvent,
+        authData: {
+          token: string | null
+          workspaceId: string | null
+          apiEndpoint: string | null
+          realtimeEndpoint?: string | null
+          authorizer?: string | null
+          stage?: string | null
+        }
+      ) => {
+        console.log('Background service: Updating auth configuration')
+        this.authToken = authData.token
+        this.workspaceId = authData.workspaceId
+        if (authData.apiEndpoint) {
+          this.apiEndpoint = authData.apiEndpoint
+        }
+        if (authData.realtimeEndpoint) {
+          this.realtimeEndpoint = authData.realtimeEndpoint
+        }
+        if (authData.authorizer) {
+          this.authorizer = authData.authorizer
+        }
+        if (authData.stage) {
+          this.stage = authData.stage
+        }
 
-      if (this.authToken && this.workspaceId && this.apiEndpoint) {
-        await this.startDataSync()
-      } else {
-        this.stopDataSync()
-      }
+        if (this.authToken && this.workspaceId && this.apiEndpoint) {
+          await this.startDataSync()
+        } else {
+          this.stopDataSync()
+        }
 
-      return { success: true }
-    })
+        return { success: true }
+      }
+    )
 
     // Handle prompts requests from overlay
     ipcMain.handle('background:get-prompts', async () => {
@@ -110,9 +142,12 @@ export class BackgroundDataService {
     })
 
     // Handle prompt capture from main window or overlay
-    ipcMain.handle('background:capture-prompt', async (_event: IpcMainInvokeEvent, payload: PromptCapturePayload) => {
-      return await this.capturePrompt(payload)
-    })
+    ipcMain.handle(
+      'background:capture-prompt',
+      async (_event: IpcMainInvokeEvent, payload: PromptCapturePayload) => {
+        return await this.capturePrompt(payload)
+      }
+    )
 
     // Get connection status
     ipcMain.handle('background:get-status', async () => {
@@ -140,7 +175,10 @@ export class BackgroundDataService {
       await this.syncPrompts()
       this.connectionStatus = 'connected'
 
-      // Set up periodic sync every 30 seconds
+      // Set up MQTT connection for realtime poke notifications
+      this.connectToRealtime()
+
+      // Set up periodic sync every 30 seconds as fallback
       this.syncInterval = setInterval(async () => {
         try {
           await this.syncPrompts()
@@ -162,6 +200,7 @@ export class BackgroundDataService {
       clearInterval(this.syncInterval)
       this.syncInterval = null
     }
+    this.disconnectFromRealtime()
     this.connectionStatus = 'disconnected'
     console.log('Data sync stopped')
   }
@@ -174,39 +213,64 @@ export class BackgroundDataService {
     }
 
     try {
-      console.log('Syncing prompts with server...', {
+      console.log('Syncing prompts with server via Replicache pull...', {
         endpoint: this.apiEndpoint,
         hasToken: !!this.authToken,
         workspaceId: this.workspaceId
       })
 
-      const response = await fetch(`${this.apiEndpoint}/prompts`, {
-        method: 'GET',
+      // Use Replicache pull endpoint to get all prompts
+      const pullURL = `${this.apiEndpoint}/sync/pull`
+      const response = await fetch(pullURL, {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.authToken}`,
+          'x-prompt-saver-workspace': this.workspaceId,
+          Authorization: `Bearer ${this.authToken}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          clientGroupID: 'background-service',
+          cookie: null,
+          pullVersion: 1,
+          schemaVersion: '8'
+        })
       })
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => 'Unknown error')
-        throw new Error(`Failed to sync prompts: ${response.status} ${response.statusText} - ${errorText}`)
+        throw new Error(
+          `Failed to sync prompts: ${response.status} ${response.statusText} - ${errorText}`
+        )
       }
 
-      const data = await response.json()
+      const data = (await response.json()) as any
 
-      // Update local prompts cache
-      if (Array.isArray((data as any).prompts)) {
-        this.prompts = (data as any).prompts
+      // Extract prompts from Replicache pull response
+      if (data.patch && Array.isArray(data.patch)) {
+        const prompts: Prompt[] = []
+        for (const operation of data.patch) {
+          if (operation.op === 'put' && operation.key.startsWith('/prompt/')) {
+            const prompt = operation.value
+            // Filter out deleted prompts
+            if (!prompt.timeDeleted) {
+              prompts.push(prompt)
+            }
+          }
+        }
+        
+        // Sort prompts: favorites first, then by creation time (newest first)
+        this.prompts = prompts.sort((a, b) => {
+          if (a.isFavorite && !b.isFavorite) return -1
+          if (!a.isFavorite && b.isFavorite) return 1
+          const timeA = (a as any).timeCreated ? new Date((a as any).timeCreated).getTime() : 0
+          const timeB = (b as any).timeCreated ? new Date((b as any).timeCreated).getTime() : 0
+          return timeB - timeA
+        })
+        
         this.lastSyncTime = new Date()
-        console.log('✅ Prompts synced successfully, count:', this.prompts.length)
-      } else if (Array.isArray(data)) {
-        // Handle case where the API returns prompts directly as array
-        this.prompts = data
-        this.lastSyncTime = new Date()
-        console.log('✅ Prompts synced successfully (direct array), count:', this.prompts.length)
+        console.log('✅ Prompts synced successfully via Replicache, count:', this.prompts.length)
       } else {
-        console.warn('Unexpected prompts data format:', data)
+        console.warn('Unexpected Replicache pull response format:', data)
         // Don't update prompts if format is unexpected
       }
 
@@ -214,7 +278,6 @@ export class BackgroundDataService {
         this.connectionStatus = 'connected'
         console.log('✅ Background data service connected')
       }
-
     } catch (error) {
       console.error('❌ Background sync failed:', error)
       this.connectionStatus = 'error'
@@ -238,7 +301,7 @@ export class BackgroundDataService {
       const response = await fetch(`${this.apiEndpoint}/prompts`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.authToken}`,
+          Authorization: `Bearer ${this.authToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -267,7 +330,6 @@ export class BackgroundDataService {
         success: true,
         message: 'Prompt captured successfully'
       }
-
     } catch (error) {
       console.error('Failed to capture prompt:', error)
       return {
@@ -292,6 +354,100 @@ export class BackgroundDataService {
     }
   }
 
+  private connectToRealtime() {
+    // Only connect if we have all required configuration
+    if (
+      !this.authToken ||
+      !this.workspaceId ||
+      !this.realtimeEndpoint ||
+      !this.authorizer ||
+      !this.stage
+    ) {
+      console.log('Skipping realtime connection - missing configuration:', {
+        hasToken: !!this.authToken,
+        hasWorkspace: !!this.workspaceId,
+        hasEndpoint: !!this.realtimeEndpoint,
+        hasAuthorizer: !!this.authorizer,
+        hasStage: !!this.stage
+      })
+      return
+    }
+
+    // Disconnect existing connection if any
+    this.disconnectFromRealtime()
+
+    try {
+      console.log('🔌 Connecting to realtime MQTT for poke notifications...')
+
+      const url = new URL(`wss://${this.realtimeEndpoint}/mqtt`)
+      url.searchParams.set('x-amz-customauthorizer-name', this.authorizer)
+
+      this.mqttClient = mqtt.connect(url.toString(), {
+        protocolVersion: 5,
+        manualConnect: true,
+        username: '', // must be empty for the authorizer to work
+        password: this.authToken,
+        clientId: 'bg_service_' + createId()
+      })
+
+      this.mqttClient.on('connect', async () => {
+        console.log('✅ MQTT connected in background service')
+        if (!this.workspaceId || !this.stage) return
+
+        const topic = `prompt-saver/${this.stage}/${this.workspaceId}/all/#`
+        console.log('📡 Subscribing to:', topic)
+
+        try {
+          await this.mqttClient?.subscribeAsync(topic, { qos: 1 })
+          console.log('✅ Subscribed to poke notifications')
+        } catch (error) {
+          console.error('Failed to subscribe to MQTT topic:', error)
+        }
+      })
+
+      this.mqttClient.on('error', (error) => {
+        console.error('MQTT connection error:', error)
+      })
+
+      this.mqttClient.on('message', (fullTopic, payload) => {
+        try {
+          const splits = fullTopic.split('/')
+          const topic = splits[4]
+
+          if (topic === 'poke') {
+            console.log('🔔 Received poke notification, triggering sync...')
+            // Trigger immediate sync when poke received
+            this.syncPrompts().catch((error) => {
+              console.error('Failed to sync after poke:', error)
+            })
+          }
+        } catch (error) {
+          console.error('Error processing MQTT message:', error)
+        }
+      })
+
+      this.mqttClient.on('disconnect', () => {
+        console.log('MQTT disconnected')
+      })
+
+      this.mqttClient.connect()
+    } catch (error) {
+      console.error('Failed to connect to realtime:', error)
+    }
+  }
+
+  private disconnectFromRealtime() {
+    if (this.mqttClient) {
+      console.log('🔌 Disconnecting from MQTT...')
+      try {
+        this.mqttClient.end()
+      } catch (error) {
+        console.error('Error disconnecting from MQTT:', error)
+      }
+      this.mqttClient = null
+    }
+  }
+
   dispose() {
     console.log('Disposing background data service...')
 
@@ -310,6 +466,9 @@ export class BackgroundDataService {
       this.authToken = null
       this.workspaceId = null
       this.apiEndpoint = null
+      this.realtimeEndpoint = null
+      this.authorizer = null
+      this.stage = null
       this.lastSyncTime = null
       this.connectionStatus = 'disconnected'
       this.isInitialized = false
@@ -322,7 +481,10 @@ export class BackgroundDataService {
 
   // Health check method
   isHealthy(): boolean {
-    return this.isInitialized && (this.connectionStatus === 'connected' || this.connectionStatus === 'disconnected')
+    return (
+      this.isInitialized &&
+      (this.connectionStatus === 'connected' || this.connectionStatus === 'disconnected')
+    )
   }
 
   // Force refresh data
@@ -338,5 +500,39 @@ export class BackgroundDataService {
       console.error('Failed to refresh data:', error)
       return false
     }
+  }
+
+  // Public method to set auth configuration (called from main process)
+  async setAuth(authData: {
+    token: string | null
+    workspaceId: string | null
+    apiEndpoint: string | null
+    realtimeEndpoint?: string | null
+    authorizer?: string | null
+    stage?: string | null
+  }): Promise<{ success: boolean }> {
+    console.log('Background service: Updating auth configuration via setAuth')
+    this.authToken = authData.token
+    this.workspaceId = authData.workspaceId
+    if (authData.apiEndpoint) {
+      this.apiEndpoint = authData.apiEndpoint
+    }
+    if (authData.realtimeEndpoint) {
+      this.realtimeEndpoint = authData.realtimeEndpoint
+    }
+    if (authData.authorizer) {
+      this.authorizer = authData.authorizer
+    }
+    if (authData.stage) {
+      this.stage = authData.stage
+    }
+
+    if (this.authToken && this.workspaceId && this.apiEndpoint) {
+      await this.startDataSync()
+    } else {
+      this.stopDataSync()
+    }
+
+    return { success: true }
   }
 }

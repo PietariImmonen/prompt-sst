@@ -299,12 +299,24 @@ ipcMain.on(
       token: string | null
       workspaceId: string | null
       apiEndpoint: string | null
+      realtimeEndpoint?: string | null
+      authorizer?: string | null
+      stage?: string | null
     }
   ) => {
-    console.log('Main process: Syncing auth to background service')
+    console.log('Main process: Syncing auth to background service', {
+      hasToken: !!authData.token,
+      hasWorkspace: !!authData.workspaceId,
+      hasApiEndpoint: !!authData.apiEndpoint,
+      hasRealtimeEndpoint: !!authData.realtimeEndpoint,
+      hasAuthorizer: !!authData.authorizer,
+      hasStage: !!authData.stage
+    })
     if (backgroundDataService) {
-      // Use the background service's IPC handler directly
-      ipcMain.emit('background:set-auth', null, authData)
+      // Call setAuth directly on the background service
+      backgroundDataService.setAuth(authData).catch((error) => {
+        console.error('Failed to set auth on background service:', error)
+      })
     }
   }
 )

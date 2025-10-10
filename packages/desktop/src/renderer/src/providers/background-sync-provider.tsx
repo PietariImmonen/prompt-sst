@@ -19,8 +19,11 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
   const auth = useAuth()
   const [hasInitialSync, setHasInitialSync] = React.useState(false)
 
-  // Get API endpoint from environment
+  // Get configuration from environment
   const apiEndpoint = import.meta.env.VITE_API_URL
+  const realtimeEndpoint = import.meta.env.VITE_REALTIME_ENDPOINT
+  const authorizer = import.meta.env.VITE_AUTHORIZER
+  const stage = import.meta.env.VITE_STAGE
 
   // Sync auth data to background service whenever auth state changes
   React.useEffect(() => {
@@ -48,19 +51,28 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
     let authData = {
       token: null as string | null,
       workspaceId: null as string | null,
-      apiEndpoint: apiEndpoint || null
+      apiEndpoint: apiEndpoint || null,
+      realtimeEndpoint: realtimeEndpoint || null,
+      authorizer: authorizer || null,
+      stage: stage || null
     }
 
     if (currentAccount && currentWorkspace) {
       authData = {
         token: currentAccount.token,
         workspaceId: currentWorkspace.id,
-        apiEndpoint: apiEndpoint || null
+        apiEndpoint: apiEndpoint || null,
+        realtimeEndpoint: realtimeEndpoint || null,
+        authorizer: authorizer || null,
+        stage: stage || null
       }
       console.log('Syncing auth data:', {
         hasToken: !!authData.token,
         workspaceId: authData.workspaceId,
-        hasApiEndpoint: !!authData.apiEndpoint
+        hasApiEndpoint: !!authData.apiEndpoint,
+        hasRealtimeEndpoint: !!authData.realtimeEndpoint,
+        hasAuthorizer: !!authData.authorizer,
+        hasStage: !!authData.stage
       })
     } else {
       console.log('No auth or workspace data available, clearing background service')
@@ -70,7 +82,7 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
     window.electron.ipcRenderer.send('sync-auth-to-background-service', authData)
 
     setHasInitialSync(true)
-  }, [auth.current, auth.isReady, apiEndpoint])
+  }, [auth.current, auth.isReady, apiEndpoint, realtimeEndpoint, authorizer, stage])
 
   // Handle requests from main process for auth data
   React.useEffect(() => {
@@ -91,14 +103,20 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
       let authData = {
         token: null as string | null,
         workspaceId: null as string | null,
-        apiEndpoint: apiEndpoint || null
+        apiEndpoint: apiEndpoint || null,
+        realtimeEndpoint: realtimeEndpoint || null,
+        authorizer: authorizer || null,
+        stage: stage || null
       }
 
       if (currentAccount && currentWorkspace) {
         authData = {
           token: currentAccount.token,
           workspaceId: currentWorkspace.id,
-          apiEndpoint: apiEndpoint || null
+          apiEndpoint: apiEndpoint || null,
+          realtimeEndpoint: realtimeEndpoint || null,
+          authorizer: authorizer || null,
+          stage: stage || null
         }
       }
 
@@ -111,7 +129,7 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
     return () => {
       window.electron.ipcRenderer.removeAllListeners('request-auth-for-background-service')
     }
-  }, [auth.current, apiEndpoint])
+  }, [auth.current, apiEndpoint, realtimeEndpoint, authorizer, stage])
 
   // Monitor workspace changes
   React.useEffect(() => {
@@ -128,7 +146,10 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
               const authData = {
                 token: auth.current.token,
                 workspaceId: currentWorkspace.id,
-                apiEndpoint: apiEndpoint || null
+                apiEndpoint: apiEndpoint || null,
+                realtimeEndpoint: realtimeEndpoint || null,
+                authorizer: authorizer || null,
+                stage: stage || null
               }
               window.electron?.ipcRenderer.send('sync-auth-to-background-service', authData)
             } else {
@@ -136,7 +157,10 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
               window.electron?.ipcRenderer.send('sync-auth-to-background-service', {
                 token: null,
                 workspaceId: null,
-                apiEndpoint: apiEndpoint || null
+                apiEndpoint: apiEndpoint || null,
+                realtimeEndpoint: realtimeEndpoint || null,
+                authorizer: authorizer || null,
+                stage: stage || null
               })
             }
           }
@@ -146,7 +170,7 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
 
     window.addEventListener('storage', handleStorageChange)
     return () => window.removeEventListener('storage', handleStorageChange)
-  }, [auth.current, apiEndpoint])
+  }, [auth.current, apiEndpoint, realtimeEndpoint, authorizer, stage])
 
   // Add dev tools info
   React.useEffect(() => {
@@ -154,10 +178,13 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
       console.log('🔄 Background sync initialized:', {
         authenticated: !!auth.current,
         hasWorkspace: !!workspaceStore.get(),
-        apiEndpoint: apiEndpoint || 'not configured'
+        apiEndpoint: apiEndpoint || 'not configured',
+        realtimeEndpoint: realtimeEndpoint || 'not configured',
+        authorizer: authorizer || 'not configured',
+        stage: stage || 'not configured'
       })
     }
-  }, [hasInitialSync, auth.current, auth.isReady, apiEndpoint])
+  }, [hasInitialSync, auth.current, auth.isReady, apiEndpoint, realtimeEndpoint, authorizer, stage])
 
   return <>{children}</>
 }
