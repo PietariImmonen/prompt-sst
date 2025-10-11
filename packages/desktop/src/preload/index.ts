@@ -139,11 +139,15 @@ interface TranscriptionAPI {
     isRecording: boolean
     hasApiKey: boolean
   }>
+  requestMicrophoneAccess: () => Promise<boolean>
 }
 
 const transcription: TranscriptionAPI = {
   getStatus() {
     return ipcRenderer.invoke('transcription:get-status')
+  },
+  requestMicrophoneAccess() {
+    return ipcRenderer.invoke('request-microphone-access')
   }
 }
 

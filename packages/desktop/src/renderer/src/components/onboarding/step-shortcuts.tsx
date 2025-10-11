@@ -12,6 +12,7 @@ interface StepShortcutsProps {
 export function StepShortcuts({ onNext, onSkip, examplePromptContent }: StepShortcutsProps) {
   const [capturePressed, setCapturePressed] = React.useState(false)
   const [palettePressed, setPalettePressed] = React.useState(false)
+  console.log(examplePromptContent)
 
   const isMac = navigator.platform.toLowerCase().includes('mac')
   const modKey = isMac ? '⌘' : 'Ctrl'

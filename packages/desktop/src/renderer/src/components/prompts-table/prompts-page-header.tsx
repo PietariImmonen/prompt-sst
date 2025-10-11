@@ -2,7 +2,7 @@ import { Search, Plus } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
+
 import { cn } from '@/lib/utils'
 import { MultiSelectTags } from '@/components/tag/multi-select-tags'
 import type { Tag } from '@prompt-saver/core/models/Tag'

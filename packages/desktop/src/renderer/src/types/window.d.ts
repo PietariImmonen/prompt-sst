@@ -6,6 +6,7 @@ interface TranscriptionAPI {
     isRecording: boolean
     hasApiKey: boolean
   }>
+  requestMicrophoneAccess: () => Promise<boolean>
 }
 
 declare global {

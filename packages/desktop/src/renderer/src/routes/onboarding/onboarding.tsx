@@ -44,12 +44,12 @@ export function OnboardingPage() {
     if (rep) {
       try {
         // Get tags for the selected role and example prompt
-        const { getTagsForRole } = await import('@prompt-saver/core/domain/onboarding/role-tags')
+        // const { getTagsForRole } = await import('@prompt-saver/core/domain/onboarding/role-tags')
         const { getExamplePromptForRole } = await import(
           '@prompt-saver/core/domain/onboarding/example-prompts'
         )
 
-        const tagNames = getTagsForRole(role)
+        // const tagNames = getTagsForRole(role)
         const promptData = getExamplePromptForRole(role)
         setExamplePrompt(promptData)
 

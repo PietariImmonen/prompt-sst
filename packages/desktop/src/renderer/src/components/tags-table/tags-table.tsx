@@ -1,4 +1,3 @@
-import * as React from 'react'
 import { format } from 'date-fns'
 import { Tag as TagIcon, Edit2, Trash2 } from 'lucide-react'
 

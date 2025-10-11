@@ -40,6 +40,11 @@ const menuItems = [
     icon: Mic
   },
   {
+    title: 'Transcription Direct',
+    url: '/transcription-test-direct',
+    icon: Mic
+  },
+  {
     title: 'Account',
     url: '/account-settings',
     icon: User

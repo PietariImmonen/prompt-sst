@@ -35,7 +35,7 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
           protocolVersion: 5,
           manualConnect: true,
           username: '', // this must be empty for the authorizer to work
-          password: auth.current.token || '',
+          password: auth?.current?.token || '',
           clientId: 'client_' + createId()
         })
 

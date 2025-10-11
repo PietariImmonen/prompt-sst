@@ -1,448 +1,183 @@
-import { app, BrowserWindow, ipcMain, clipboard, globalShortcut, screen } from 'electron'
+import { app, BrowserWindow, globalShortcut, ipcMain, screen, clipboard } from 'electron'
+import { exec } from 'child_process'
 import { join } from 'path'
-import WebSocket from 'ws'
+import { promisify } from 'util'
 
-// Try to load robotjs, but handle gracefully if it fails
+const execAsync = promisify(exec)
+
+// Try to load robotjs, fall back to AppleScript/platform-specific if not available
 let robot: any = null
+let pasteMethod: 'robotjs' | 'applescript' | 'clipboard-only' = 'clipboard-only'
+
 try {
   robot = require('robotjs')
-  // Configure robotjs for faster operation
   robot.setKeyboardDelay(0)
+  pasteMethod = 'robotjs'
+  console.log('✅ robotjs loaded successfully')
 } catch (error) {
-  console.warn('⚠️  robotjs not available, using clipboard-only mode:', error)
+  console.warn('⚠️  robotjs not available, checking platform-specific alternatives...')
+
+  if (process.platform === 'darwin') {
+    pasteMethod = 'applescript'
+    console.log('✅ Using AppleScript for paste on macOS')
+  } else {
+    console.warn('⚠️  Using clipboard-only mode (manual paste required)')
+  }
 }
 
-const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
-
-type TranscriptionStatus = 'idle' | 'connecting' | 'recording' | 'processing' | 'error'
-
-interface TranscriptionToken {
-  text: string
-  is_final: boolean
-}
-
-interface TranscriptionResponse {
-  tokens?: TranscriptionToken[]
-  error?: string
-}
-
+/**
+ * TranscriptionService
+ *
+ * Manages the universal transcription feature:
+ * - Registers global shortcut (Cmd+Shift+F)
+ * - Shows/hides overlay window
+ * - Inserts transcribed text into active application
+ *
+ * The actual audio capture and Soniox API communication is handled
+ * by the overlay window using @soniox/speech-to-text-web SDK.
+ */
 export class TranscriptionService {
-  private ws: WebSocket | null = null
-  private audioWindow: BrowserWindow | null = null
   private overlayWindow: BrowserWindow | null = null
-  private status: TranscriptionStatus = 'idle'
-  private apiKey: string | null = null
-  private accumulatedText: string = ''
-  private isRecording: boolean = false
-  private shortcutRegistered: boolean = false
+  private isActive = false
   private shortcut = process.platform === 'darwin' ? 'Command+Shift+F' : 'Control+Shift+F'
-  private reconnectAttempts: number = 0
-  private maxReconnectAttempts: number = 3
-  private reconnectTimeout: NodeJS.Timeout | null = null
+  private enabled = false
+  private previousFocusedWindow: BrowserWindow | null = null
 
   constructor() {
-    // Get API key from environment
-    this.apiKey = process.env.VITE_SONIOX_API_KEY || null
-    console.log('🔑 TranscriptionService constructor:')
-    console.log(
-      '   process.env.VITE_SONIOX_API_KEY:',
-      this.apiKey ? `${this.apiKey.substring(0, 10)}... (${this.apiKey.length} chars)` : 'NOT SET'
-    )
-    console.log('   API key available:', !!this.apiKey)
+    console.log('🎙️ Initializing TranscriptionService')
     this.setupIpcHandlers()
   }
 
   async initialize(): Promise<boolean> {
-    console.log('🎙️  Initializing transcription service...')
-    console.log('   API key present:', !!this.apiKey)
-
-    if (!this.apiKey) {
-      console.warn('⚠️  Soniox API key not configured - transcription feature disabled')
-      console.warn('   Make sure VITE_SONIOX_API_KEY is set in packages/desktop/.env')
-      return false
-    }
-
-    console.log('✅ API key found, length:', this.apiKey.length)
-
-    // Register global shortcut
-    const registered = this.registerShortcut()
-    if (!registered) {
-      console.error('❌ Failed to register transcription shortcut')
-      return false
-    }
-
-    console.log('✅ Transcription service initialized')
-    return true
-  }
-
-  private setupIpcHandlers() {
-    // Handle audio chunks from renderer
-    ipcMain.on('transcription:audio-chunk', (_event, audioData: ArrayBuffer) => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN && this.isRecording) {
-        try {
-          this.ws.send(Buffer.from(audioData))
-        } catch (error) {
-          console.error('Failed to send audio chunk:', error)
-        }
-      }
-    })
-
-    // Handle manual stop from overlay
-    ipcMain.on('transcription:stop-manual', () => {
-      this.stopTranscription()
-    })
-
-    // Get current status
-    ipcMain.handle('transcription:get-status', () => {
-      console.log('📊 Status requested from renderer')
-      const statusData = {
-        status: this.status,
-        isRecording: this.isRecording,
-        hasApiKey: !!this.apiKey,
-        text: this.accumulatedText
-      }
-      console.log('   Returning:', statusData)
-      return statusData
-    })
-  }
-
-  private registerShortcut(): boolean {
     try {
-      const success = globalShortcut.register(this.shortcut, () => {
+      // Register global shortcut
+      const registered = globalShortcut.register(this.shortcut, () => {
         this.toggleTranscription()
       })
 
-      if (success) {
-        this.shortcutRegistered = true
-        console.log(`✅ Registered transcription shortcut: ${this.shortcut}`)
-      } else {
-        console.error(`❌ Failed to register shortcut: ${this.shortcut}`)
+      if (!registered) {
+        console.error('❌ Failed to register transcription shortcut:', this.shortcut)
+        return false
       }
 
-      return success
+      console.log(`✅ Transcription shortcut registered: ${this.shortcut}`)
+      this.enabled = true
+      return true
     } catch (error) {
-      console.error('Error registering transcription shortcut:', error)
+      console.error('❌ Failed to initialize transcription service:', error)
       return false
     }
   }
 
-  private unregisterShortcut() {
-    if (this.shortcutRegistered) {
-      globalShortcut.unregister(this.shortcut)
-      this.shortcutRegistered = false
-      console.log(`🔓 Unregistered transcription shortcut: ${this.shortcut}`)
-    }
+  private setupIpcHandlers() {
+    // Handle text insertion requests from overlay
+    ipcMain.on('transcription:insert-text', (_event, text: string) => {
+      console.log('💉 Inserting text:', text)
+      this.insertText(text).catch((error) => {
+        console.error('❌ Failed to insert text:', error)
+      })
+    })
+
+    // Handle manual stop from overlay UI
+    ipcMain.on('transcription:stop-manual', () => {
+      console.log('🛑 Manual stop requested from overlay')
+      this.hideOverlay()
+    })
+
+    // Handle status requests (for test page)
+    ipcMain.handle('transcription:get-status', () => {
+      console.log('📊 Status requested from test page')
+      return {
+        status: this.isActive ? 'recording' : 'idle',
+        isRecording: this.isActive,
+        hasApiKey: true, // API key is in the renderer for SDK
+        text: '' // SDK manages text in renderer
+      }
+    })
   }
 
-  private async toggleTranscription() {
-    console.log(
-      '🎛️  Toggle transcription called, current state:',
-      this.isRecording ? 'recording' : 'idle'
-    )
-    if (this.isRecording) {
-      await this.stopTranscription()
+  private toggleTranscription() {
+    console.log('🎛️  Toggle transcription, current state:', this.isActive)
+
+    if (this.isActive) {
+      this.stopTranscription()
     } else {
-      await this.startTranscription()
+      this.startTranscription()
     }
   }
 
   private async startTranscription() {
-    if (this.isRecording || !this.apiKey) {
-      return
-    }
-
-    console.log('🎙️  Starting transcription...')
-    this.isRecording = true
-    this.accumulatedText = ''
-    this.status = 'connecting'
-    this.reconnectAttempts = 0
-
     try {
-      // Create or show overlay window
+      console.log('▶️  Starting transcription...')
+      this.isActive = true
+
       await this.showOverlay()
-
-      // Create audio capture window if needed
-      await this.ensureAudioWindow()
-
-      // Connect to Soniox WebSocket
-      await this.connectWebSocket()
-
-      // Start audio capture
-      this.audioWindow?.webContents.send('transcription:start')
-
-      this.status = 'recording'
-      this.updateOverlay()
 
       console.log('✅ Transcription started')
     } catch (error) {
-      console.error('Failed to start transcription:', error)
-      this.status = 'error'
-      this.updateOverlay()
-      await this.cleanup()
+      console.error('❌ Error starting transcription:', error)
+      this.isActive = false
+      this.hideOverlay()
     }
   }
 
   private async stopTranscription() {
-    if (!this.isRecording) {
-      return
-    }
-
-    console.log('🛑 Stopping transcription...')
-    this.isRecording = false
-    this.status = 'processing'
-    this.updateOverlay()
-
     try {
-      // Send finalize message to get remaining tokens
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'finalize' }))
-        // Wait a moment for final tokens
-        await new Promise((resolve) => setTimeout(resolve, 500))
+      console.log('⏹️  Stopping transcription...')
+
+      // Send stop signal to overlay (which will stop Soniox)
+      if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
+        this.overlayWindow.webContents.send('transcription:stop')
       }
 
-      // Insert accumulated text
-      if (this.accumulatedText.trim()) {
-        await this.insertText(this.accumulatedText)
-      }
+      // Hide overlay after a short delay to show final status
+      setTimeout(() => {
+        this.hideOverlay()
+      }, 1000)
 
-      // Cleanup
-      await this.cleanup()
-
-      console.log('✅ Transcription stopped, text inserted')
+      this.isActive = false
+      console.log('✅ Transcription stopped')
     } catch (error) {
-      console.error('Error stopping transcription:', error)
-      this.status = 'error'
-      this.updateOverlay()
-      await this.cleanup()
+      console.error('❌ Error stopping transcription:', error)
+      this.hideOverlay()
+      this.isActive = false
     }
-  }
-
-  private async connectWebSocket(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.apiKey) {
-        console.error('❌ Cannot connect: API key not configured')
-        reject(new Error('API key not configured'))
-        return
-      }
-
-      console.log('🔌 Connecting to Soniox WebSocket...')
-      console.log('   API Key (first 10 chars):', this.apiKey.substring(0, 10) + '...')
-
-      const wsUrl = `wss://api.soniox.com/transcribe-websocket?api_key=${this.apiKey}`
-
-      try {
-        this.ws = new WebSocket(wsUrl)
-        console.log('   WebSocket object created')
-
-        this.ws.on('open', () => {
-          console.log('✅ WebSocket connected to Soniox successfully!')
-          resolve()
-        })
-
-        this.ws.on('message', (data: WebSocket.Data) => {
-          try {
-            const dataStr = data.toString()
-            console.log('📨 Received message from Soniox:', dataStr.substring(0, 100))
-
-            const response: TranscriptionResponse = JSON.parse(dataStr)
-
-            if (response.error) {
-              console.error('❌ Soniox error:', response.error)
-              this.status = 'error'
-              this.updateOverlay()
-              return
-            }
-
-            if (response.tokens) {
-              console.log(`📝 Received ${response.tokens.length} tokens`)
-              this.processTokens(response.tokens)
-            }
-          } catch (error) {
-            console.error('❌ Error processing transcription message:', error)
-          }
-        })
-
-        this.ws.on('error', (error) => {
-          console.error('❌ WebSocket error:', error)
-          console.error('   Error details:', JSON.stringify(error, null, 2))
-          this.status = 'error'
-          this.updateOverlay()
-          reject(error)
-        })
-
-        this.ws.on('close', (code, reason) => {
-          console.log('🔌 WebSocket closed')
-          console.log('   Close code:', code)
-          console.log('   Close reason:', reason.toString())
-
-          if (this.isRecording && this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.attemptReconnect()
-          }
-        })
-      } catch (error) {
-        console.error('Failed to create WebSocket:', error)
-        reject(error)
-      }
-    })
-  }
-
-  private attemptReconnect() {
-    this.reconnectAttempts++
-    console.log(
-      `🔄 Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts}...`
-    )
-
-    this.reconnectTimeout = setTimeout(
-      async () => {
-        if (this.isRecording) {
-          try {
-            await this.connectWebSocket()
-            console.log('✅ Reconnected successfully')
-            this.reconnectAttempts = 0
-          } catch (error) {
-            console.error('Reconnection failed:', error)
-            if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-              this.status = 'error'
-              this.updateOverlay()
-              await this.stopTranscription()
-            }
-          }
-        }
-      },
-      Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000)
-    )
-  }
-
-  private processTokens(tokens: TranscriptionToken[]) {
-    for (const token of tokens) {
-      // Only process final tokens for insertion
-      if (token.is_final) {
-        this.accumulatedText += token.text
-
-        // Insert the token immediately for streaming effect
-        if (token.text.trim()) {
-          this.insertText(token.text).catch((error) => {
-            console.error('Failed to insert text:', error)
-          })
-        }
-      }
-
-      // Send all tokens to overlay for preview (including non-final)
-      this.overlayWindow?.webContents.send('transcription:token', {
-        text: token.text,
-        isFinal: token.is_final,
-        accumulated: this.accumulatedText
-      })
-    }
-  }
-
-  private async insertText(text: string): Promise<void> {
-    try {
-      // Store current clipboard content
-      const previousClipboard = clipboard.readText()
-
-      // Write text to clipboard
-      clipboard.writeText(text)
-
-      // Small delay to ensure clipboard is updated
-      await new Promise((resolve) => setTimeout(resolve, 50))
-
-      // Simulate Cmd+V or Ctrl+V based on platform
-      if (robot) {
-        try {
-          if (process.platform === 'darwin') {
-            robot.keyTap('v', ['command'])
-          } else {
-            robot.keyTap('v', ['control'])
-          }
-        } catch (robotError) {
-          console.error('robotjs paste failed:', robotError)
-          // Continue to clipboard restoration
-        }
-      } else {
-        // No robotjs available - text stays in clipboard
-        console.log('No keyboard automation available, text left in clipboard')
-      }
-
-      // Wait a bit before restoring clipboard
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      // Restore previous clipboard content only if robotjs worked
-      if (robot) {
-        clipboard.writeText(previousClipboard)
-      }
-    } catch (error) {
-      console.error('Error inserting text:', error)
-      // Fallback: leave text in clipboard for manual paste
-      console.log('Text left in clipboard for manual paste')
-    }
-  }
-
-  private async ensureAudioWindow() {
-    if (this.audioWindow && !this.audioWindow.isDestroyed()) {
-      console.log('🔊 Audio window already exists')
-      return
-    }
-
-    console.log('🔊 Creating audio capture window...')
-
-    this.audioWindow = new BrowserWindow({
-      width: 1,
-      height: 1,
-      show: false,
-      webPreferences: {
-        preload: join(__dirname, '../preload/index.mjs'),
-        sandbox: false,
-        contextIsolation: true,
-        nodeIntegration: false
-      }
-    })
-
-    // Load the audio capture page
-    if (isDev && process.env['ELECTRON_RENDERER_URL']) {
-      await this.audioWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#audio-capture`)
-    } else {
-      await this.audioWindow.loadFile(join(__dirname, '../renderer/index.html'), {
-        hash: 'audio-capture'
-      })
-    }
-
-    this.audioWindow.on('closed', () => {
-      this.audioWindow = null
-    })
   }
 
   private async showOverlay() {
+    this.previousFocusedWindow = BrowserWindow.getFocusedWindow() ?? null
+
     if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
-      this.overlayWindow.show()
-      this.overlayWindow.focus()
+      this.overlayWindow.showInactive()
+
+      if (this.previousFocusedWindow && !this.previousFocusedWindow.isDestroyed()) {
+        setTimeout(() => {
+          try {
+            const previousUrl = this.previousFocusedWindow?.webContents.getURL()
+            if (!previousUrl || !previousUrl.includes('#palette')) {
+              this.previousFocusedWindow?.focus()
+            }
+          } catch {
+            /* swallow */
+          }
+        }, 20)
+      }
+
+      // Send start signal to begin transcription
+      this.overlayWindow.webContents.send('transcription:start')
       return
     }
 
-    console.log('📱 Creating transcription overlay...')
-
-    // Get cursor position
+    // Get cursor position to position overlay nearby
     const cursorPoint = screen.getCursorScreenPoint()
-    const currentDisplay = screen.getDisplayNearestPoint(cursorPoint)
-    const { width, height } = currentDisplay.bounds
-    const { x: displayX, y: displayY } = currentDisplay.bounds
+    const display = screen.getDisplayNearestPoint(cursorPoint)
 
-    const windowWidth = 300
-    const windowHeight = 100
-
-    // Position near cursor, slightly below
-    const x = Math.max(
-      displayX,
-      Math.min(cursorPoint.x - windowWidth / 2, displayX + width - windowWidth)
-    )
-    const y = Math.max(displayY, Math.min(cursorPoint.y + 20, displayY + height - windowHeight))
-
+    // Create overlay window
     this.overlayWindow = new BrowserWindow({
-      width: windowWidth,
-      height: windowHeight,
-      x,
-      y,
-      show: false,
+      width: 320,
+      height: 140,
+      x: Math.min(cursorPoint.x + 20, display.bounds.x + display.bounds.width - 340),
+      y: Math.min(cursorPoint.y + 20, display.bounds.y + display.bounds.height - 160),
       frame: false,
       transparent: true,
       alwaysOnTop: true,
@@ -454,153 +189,251 @@ export class TranscriptionService {
       closable: true,
       focusable: true,
       fullscreenable: false,
+      // Critical: Set these properties for proper overlay behavior over fullscreen
       type: process.platform === 'darwin' ? 'panel' : undefined,
-      hasShadow: false,
+      hasShadow: process.platform !== 'darwin',
+      vibrancy: process.platform === 'darwin' ? 'under-window' : undefined,
       webPreferences: {
-        preload: join(__dirname, '../preload/index.mjs'),
-        sandbox: false,
-        contextIsolation: true,
         nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: false,
+        preload: join(__dirname, '../preload/index.mjs'),
         backgroundThrottling: false
       }
     })
 
-    // Platform-specific window level
+    // Platform-specific configuration for proper overlay behavior over fullscreen apps
     if (process.platform === 'darwin') {
+      // macOS: Set proper window level for appearing over full screen apps
       this.overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
-      this.overlayWindow.setAlwaysOnTop(true, 'screen-saver', 1)
+      this.overlayWindow.setAlwaysOnTop(true, 'screen-saver', 1) // Higher level for full screen compatibility
     } else {
+      // Windows/Linux: Set always on top
+      this.overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
       this.overlayWindow.setAlwaysOnTop(true, 'screen-saver')
     }
 
-    // Handle Escape key to stop
-    this.overlayWindow.webContents.on('before-input-event', (event, input) => {
-      if (input.key === 'Escape' && input.type === 'keyDown') {
-        event.preventDefault()
-        this.stopTranscription()
+    // CRITICAL: Grant microphone permission for the overlay window
+    this.overlayWindow.webContents.session.setPermissionRequestHandler(
+      (_webContents, permission, callback) => {
+        console.log(`🎤 Permission requested: ${permission}`)
+        if (permission === 'media') {
+          console.log('   ✅ Granting media (microphone) permission')
+          callback(true) // Grant permission
+        } else {
+          callback(false)
+        }
       }
-    })
+    )
 
-    // Load overlay page
-    if (isDev && process.env['ELECTRON_RENDERER_URL']) {
-      await this.overlayWindow.loadURL(
-        `${process.env['ELECTRON_RENDERER_URL']}#transcription-overlay`
-      )
-    } else {
-      await this.overlayWindow.loadFile(join(__dirname, '../renderer/index.html'), {
+    // Load the overlay page
+    if (app.isPackaged) {
+      this.overlayWindow.loadFile(join(__dirname, '../renderer/index.html'), {
         hash: 'transcription-overlay'
       })
+    } else {
+      const rendererUrl = process.env['ELECTRON_RENDERER_URL']
+      if (rendererUrl) {
+        this.overlayWindow.loadURL(`${rendererUrl}#transcription-overlay`)
+      }
     }
 
     this.overlayWindow.once('ready-to-show', () => {
-      this.overlayWindow?.show()
-      this.overlayWindow?.focus()
+      if (!this.overlayWindow || this.overlayWindow.isDestroyed()) return
+      this.overlayWindow.showInactive()
+
+      if (this.previousFocusedWindow && !this.previousFocusedWindow.isDestroyed()) {
+        setTimeout(() => {
+          try {
+            const previousUrl = this.previousFocusedWindow?.webContents.getURL()
+            if (!previousUrl || !previousUrl.includes('#palette')) {
+              this.previousFocusedWindow?.focus()
+            }
+          } catch {
+            /* swallow */
+          }
+        }, 20)
+      }
     })
 
-    this.overlayWindow.on('closed', () => {
-      this.overlayWindow = null
+    // Wait for page to load, then send start signal
+    this.overlayWindow.webContents.once('did-finish-load', () => {
+      console.log('✅ Overlay loaded, sending start signal')
+      this.overlayWindow?.webContents.send('transcription:start')
     })
+
+    // Handle window close
+    this.overlayWindow.on('closed', () => {
+      console.log('🪟 Overlay window closed')
+      this.overlayWindow = null
+      this.isActive = false
+    })
+
+    // Handle blur (lost focus) - optionally close overlay
+    this.overlayWindow.on('blur', () => {
+      // Keep overlay visible even when focus is lost
+      // so user can see transcription status
+    })
+
+    console.log('✅ Overlay window created and shown')
   }
 
   private hideOverlay() {
     if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
+      console.log('👋 Hiding overlay window')
       this.overlayWindow.close()
       this.overlayWindow = null
     }
+    this.isActive = false
+    this.previousFocusedWindow = null
   }
 
-  private updateOverlay() {
-    if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
-      this.overlayWindow.webContents.send('transcription:status', {
-        status: this.status,
-        isRecording: this.isRecording,
-        text: this.accumulatedText
-      })
-    }
-  }
+  private async focusOriginalTarget() {
+    try {
+      // Hide any palette windows so focus returns to the previous application
+      for (const window of BrowserWindow.getAllWindows()) {
+        if (window.isDestroyed()) continue
+        if (window === this.overlayWindow) continue
 
-  private async cleanup() {
-    // Stop audio capture
-    if (this.audioWindow && !this.audioWindow.isDestroyed()) {
-      this.audioWindow.webContents.send('transcription:stop')
-    }
+        const url = window.webContents.getURL()
+        if (url.includes('#palette')) {
+          try {
+            window.webContents.send('overlay:hide')
+          } catch (error) {
+            console.warn('⚠️ Failed to notify palette window to hide:', error)
+          }
 
-    // Close WebSocket
-    if (this.ws) {
-      try {
-        this.ws.close()
-      } catch (error) {
-        console.error('Error closing WebSocket:', error)
+          try {
+            window.hide()
+          } catch (error) {
+            console.warn('⚠️ Failed to hide palette window:', error)
+          }
+        }
       }
-      this.ws = null
+
+      if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
+        this.overlayWindow.blur()
+      }
+
+      if (this.previousFocusedWindow && !this.previousFocusedWindow.isDestroyed()) {
+        try {
+          const previousUrl = this.previousFocusedWindow.webContents.getURL()
+          if (!previousUrl.includes('#palette')) {
+            this.previousFocusedWindow.focus()
+          }
+        } catch {
+          // Ignore errors when focusing previous window (may belong to another app)
+        }
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 120))
+    } catch (error) {
+      console.warn('⚠️ Unable to restore original focus before paste:', error)
     }
-
-    // Clear reconnect timeout
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout)
-      this.reconnectTimeout = null
-    }
-
-    // Hide overlay after a short delay
-    setTimeout(() => {
-      this.hideOverlay()
-    }, 1000)
-
-    // Reset state
-    this.status = 'idle'
-    this.isRecording = false
-    this.reconnectAttempts = 0
   }
 
-  getStatus() {
-    return {
-      status: this.status,
-      isRecording: this.isRecording,
-      hasApiKey: !!this.apiKey
+  private async insertText(text: string): Promise<void> {
+    console.log('💉 ========== INSERTING TEXT ==========')
+    console.log('   Text to insert:', text)
+    console.log('   Paste method:', pasteMethod)
+
+    try {
+      await this.focusOriginalTarget()
+
+      // Save current clipboard
+      const previousClipboard = clipboard.readText()
+      console.log('   Saved clipboard')
+
+      // Write text to clipboard
+      clipboard.writeText(text)
+      console.log('   Text written to clipboard')
+
+      // Small delay to ensure clipboard is ready
+      await new Promise((resolve) => setTimeout(resolve, 50))
+
+      // Try to paste using the best available method
+      if (pasteMethod === 'robotjs' && robot) {
+        try {
+          console.log('   Attempting paste with robotjs...')
+          if (process.platform === 'darwin') {
+            robot.keyTap('v', ['command'])
+            console.log('   ✅ Executed Cmd+V via robotjs')
+          } else {
+            robot.keyTap('v', ['control'])
+            console.log('   ✅ Executed Ctrl+V via robotjs')
+          }
+        } catch (robotError) {
+          console.error('   ❌ robotjs paste failed:', robotError)
+        }
+      } else if (pasteMethod === 'applescript' && process.platform === 'darwin') {
+        try {
+          console.log('   Attempting paste with AppleScript...')
+          await execAsync(
+            'osascript -e \'tell application "System Events" to keystroke "v" using {command down}\'',
+            { timeout: 2000 }
+          )
+          console.log('   ✅ Executed Cmd+V via AppleScript')
+        } catch (appleScriptError) {
+          console.error('   ❌ AppleScript paste failed:', appleScriptError)
+        }
+      } else if (process.platform === 'win32') {
+        try {
+          console.log('   Attempting paste with PowerShell...')
+          await execAsync(
+            'powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^v\')"',
+            { timeout: 2000 }
+          )
+          console.log('   ✅ Executed Ctrl+V via PowerShell')
+        } catch (psError) {
+          console.error('   ❌ PowerShell paste failed:', psError)
+        }
+      } else if (process.platform === 'linux') {
+        try {
+          console.log('   Attempting paste with xdotool...')
+          await execAsync('xdotool key --delay 50 ctrl+v', { timeout: 2000 })
+          console.log('   ✅ Executed Ctrl+V via xdotool')
+        } catch (xdotoolError) {
+          console.error('   ❌ xdotool paste failed:', xdotoolError)
+        }
+      } else {
+        console.log('   ⚠️  No keyboard automation available, text left in clipboard')
+      }
+
+      // Wait a bit before restoring clipboard
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      // Restore previous clipboard
+      if (previousClipboard !== text) {
+        clipboard.writeText(previousClipboard)
+        console.log('   Restored previous clipboard')
+      }
+    } catch (error) {
+      console.error('   ❌ Failed to insert text:', error)
+      throw error
     }
+
+    console.log('======================================')
   }
 
   isEnabled(): boolean {
-    return !!this.apiKey && this.shortcutRegistered
+    return this.enabled
   }
 
-  dispose() {
-    console.log('🧹 Disposing transcription service...')
-
-    // Stop any active transcription
-    if (this.isRecording) {
-      this.stopTranscription()
-    }
+  async dispose() {
+    console.log('🧹 Disposing TranscriptionService')
 
     // Unregister shortcut
-    this.unregisterShortcut()
-
-    // Close windows
-    if (this.audioWindow && !this.audioWindow.isDestroyed()) {
-      this.audioWindow.close()
-      this.audioWindow = null
+    if (this.enabled) {
+      globalShortcut.unregister(this.shortcut)
+      console.log('   Unregistered shortcut')
     }
 
+    // Close overlay
     if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
       this.overlayWindow.close()
       this.overlayWindow = null
     }
 
-    // Close WebSocket
-    if (this.ws) {
-      this.ws.close()
-      this.ws = null
-    }
-
-    // Clear reconnect timeout
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout)
-      this.reconnectTimeout = null
-    }
-
-    // Remove IPC handlers
-    ipcMain.removeHandler('transcription:get-status')
-
-    console.log('✅ Transcription service disposed')
+    console.log('✅ TranscriptionService disposed')
   }
 }

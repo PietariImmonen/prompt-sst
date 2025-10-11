@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 // Extend Window type for transcription API
 declare global {
   interface Window {
-    transcription?: {
+    transcriptions?: {
       getStatus: () => Promise<{
         status: string
         isRecording: boolean

@@ -160,11 +160,11 @@ export function PromptsTable(props: PromptsTableProps) {
                           {promptTags.length > 0 ? (
                             promptTags.slice(0, 3).map((tag) => (
                               <Badge
-                                key={tag.id}
+                                key={tag?.id}
                                 variant="secondary"
                                 className="text-xs px-2 py-0.5"
                               >
-                                {tag.name}
+                                {tag?.name}
                               </Badge>
                             ))
                           ) : (

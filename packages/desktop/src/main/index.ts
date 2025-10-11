@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, systemPreferences } from 'electron'
 import { createServer } from 'http'
 import type { IncomingMessage, ServerResponse } from 'http'
 import { AddressInfo } from 'net'
@@ -292,6 +292,24 @@ ipcMain.handle('auth:cancel', async (_event, payload: { id: string }) => {
   cancelAuthRequest(payload.id)
 })
 
+// Request microphone access permission (macOS)
+ipcMain.handle('request-microphone-access', async () => {
+  if (process.platform === 'darwin') {
+    const status = systemPreferences.getMediaAccessStatus('microphone')
+    console.log('🎤 Current microphone access status:', status)
+
+    if (status === 'not-determined') {
+      const granted = await systemPreferences.askForMediaAccess('microphone')
+      console.log('🎤 Microphone access requested, granted:', granted)
+      return granted
+    }
+
+    return status === 'granted'
+  }
+  // On non-macOS platforms, assume permission is granted (handled by browser)
+  return true
+})
+
 // Handler for auth sync from main window to background service
 ipcMain.on(
   'sync-auth-to-background-service',
@@ -340,6 +358,19 @@ function createWindow(): void {
       sandbox: false
     }
   })
+
+  // Grant microphone permission for transcription feature
+  mainWindow.webContents.session.setPermissionRequestHandler(
+    (webContents, permission, callback) => {
+      console.log(`🎤 Main window permission requested: ${permission}`)
+      if (permission === 'media') {
+        console.log('   ✅ Granting media (microphone) permission to main window')
+        callback(true) // Grant permission
+      } else {
+        callback(false)
+      }
+    }
+  )
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()

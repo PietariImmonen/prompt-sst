@@ -10,12 +10,19 @@ import { realtime } from "sst/aws/realtime";
 
 import { subjects } from "./subjects";
 
-const client = createClient({
-  clientID: "auth-iot",
-  issuer: Resource.Auth.url,
-});
-
 export const handler = realtime.authorizer(async (token) => {
+  // Debug logging
+
+  if (!Resource.Auth?.url) {
+    throw new Error(
+      "Resource.Auth.url is not available - check SST linking configuration",
+    );
+  }
+
+  const client = createClient({
+    clientID: "auth-iot",
+    issuer: Resource.Auth.url,
+  });
   const prefix = `${Resource.App.name}/${Resource.App.stage}`;
   const result = await client.verify(subjects, token!);
 

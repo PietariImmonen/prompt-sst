@@ -49,10 +49,20 @@ type PromptCaptureAPI = {
   notifyCapture: (result: { success: boolean; message?: string }) => Promise<void>;
 };
 
+type TranscriptionAPI = {
+  getStatus: () => Promise<{
+    status: string;
+    isRecording: boolean;
+    hasApiKey: boolean;
+  }>;
+  requestMicrophoneAccess: () => Promise<boolean>;
+};
+
 declare global {
   interface Window {
     electron: ElectronAPI;
     promptCapture: PromptCaptureAPI;
     desktopAuth: DesktopAuthAPI;
+    transcription: TranscriptionAPI;
   }
 }
