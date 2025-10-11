@@ -1,11 +1,73 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Loader2, Mic, MicOff, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import useTranscribe from '@/hooks/useTranscribe'
 import { isActiveState } from '@soniox/speech-to-text-web'
 
 const TranscriptionOverlayPage = () => {
-  const finalTextRef = useRef('')
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasFlushedRef = useRef(false)
+  const latestFinalTextRef = useRef('')
+  const latestPreviewRef = useRef('')
+
+  const clearFlushTimer = useCallback(() => {
+    if (flushTimerRef.current) {
+      clearTimeout(flushTimerRef.current)
+      flushTimerRef.current = null
+    }
+  }, [])
+
+  const sendTranscript = useCallback(
+    (rawText: string | null) => {
+      if (hasFlushedRef.current) {
+        return
+      }
+      hasFlushedRef.current = true
+      clearFlushTimer()
+
+      const trimmed = rawText?.trim() ?? ''
+      if (trimmed.length > 0) {
+        console.log('📤 Sending complete transcription for insertion:', trimmed)
+        window.electron.ipcRenderer.send('transcription:insert-text', trimmed)
+      } else {
+        console.log('⚠️  No text to insert, closing overlay')
+        window.electron.ipcRenderer.send('transcription:stop-manual')
+      }
+    },
+    [clearFlushTimer]
+  )
+
+  const flushCombinedTranscript = useCallback(() => {
+    if (hasFlushedRef.current) {
+      return
+    }
+    const combined = `${latestFinalTextRef.current}${latestPreviewRef.current}`.trim()
+    if (combined.length > 0) {
+      sendTranscript(combined)
+    } else {
+      sendTranscript(null)
+    }
+  }, [sendTranscript])
+
+  const scheduleFlush = useCallback(
+    (delay = 400) => {
+      if (hasFlushedRef.current) {
+        return
+      }
+      clearFlushTimer()
+      flushTimerRef.current = setTimeout(() => {
+        flushCombinedTranscript()
+      }, delay)
+    },
+    [clearFlushTimer, flushCombinedTranscript]
+  )
+
+  const resetSession = useCallback(() => {
+    hasFlushedRef.current = false
+    latestFinalTextRef.current = ''
+    latestPreviewRef.current = ''
+    clearFlushTimer()
+  }, [clearFlushTimer])
 
   // Get API key from environment
   const apiKey =
@@ -13,42 +75,49 @@ const TranscriptionOverlayPage = () => {
     'c476482a47b7e22b2de7629562deb30ed4ccc73d692eb06199b466b156e7ae56'
 
   // Use the transcription hook
-  const { state, finalTokens, nonFinalTokens, startTranscription, stopTranscription, error } =
+  const { state, finalText, nonFinalTokens, startTranscription, stopTranscription, error } =
     useTranscribe({
-      apiKey: apiKey,
+      apiKey,
       onStarted: () => {
         console.log('✅ Overlay: Transcription started')
       },
-      onFinished: () => {
+      onFinished: ({ finalText: finishedText }) => {
         console.log('✅ Overlay: Transcription finished')
-        // Clear preview after finish
-        setTimeout(() => {
-          finalTextRef.current = ''
-        }, 1000)
+
+        if (finishedText.trim().length > 0) {
+          sendTranscript(finishedText)
+        } else {
+          console.log('⚠️  Soniox returned empty final text, using buffered tokens')
+          flushCombinedTranscript()
+        }
       }
     })
 
-  // Send final tokens to main process for insertion
   useEffect(() => {
-    finalTokens.forEach((token) => {
-      if (token.text && token.text !== '<end>') {
-        console.log('📤 Sending final token to main for insertion:', token.text)
-        window.electron.ipcRenderer.send('transcription:insert-text', token.text)
-        finalTextRef.current += token.text
-      }
-    })
-  }, [finalTokens])
+    latestFinalTextRef.current = finalText
+    if (finalText.length > 0) {
+      console.log(`📝 Current final text length: ${finalText.length}`)
+    }
+  }, [finalText])
+
+  useEffect(() => {
+    return () => {
+      clearFlushTimer()
+    }
+  }, [clearFlushTimer])
 
   // Listen for start/stop commands from main process
   useEffect(() => {
     const handleStart = () => {
       console.log('🎛️  Overlay received start command')
+      resetSession()
       startTranscription()
     }
 
     const handleStop = () => {
       console.log('🎛️  Overlay received stop command')
       stopTranscription()
+      scheduleFlush(600)
     }
 
     window.electron.ipcRenderer.on('transcription:start', handleStart)
@@ -58,10 +127,12 @@ const TranscriptionOverlayPage = () => {
       window.electron.ipcRenderer.removeListener('transcription:start', handleStart)
       window.electron.ipcRenderer.removeListener('transcription:stop', handleStop)
     }
-  }, [startTranscription, stopTranscription])
+  }, [resetSession, scheduleFlush, startTranscription, stopTranscription])
 
   const handleManualStop = () => {
     console.log('🛑 Manual stop clicked in overlay')
+    clearFlushTimer()
+    hasFlushedRef.current = true
     stopTranscription()
     window.electron.ipcRenderer.send('transcription:stop-manual')
   }
@@ -71,8 +142,12 @@ const TranscriptionOverlayPage = () => {
   // Get preview text from non-final tokens
   const previewText = nonFinalTokens.map((token) => token.text).join('')
 
+  useEffect(() => {
+    latestPreviewRef.current = previewText
+  }, [previewText])
+
   // Get last 5 words for compact display
-  const allText = finalTextRef.current + previewText
+  const allText = `${finalText}${previewText}`
   const words = allText.trim().split(/\s+/).slice(-5)
   const displayText = words.join(' ')
 

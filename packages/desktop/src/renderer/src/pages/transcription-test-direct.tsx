@@ -42,6 +42,7 @@ const TranscriptionTestDirectPage = () => {
   const {
     state,
     finalTokens,
+    finalText,
     nonFinalTokens,
     startTranscription,
     stopTranscription,
@@ -55,16 +56,21 @@ const TranscriptionTestDirectPage = () => {
       addLog('📼 Audio recording started in parallel')
       addLog('💡 Tip: Speak clearly and loudly')
     },
-    onFinished: () => {
+    onFinished: ({ finalText: completedText, finalTokens: finishedTokens }) => {
       addLog('🏁 onFinished callback - Transcription finished!')
-      addLog(`📝 Total final tokens: ${finalTokens.length}`)
+      addLog(`📝 Total final tokens: ${finishedTokens.length}`)
+      if (completedText.length > 0) {
+        addLog(`📄 Final transcript: ${completedText}`)
+      } else {
+        addLog('⚠️ Final transcript is empty')
+      }
       addLog('💾 Audio recording saved - check below for playback')
     }
   })
 
-  // Combine all tokens for display
-  const allTokens = [...finalTokens, ...nonFinalTokens]
-  const transcribedText = allTokens.map((token) => token.text).join('')
+  const previewText = nonFinalTokens.map((token) => token.text).join('')
+  const transcribedText = `${finalText}${previewText}`
+  const totalTokenCount = finalTokens.length + nonFinalTokens.length
 
   const [microphoneLabel, setMicrophoneLabel] = useState<string | null>(null)
   const [microphoneError, setMicrophoneError] = useState<string | null>(null)
@@ -226,7 +232,7 @@ const TranscriptionTestDirectPage = () => {
             <div className="rounded-lg border bg-blue-50 p-3 dark:bg-blue-950">
               <p className="text-xs font-medium text-blue-900 dark:text-blue-100">Total Tokens</p>
               <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {allTokens.length}
+                {totalTokenCount}
               </p>
             </div>
             <div className="rounded-lg border bg-green-50 p-3 dark:bg-green-950">

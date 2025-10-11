@@ -99,20 +99,20 @@ export function PromptsTable(props: PromptsTableProps) {
           className
         )}
       >
-        <div className="overflow-x-auto">
-          <Table className="w-full">
+        <div className="overflow-x-auto overflow-y-hidden">
+          <Table className="w-full table-fixed">
             <TableHeader>
               <TableRow className="border-border/60">
-                <TableHead className="w-2/5 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <TableHead className="w-[40%] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Prompt
                 </TableHead>
-                <TableHead className="w-1/5 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <TableHead className="w-[25%] px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Tags
                 </TableHead>
-                <TableHead className="w-1/6 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <TableHead className="w-[20%] px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Captured
                 </TableHead>
-                <TableHead className="w-16 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <TableHead className="w-[15%] px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Actions
                 </TableHead>
               </TableRow>
@@ -140,8 +140,8 @@ export function PromptsTable(props: PromptsTableProps) {
                       className="group cursor-pointer border-b border-border/60 bg-transparent transition hover:bg-muted/20"
                       onClick={() => handleRowSelect(prompt.id)}
                     >
-                      <TableCell className="px-4 py-3">
-                        <div className="flex items-center gap-2 min-w-0">
+                      <TableCell className="px-4 py-3 max-w-0">
+                        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                           <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-border/60 bg-muted/30 text-muted-foreground transition group-hover:border-border group-hover:text-foreground">
                             <NotebookPen className="h-3.5 w-3.5" />
                           </span>
@@ -155,14 +155,14 @@ export function PromptsTable(props: PromptsTableProps) {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex flex-wrap gap-1">
+                      <TableCell className="px-4 py-3 max-w-0" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-wrap gap-1 overflow-hidden">
                           {promptTags.length > 0 ? (
                             promptTags.slice(0, 3).map((tag) => (
                               <Badge
                                 key={tag?.id}
                                 variant="secondary"
-                                className="text-xs px-2 py-0.5"
+                                className="text-xs px-2 py-0.5 truncate max-w-full"
                               >
                                 {tag?.name}
                               </Badge>
@@ -171,7 +171,7 @@ export function PromptsTable(props: PromptsTableProps) {
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
                           {promptTags.length > 3 && (
-                            <Badge variant="outline" className="text-xs px-2 py-0.5">
+                            <Badge variant="outline" className="text-xs px-2 py-0.5 flex-shrink-0">
                               +{promptTags.length - 3}
                             </Badge>
                           )}

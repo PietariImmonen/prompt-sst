@@ -13,7 +13,7 @@ interface UseTranscribeParameters {
   apiKey: string | (() => Promise<string>)
   translationConfig?: TranslationConfig
   onStarted?: () => void
-  onFinished?: () => void
+  onFinished?: (result: { finalText: string; finalTokens: Token[] }) => void
 }
 
 type TranscriptionError = {
@@ -37,6 +37,9 @@ export default function useTranscribe({
   const sonioxClient = useRef<SonioxClient | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+  const finalTokensRef = useRef<Token[]>([])
+  const finalTextRef = useRef('')
+  const nonFinalTokensRef = useRef<Token[]>([])
 
   // Initialize client only once, handle async API key
   useEffect(() => {
@@ -59,6 +62,7 @@ export default function useTranscribe({
 
   const [state, setState] = useState<RecorderState>('Init')
   const [finalTokens, setFinalTokens] = useState<Token[]>([])
+  const [finalText, setFinalText] = useState('')
   const [nonFinalTokens, setNonFinalTokens] = useState<Token[]>([])
   const [error, setError] = useState<TranscriptionError | null>(null)
   const [audioURL, setAudioURL] = useState<string | null>(null)
@@ -71,10 +75,14 @@ export default function useTranscribe({
 
     console.log('🎙️ Starting transcription...')
     setFinalTokens([])
+    setFinalText('')
     setNonFinalTokens([])
     setError(null)
     setAudioURL(null)
     audioChunksRef.current = []
+    finalTokensRef.current = []
+    finalTextRef.current = ''
+    nonFinalTokensRef.current = []
 
     sonioxClient.current.start({
       model: 'stt-rt-preview',
@@ -99,7 +107,13 @@ export default function useTranscribe({
 
       onFinished: () => {
         console.log('🏁 Transcription finished')
-        onFinished?.()
+        const previewText = nonFinalTokensRef.current.map((token) => token.text).join('')
+        const combinedText = `${finalTextRef.current}${previewText}`.trim()
+        finalTextRef.current = combinedText
+        setFinalText(finalTextRef.current)
+        onFinished?.({ finalText: combinedText, finalTokens: finalTokensRef.current })
+        nonFinalTokensRef.current = []
+        setNonFinalTokens([])
       },
 
       onStarted: async () => {
@@ -200,9 +214,20 @@ export default function useTranscribe({
 
         if (newFinalTokens.length > 0) {
           console.log(`✅ Adding ${newFinalTokens.length} final tokens`)
-          setFinalTokens((previousTokens) => [...previousTokens, ...newFinalTokens])
+          finalTokensRef.current = [...finalTokensRef.current, ...newFinalTokens]
+          setFinalTokens([...finalTokensRef.current])
+
+          const appendedText = newFinalTokens
+            .map((token) => token.text)
+            .join('')
+          if (appendedText.length > 0) {
+            finalTextRef.current += appendedText
+            setFinalText(finalTextRef.current)
+            console.log(`🧵 Final text length: ${finalTextRef.current.length}`)
+          }
         }
 
+        nonFinalTokensRef.current = newNonFinalTokens
         if (newNonFinalTokens.length > 0) {
           console.log(`⏸️ Setting ${newNonFinalTokens.length} non-final tokens`)
         }
@@ -239,6 +264,7 @@ export default function useTranscribe({
     stopTranscription,
     state,
     finalTokens,
+    finalText,
     nonFinalTokens,
     error,
     audioURL

@@ -12,6 +12,7 @@
     "typecheck": "bun run typecheck:node && bun run typecheck:web",
     "typecheck:sst": "cd ../.. && sst bind -- bun run --filter @clyo/desktop typecheck",
     "env:generate": "node ../../scripts/generate-desktop-env.mjs",
+    "setup:dev-permissions": "bash ./scripts/setup-dev-permissions.sh",
     "start": "bunx electron-vite preview",
     "dev": "electron-vite dev",
     "build": "bun run env:generate -- --stage production --mode production && bun run typecheck && bunx electron-vite build",

@@ -71,16 +71,23 @@ export class TranscriptionService {
 
   private setupIpcHandlers() {
     // Handle text insertion requests from overlay
-    ipcMain.on('transcription:insert-text', (_event, text: string) => {
+    ipcMain.on('transcription:insert-text', async (_event, text: string) => {
       console.log('💉 Inserting text:', text)
-      this.insertText(text).catch((error) => {
+      try {
+        await this.insertText(text)
+        console.log('✅ Text insertion complete')
+        // Close overlay immediately after insertion
+        this.hideOverlay()
+      } catch (error) {
         console.error('❌ Failed to insert text:', error)
-      })
+        // Still close overlay even on error
+        this.hideOverlay()
+      }
     })
 
-    // Handle manual stop from overlay UI
+    // Handle manual stop from overlay UI (without text insertion)
     ipcMain.on('transcription:stop-manual', () => {
-      console.log('🛑 Manual stop requested from overlay')
+      console.log('🛑 Manual stop requested from overlay (no text)')
       this.hideOverlay()
     })
 
@@ -130,10 +137,8 @@ export class TranscriptionService {
         this.overlayWindow.webContents.send('transcription:stop')
       }
 
-      // Hide overlay after a short delay to show final status
-      setTimeout(() => {
-        this.hideOverlay()
-      }, 1000)
+      // Don't hide overlay here - it will close after text insertion
+      // or after manual stop if no text
 
       this.isActive = false
       console.log('✅ Transcription stopped')
@@ -290,6 +295,14 @@ export class TranscriptionService {
 
   private async focusOriginalTarget() {
     try {
+      console.log('🎯 Focusing original target...')
+
+      // Hide the overlay window first
+      if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
+        this.overlayWindow.hide()
+        console.log('   Hidden overlay window')
+      }
+
       // Hide any palette windows so focus returns to the previous application
       for (const window of BrowserWindow.getAllWindows()) {
         if (window.isDestroyed()) continue
@@ -311,22 +324,25 @@ export class TranscriptionService {
         }
       }
 
-      if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
-        this.overlayWindow.blur()
-      }
-
+      // If previousFocusedWindow is an Electron window, focus it
       if (this.previousFocusedWindow && !this.previousFocusedWindow.isDestroyed()) {
         try {
           const previousUrl = this.previousFocusedWindow.webContents.getURL()
           if (!previousUrl.includes('#palette')) {
             this.previousFocusedWindow.focus()
+            console.log('   Focused Electron window')
           }
         } catch {
-          // Ignore errors when focusing previous window (may belong to another app)
+          // Ignore errors when focusing previous window
         }
+      } else {
+        // No Electron window to focus - we're pasting to an external app
+        // The paste will go to whatever window is active after hiding overlay
+        console.log('   No Electron window to focus - pasting to system active window')
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 120))
+      // Wait for focus to settle
+      await new Promise((resolve) => setTimeout(resolve, 150))
     } catch (error) {
       console.warn('⚠️ Unable to restore original focus before paste:', error)
     }
@@ -399,8 +415,8 @@ export class TranscriptionService {
         console.log('   ⚠️  No keyboard automation available, text left in clipboard')
       }
 
-      // Wait a bit before restoring clipboard
-      await new Promise((resolve) => setTimeout(resolve, 200))
+      // Wait longer to ensure paste completes in the target app
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       // Restore previous clipboard
       if (previousClipboard !== text) {
