@@ -70,9 +70,8 @@ const TranscriptionOverlayPage = () => {
   }, [clearFlushTimer])
 
   // Get API key from environment
-  const apiKey =
-    import.meta.env.VITE_SONIOX_API_KEY ||
-    'c476482a47b7e22b2de7629562deb30ed4ccc73d692eb06199b466b156e7ae56'
+  const apiKey = import.meta.env.VITE_SONIOX_API_KEY ?? ''
+  const missingApiKey = apiKey.length === 0
 
   // Use the transcription hook
   const { state, finalText, nonFinalTokens, startTranscription, stopTranscription, error } =
@@ -208,6 +207,12 @@ const TranscriptionOverlayPage = () => {
         {error && (
           <div className="mb-2 rounded bg-red-500/10 px-2 py-1 text-xs text-red-400">
             {error.status}: {error.message}
+          </div>
+        )}
+
+        {missingApiKey && !error && (
+          <div className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-300">
+            Soniox API key is missing. Update your desktop environment configuration and restart the app.
           </div>
         )}
 

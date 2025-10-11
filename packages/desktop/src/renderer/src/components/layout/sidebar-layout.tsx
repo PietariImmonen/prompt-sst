@@ -17,7 +17,10 @@ import {
   SidebarProvider
 } from '@/components/ui/sidebar'
 import { PromptInsertionPalette } from '@/components/prompt-insertion-palette'
-import { getPromptPaletteShortcutDisplay } from '@/components/prompt-insertion-palette/shortcut'
+import {
+  getPromptPaletteShortcutDisplay,
+  getTranscriptionShortcutDisplay
+} from '@/components/prompt-insertion-palette/shortcut'
 import { PromptCapturePaletteTrigger } from '@/components/prompt-capture-palette/prompt-capture-trigger'
 import { useAuth } from '@/hooks/use-auth'
 import icon from '@/assets/icon.png'
@@ -35,16 +38,6 @@ const menuItems = [
     icon: Tag
   },
   {
-    title: 'Transcription',
-    url: '/transcription-test',
-    icon: Mic
-  },
-  {
-    title: 'Transcription Direct',
-    url: '/transcription-test-direct',
-    icon: Mic
-  },
-  {
     title: 'Account',
     url: '/account-settings',
     icon: User
@@ -55,6 +48,7 @@ function AppSidebar() {
   const location = useLocation()
   const shortcutHint = React.useMemo(() => getPromptPaletteShortcutDisplay(false), [])
   const shortcutHintCapture = React.useMemo(() => getPromptPaletteShortcutDisplay(true), [])
+  const shortcutHintTranscription = React.useMemo(() => getTranscriptionShortcutDisplay(), [])
   const auth = useAuth()
 
   return (
@@ -117,6 +111,15 @@ function AppSidebar() {
             </p>
           </div>
           <PromptCapturePaletteTrigger />
+        </div>
+        <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 bg-black/80 p-2 text-foreground transition-colors hover:bg-black">
+          <div className="leading-tight">
+            <p className="text-xs font-semibold text-foreground">Universal transcription</p>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              {shortcutHintTranscription}
+            </p>
+          </div>
+          <Mic className="h-4 w-4 text-muted-foreground" />
         </div>
         <SidebarMenuButton
           onClick={() => auth.logout()}
