@@ -45,6 +45,28 @@ export class SimplePaletteService {
     console.log('📡 Simplified palette listening to existing overlay IPC events')
   }
 
+  private broadcastShortcut(kind: 'capture' | 'palette') {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (!window || window.isDestroyed()) continue
+      try {
+        window.webContents.send('shortcut:global-fired', { kind })
+      } catch (error) {
+        console.warn('Failed to notify renderer about simplified palette shortcut:', error)
+      }
+    }
+  }
+
+  private notifyVisibilityChange(visible: boolean) {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (!window || window.isDestroyed()) continue
+      try {
+        window.webContents.send('palette:visibility-changed', { visible })
+      } catch (error) {
+        console.warn('Failed to notify renderer about palette visibility:', error)
+      }
+    }
+  }
+
   private createWindow(): BrowserWindow {
     // Get cursor position and display
     const cursorPoint = screen.getCursorScreenPoint()
@@ -158,12 +180,14 @@ export class SimplePaletteService {
             }
           }, 50)
           this.options.onShow?.()
+          this.notifyVisibilityChange(true)
         }
       })
 
       // Also handle the case where the window loads very quickly
       this.window.once('show', () => {
         console.log('📱 Palette window shown')
+        this.notifyVisibilityChange(true)
       })
     } catch (error) {
       console.error('Failed to show palette:', error)
@@ -176,6 +200,7 @@ export class SimplePaletteService {
         this.window.hide()
       }
       this.options.onHide?.()
+      this.notifyVisibilityChange(false)
     } catch (error) {
       console.error('Failed to hide palette:', error)
     }
@@ -225,6 +250,7 @@ export class SimplePaletteService {
     if (this.shortcutRegistered) return true
 
     const success = globalShortcut.register(this.shortcut, () => {
+      this.broadcastShortcut('palette')
       if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
         this.hide()
       } else {
@@ -253,6 +279,7 @@ export class SimplePaletteService {
     // Remove only our specific listeners
     ipcMain.removeListener('overlay:hide', this.hideHandler)
     ipcMain.removeListener('overlay:select-prompt', this.selectHandler)
+    this.notifyVisibilityChange(false)
   }
 
   isVisible(): boolean {

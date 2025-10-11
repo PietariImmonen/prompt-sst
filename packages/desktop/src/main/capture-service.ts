@@ -251,6 +251,17 @@ export function createCaptureService(
     // Also notify any other listeners (like tray service) of status changes
   }
 
+  function notifyShortcutFired(kind: 'capture' | 'palette') {
+    const window = getWindow()
+    if (!window || window.isDestroyed()) return
+
+    try {
+      window.webContents.send('shortcut:global-fired', { kind })
+    } catch (error) {
+      console.warn('Failed to notify renderer about shortcut:', error)
+    }
+  }
+
   // Removed global keyboard capture functions - using standard input handling
 
   function showOverlay() {
@@ -619,6 +630,7 @@ export function createCaptureService(
 
     const success = globalShortcut.register(captureAccelerator, async () => {
       console.log('Capture shortcut triggered')
+      notifyShortcutFired('capture')
       // Check permissions before attempting capture
       if (!(await checkAccessibilityPermissions())) {
         return
@@ -740,6 +752,7 @@ export function createCaptureService(
     if (paletteListening) return
     const success = globalShortcut.register(paletteAccelerator, async () => {
       console.log(`Palette shortcut ${paletteAccelerator} triggered`)
+      notifyShortcutFired('palette')
 
       // Detect the currently focused element before showing overlay
       const focusInfo = await detectFocusedElement()

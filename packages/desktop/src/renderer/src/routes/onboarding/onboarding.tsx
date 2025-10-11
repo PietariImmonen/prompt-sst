@@ -4,11 +4,12 @@ import { UserSettingsStore } from '@/data/user-settings'
 import { ProgressIndicator } from '@/components/onboarding/progress-indicator'
 import { StepRoleSelection } from '@/components/onboarding/step-role-selection'
 import { StepShortcuts } from '@/components/onboarding/step-shortcuts'
+import { StepTranscription } from '@/components/onboarding/step-transcription'
 import { StepChromeExtension } from '@/components/onboarding/step-chrome-extension'
 import { toast } from 'sonner'
 import type { UserRole } from '@prompt-saver/core/domain/onboarding/role-tags'
 
-type OnboardingStep = 1 | 2 | 3
+type OnboardingStep = 1 | 2 | 3 | 4
 
 export function OnboardingPage() {
   const rep = useReplicache()
@@ -69,12 +70,20 @@ export function OnboardingPage() {
     setCurrentStep(2)
   }
 
-  const handleShortcutsNext = () => {
+  const handleTranscriptionNext = () => {
     setCurrentStep(3)
   }
 
-  const handleShortcutsSkip = () => {
+  const handleTranscriptionSkip = () => {
     setCurrentStep(3)
+  }
+
+  const handleShortcutsNext = () => {
+    setCurrentStep(4)
+  }
+
+  const handleShortcutsSkip = () => {
+    setCurrentStep(4)
   }
 
   const handleChromeExtensionNext = async () => {
@@ -111,11 +120,17 @@ export function OnboardingPage() {
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-black p-4 text-foreground">
       <div className="w-full space-y-8">
-        <ProgressIndicator currentStep={currentStep} totalSteps={3} />
+        <ProgressIndicator currentStep={currentStep} totalSteps={4} />
 
         <div className="flex justify-center">
           {currentStep === 1 && <StepRoleSelection onNext={handleRoleSelection} />}
-          {currentStep === 2 && examplePrompt && (
+          {currentStep === 2 && (
+            <StepTranscription
+              onNext={handleTranscriptionNext}
+              onSkip={handleTranscriptionSkip}
+            />
+          )}
+          {currentStep === 3 && examplePrompt && (
             <StepShortcuts
               onNext={handleShortcutsNext}
               onSkip={handleShortcutsSkip}
@@ -123,7 +138,7 @@ export function OnboardingPage() {
               examplePromptContent={examplePrompt.content}
             />
           )}
-          {currentStep === 3 && <StepChromeExtension onNext={handleChromeExtensionNext} />}
+          {currentStep === 4 && <StepChromeExtension onNext={handleChromeExtensionNext} />}
         </div>
       </div>
     </div>

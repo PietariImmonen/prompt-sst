@@ -9,12 +9,16 @@ interface StepShortcutsProps {
   examplePromptContent: string
 }
 
-export function StepShortcuts({ onNext, onSkip, examplePromptContent }: StepShortcutsProps) {
+export function StepShortcuts({
+  onNext,
+  onSkip,
+  examplePromptTitle,
+  examplePromptContent
+}: StepShortcutsProps) {
   const [capturePressed, setCapturePressed] = React.useState(false)
   const [palettePressed, setPalettePressed] = React.useState(false)
-  console.log(examplePromptContent)
-
-  const isMac = navigator.platform.toLowerCase().includes('mac')
+  const isMac =
+    typeof navigator !== 'undefined' && navigator.platform.toLowerCase().includes('mac')
   const modKey = isMac ? '⌘' : 'Ctrl'
 
   React.useEffect(() => {
@@ -56,7 +60,45 @@ export function StepShortcuts({ onNext, onSkip, examplePromptContent }: StepShor
     }
   }, [isMac])
 
-  const allPressed = capturePressed && palettePressed
+  React.useEffect(() => {
+    const ipc = window.electron?.ipcRenderer
+    if (!ipc?.on) return
+
+    const handler = (_event: unknown, payload: { kind?: 'capture' | 'palette' }) => {
+      if (payload?.kind === 'capture') setCapturePressed(true)
+      if (payload?.kind === 'palette') setPalettePressed(true)
+    }
+
+    ipc.on('shortcut:global-fired', handler)
+
+    return () => {
+      ipc.off?.('shortcut:global-fired', handler)
+      ipc.removeListener?.('shortcut:global-fired', handler)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    const ipc = window.electron?.ipcRenderer
+    if (!ipc?.on) return
+
+    const handleVisibility = (
+      _event: unknown,
+      payload: { visible?: boolean }
+    ) => {
+      if (payload?.visible) {
+        setPalettePressed(true)
+      }
+    }
+
+    ipc.on('palette:visibility-changed', handleVisibility)
+
+    return () => {
+      ipc.off?.('palette:visibility-changed', handleVisibility)
+      ipc.removeListener?.('palette:visibility-changed', handleVisibility)
+    }
+  }, [])
+
+  const canContinue = capturePressed
 
   return (
     <div className="w-full max-w-md space-y-5">
@@ -93,6 +135,14 @@ export function StepShortcuts({ onNext, onSkip, examplePromptContent }: StepShor
             {modKey} + Shift + C
           </kbd>
         </div>
+        <div className="mt-3 space-y-2 rounded-md border border-border/50 bg-background/60 p-3 text-left">
+          <p className="text-xs font-semibold text-muted-foreground">
+            Example prompt (use the shortcut above to capture it)
+          </p>
+          <pre className="max-h-24 overflow-auto whitespace-pre-wrap rounded bg-muted/40 p-2 text-xs leading-relaxed text-foreground">
+            {examplePromptContent}
+          </pre>
+        </div>
       </div>
 
       {/* Second Box: Palette Shortcut */}
@@ -126,6 +176,10 @@ export function StepShortcuts({ onNext, onSkip, examplePromptContent }: StepShor
           </kbd>
         </div>
       </div>
+      <p className="text-center text-xs text-muted-foreground">
+        Copy the example prompt <span className="font-semibold">{examplePromptTitle}</span> with the capture
+        shortcut, then open the palette to paste it.
+      </p>
 
       {/* Buttons */}
       <div className="flex gap-3">
@@ -134,7 +188,7 @@ export function StepShortcuts({ onNext, onSkip, examplePromptContent }: StepShor
         </Button>
         <Button
           onClick={onNext}
-          disabled={!allPressed}
+          disabled={!canContinue}
           className="flex-1 rounded-md bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-purple-500/20 disabled:opacity-50 disabled:hover:scale-100"
           size="lg"
         >

@@ -1,5 +1,6 @@
 export { ProgressIndicator } from './progress-indicator'
 export { StepRoleSelection } from './step-role-selection'
+export { StepTranscription } from './step-transcription'
 export { StepShortcuts } from './step-shortcuts'
 export { StepChromeExtension } from './step-chrome-extension'
 export { StepCompletion } from './step-completion'

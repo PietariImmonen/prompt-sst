@@ -48,6 +48,24 @@ export class TranscriptionService {
     this.setupIpcHandlers()
   }
 
+  private broadcastState(
+    payload:
+      | { state: 'started' | 'stopped' | 'cancelled' }
+      | { state: 'completed'; text: string }
+      | { state: 'failed'; message: string }
+  ) {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (!window || window.isDestroyed()) continue
+      if (this.overlayWindow && window.id === this.overlayWindow.id) continue
+
+      try {
+        window.webContents.send('transcription:state-changed', payload)
+      } catch (error) {
+        console.warn('⚠️ Failed to broadcast transcription state:', error)
+      }
+    }
+  }
+
   async initialize(): Promise<boolean> {
     try {
       // Register global shortcut
@@ -78,10 +96,15 @@ export class TranscriptionService {
         console.log('✅ Text insertion complete')
         // Close overlay immediately after insertion
         this.hideOverlay()
+        this.broadcastState({ state: 'completed', text })
       } catch (error) {
         console.error('❌ Failed to insert text:', error)
         // Still close overlay even on error
         this.hideOverlay()
+        this.broadcastState({
+          state: 'failed',
+          message: error instanceof Error ? error.message : 'Failed to insert transcribed text'
+        })
       }
     })
 
@@ -89,6 +112,7 @@ export class TranscriptionService {
     ipcMain.on('transcription:stop-manual', () => {
       console.log('🛑 Manual stop requested from overlay (no text)')
       this.hideOverlay()
+      this.broadcastState({ state: 'cancelled' })
     })
 
     // Handle status requests (for test page)
@@ -121,10 +145,15 @@ export class TranscriptionService {
       await this.showOverlay()
 
       console.log('✅ Transcription started')
+      this.broadcastState({ state: 'started' })
     } catch (error) {
       console.error('❌ Error starting transcription:', error)
       this.isActive = false
       this.hideOverlay()
+      this.broadcastState({
+        state: 'failed',
+        message: error instanceof Error ? error.message : 'Failed to start transcription'
+      })
     }
   }
 
@@ -142,10 +171,15 @@ export class TranscriptionService {
 
       this.isActive = false
       console.log('✅ Transcription stopped')
+      this.broadcastState({ state: 'stopped' })
     } catch (error) {
       console.error('❌ Error stopping transcription:', error)
       this.hideOverlay()
       this.isActive = false
+      this.broadcastState({
+        state: 'failed',
+        message: error instanceof Error ? error.message : 'Failed to stop transcription'
+      })
     }
   }
 
