@@ -1,9 +1,8 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import {
-  getTagsForRole,
+  createRoleTags,
   isValidRole,
-} from "@prompt-saver/core/domain/onboarding/role-tags";
-import { Tag } from "@prompt-saver/core/domain/tag";
+} from "@prompt-saver/core/domain/onboarding";
 
 const route = new OpenAPIHono().post("/complete", async (c) => {
   try {
@@ -21,12 +20,8 @@ const route = new OpenAPIHono().post("/complete", async (c) => {
       );
     }
 
-    // Get tags for the selected role
-    const tagNames = getTagsForRole(role);
-
-    // Create tags in batch
-    const tags = tagNames.map((name) => ({ name }));
-    const createdTags = await Tag.createBatch({ tags });
+    // Create tags in batch using the core onboarding helper
+    const createdTags = await createRoleTags(role);
 
     return c.json({
       success: true,

@@ -1,19 +1,12 @@
 import { secret } from "./secret";
 
-// Neon database configuration with branch support
-// Each stage gets its own branch for isolated development
-const getBranchName = () => {
-  const stage = $app.stage;
-  // Use main branch for production, stage-specific branches for others
-  return stage === "production" ? "main" : `branch-${stage}`;
-};
-
-// Create a linkable resource for the Neon database
+// Neon database configuration
+// Each stage uses a separate Neon database endpoint configured via secrets
+// The NeonDatabaseUrl secret should point to the correct database/branch per stage
 export const database = new sst.Linkable("Database", {
   properties: {
     url: secret.NeonDatabaseUrl.value,
     apiKey: secret.NeonApiKey.value,
-    branch: getBranchName(),
   },
 });
 

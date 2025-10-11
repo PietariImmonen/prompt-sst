@@ -1,4 +1,5 @@
 import { database } from "./database";
+import { domain, zone } from "./dns";
 import { allSecrets } from "./secret";
 
 export const auth = new sst.aws.Auth("Auth", {
@@ -8,11 +9,15 @@ export const auth = new sst.aws.Auth("Auth", {
 
     handler: "./packages/functions/src/auth/auth.handler",
     environment: {
-      AUTH_APP_URL: "http://localhost:3000",
-      AUTH_SITE_URL: "http://localhost:3001",
+      AUTH_APP_URL: $dev ? "http://localhost:3000" : `https://${domain}`,
+      AUTH_SITE_URL: $dev ? "http://localhost:3001" : `https://${domain}`,
     },
   },
   forceUpgrade: "v2",
+  domain: {
+    name: "auth." + domain,
+    dns: sst.aws.dns({ zone }),
+  },
 });
 
 // maybe we can insert password there manually using the same hash function as the sst auth uses?

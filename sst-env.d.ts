@@ -29,7 +29,6 @@ declare module "sst" {
     }
     "Database": {
       "apiKey": string
-      "branch": string
       "type": "sst.sst.Linkable"
       "url": string
     }

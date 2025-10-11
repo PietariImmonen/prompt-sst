@@ -1,5 +1,6 @@
 import { fileUploadBucket } from "./bucket";
 import { database } from "./database";
+import { domain, zone } from "./dns";
 import { realtime } from "./realtime";
 import { allSecrets, secret } from "./secret";
 
@@ -22,6 +23,6 @@ bus.subscribe("BusSubscriber", {
     },
   ],
   environment: {
-    APP_DOMAIN: "http://localhost:3000",
+    APP_DOMAIN: $dev ? "http://localhost:3000" : `https://${domain}`,
   },
 });

@@ -173,54 +173,65 @@ export namespace Tag {
       useTransaction(async (tx) => {
         const actor = assertActor("user");
         const workspaceID = actor.properties.workspaceID;
-        const createdTags: Array<{ id: string; name: string; slug: string }> =
-          [];
 
-        for (const tagInput of input.tags) {
-          const name = normalizeWhitespace(tagInput.name);
-          const slug = slugify(name);
+        const preparedRecords = input.tags
+          .map((tagInput) => {
+            const name = normalizeWhitespace(tagInput.name);
+            const slug = slugify(name);
 
-          if (!slug) {
-            console.warn(`Skipping tag with empty slug: ${name}`);
-            continue;
-          }
-
-          const record: TagInsert = {
-            id: createId(),
-            workspaceID,
-            name,
-            slug,
-            description: sanitizeDescription(tagInput.description ?? null),
-          };
-
-          try {
-            const [result] = await tx
-              .insert(tag)
-              .values(record)
-              .onConflictDoUpdate({
-                target: [tag.workspaceID, tag.slug],
-                set: {
-                  name: record.name,
-                  description: record.description,
-                  timeDeleted: sql`NULL`,
-                  timeUpdated: sql`CURRENT_TIMESTAMP`,
-                },
-              })
-              .returning();
-
-            if (result) {
-              createdTags.push({
-                id: result.id,
-                name: result.name,
-                slug: result.slug,
-              });
+            if (!slug) {
+              console.warn(`Skipping tag with empty slug: ${name}`);
+              return null;
             }
-          } catch (error) {
-            console.error(`Failed to create tag: ${name}`, error);
-          }
+
+            const record: TagInsert = {
+              id: createId(),
+              workspaceID,
+              name,
+              slug,
+              description: sanitizeDescription(tagInput.description ?? null),
+            };
+
+            return record;
+          })
+          .filter((record): record is TagInsert => record !== null);
+
+        if (preparedRecords.length === 0) {
+          return [];
         }
 
-        return createdTags;
+        const uniqueRecords: TagInsert[] = [];
+        const seenSlugs = new Set<string>();
+
+        for (const record of preparedRecords) {
+          if (seenSlugs.has(record.slug)) continue;
+          seenSlugs.add(record.slug);
+          uniqueRecords.push(record);
+        }
+
+        if (uniqueRecords.length === 0) {
+          return [];
+        }
+
+        const results = await tx
+          .insert(tag)
+          .values(uniqueRecords)
+          .onConflictDoUpdate({
+            target: [tag.workspaceID, tag.slug],
+            set: {
+              name: sql`excluded.name`,
+              description: sql`excluded.description`,
+              timeDeleted: sql`NULL`,
+              timeUpdated: sql`CURRENT_TIMESTAMP`,
+            },
+          })
+          .returning({
+            id: tag.id,
+            name: tag.name,
+            slug: tag.slug,
+          });
+
+        return results;
       }),
   );
 

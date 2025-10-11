@@ -20,6 +20,7 @@
     "build:unpack": "bun run build && bunx electron-builder --dir",
     "build:win": "bun run build && bunx electron-builder --win",
     "build:mac": "bun run build && bunx electron-builder --mac",
+    "build:mac:notarized": "./scripts/build-mac-notarized.sh",
     "build:linux": "bun run build && bunx electron-builder --linux"
   },
   "dependencies": {

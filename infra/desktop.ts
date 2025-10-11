@@ -1,5 +1,6 @@
 import { api } from "./api";
 import { auth } from "./auth";
+import { domain } from "./dns";
 import { realtime } from "./realtime";
 import { secret } from "./secret";
 
@@ -7,8 +8,8 @@ import { secret } from "./secret";
 // This allows the desktop app to connect to the same SST resources
 export const desktopConfig = {
   environment: {
-    VITE_APP_URL: "http://localhost:3000",
-    VITE_PUBLIC_APP_URL: "http://localhost:3001",
+    VITE_APP_URL: $dev ? "http://localhost:3000" : `https://${domain}`,
+    VITE_PUBLIC_APP_URL: $dev ? "http://localhost:3001" : `https://${domain}`,
     VITE_API_URL: api.url,
     VITE_AUTH_URL: auth.url,
     VITE_STAGE: $app.stage,

@@ -2,6 +2,7 @@ import { auth } from "./auth";
 import { fileUploadBucket } from "./bucket";
 import { bus } from "./bus";
 import { database } from "./database";
+import { domain, zone } from "./dns";
 import { realtime } from "./realtime";
 import { allSecrets } from "./secret";
 
@@ -15,7 +16,7 @@ const honoApiFn = new sst.aws.Function("Api", {
     },
   ],
   environment: {
-    APP_DOMAIN: "http://localhost:3000",
+    APP_DOMAIN: $dev ? "http://localhost:3000" : `https://${domain}`,
   },
   url: true,
 });
@@ -24,7 +25,8 @@ export const api = new sst.aws.Router("ApiRouter", {
   routes: {
     "/*": honoApiFn.url,
   },
-  // domain: {
-  //   name: "api.localhost",
-  // },
+  domain: {
+    name: "api." + domain,
+    dns: sst.aws.dns({ zone }),
+  },
 });
