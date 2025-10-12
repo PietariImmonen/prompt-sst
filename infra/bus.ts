@@ -1,6 +1,6 @@
 import { fileUploadBucket } from "./bucket";
 import { database } from "./database";
-import { domain, zone } from "./dns";
+import { domain } from "./dns";
 import { realtime } from "./realtime";
 import { allSecrets, secret } from "./secret";
 

@@ -67,7 +67,7 @@ function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
     <div className="text-foreground bg-background w-[350px]">
       <div className="p-6">
         <div className="space-y-1.5 pb-6">
-          <h2 className="text-xl font-semibold">Prompt Saver</h2>
+          <h2 className="text-xl font-semibold">Clyo</h2>
           <p className="text-muted-foreground text-sm">
             Logged in as {auth.current?.email}
           </p>
@@ -215,7 +215,7 @@ function PopupContent() {
             </svg>
             Secure sign-in
           </div>
-          <h2 className="text-xl font-semibold">Sign in to Prompt Saver</h2>
+          <h2 className="text-xl font-semibold">Sign in to Clyo</h2>
           <p className="text-muted-foreground text-sm">
             Sync your prompts across all your devices
           </p>

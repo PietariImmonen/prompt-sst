@@ -1,10 +1,10 @@
-# Prompt Saver Chrome Extension
+# Clyo Chrome Extension
 
-A Chrome extension built with Plasmo framework that syncs with the Prompt Saver backend using Replicache for offline-first data synchronization.
+A Chrome extension built with Plasmo framework that syncs with the Clyo backend using Replicache for offline-first data synchronization.
 
 ## Features
 
-- 🔐 Authentication synced with main Prompt Saver app
+- 🔐 Authentication synced with main Clyo app
 - 📦 Offline-first data sync with Replicache
 - ⚡ Built with Plasmo framework for modern Chrome extension development
 - 🎨 React-based UI with TypeScript

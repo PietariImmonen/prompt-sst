@@ -1,7 +1,7 @@
 {
   "name": "@prompt-saver/chrome-plugin",
   "version": "0.0.0",
-  "description": "Chrome extension for Prompt Saver with Replicache sync",
+  "description": "Chrome extension for Clyo with Replicache sync",
   "type": "module",
   "scripts": {
     "dev": "plasmo dev",
@@ -41,9 +41,9 @@
     "tailwindcss": "3",
     "typescript": "^5.8.2"
   },
-  "displayName": "Prompt Saver",
+  "displayName": "Clyo",
   "manifest": {
-    "name": "Prompt Saver",
+    "name": "Clyo",
     "host_permissions": [
       "https://*/*"
     ],

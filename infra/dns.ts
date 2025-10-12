@@ -1,15 +1,17 @@
-// DNS configuration for custom domains
-// Provides stage-aware domain and subdomain configuration
+// DNS configuration used by the infrastructure components.
+// Custom domains are only configured for the production stage.
 
-// Base domain configuration per stage
-export const domain =
-  {
-    production: "clyo.app",
-    dev: "dev.clyo.app",
-  }[$app.stage] || $app.stage + ".dev.clyo.app";
+import { isPermanentStage } from "./config";
 
-// Route 53 Hosted Zone IDs per stage
-export const zone =
-  $app.stage === "production"
-    ? "Z07374831FDYT0O4QOWPM"
-    : "Z07404991OYOCRO2VH5SP";
+const PRODUCTION_DOMAIN = "clyo.app";
+const PRODUCTION_ZONE_ID = "Z07374831FDYT0O4QOWPM";
+
+// Public domain used by the web application in production
+export const domain = PRODUCTION_DOMAIN;
+
+// Flag to indicate whether DNS resources should be provisioned
+export const useCustomDomain = isPermanentStage;
+
+// Route 53 configuration is only available when custom domains are enabled
+export const zoneId = useCustomDomain ? PRODUCTION_ZONE_ID : undefined;
+export const zone = useCustomDomain ? PRODUCTION_DOMAIN : undefined;

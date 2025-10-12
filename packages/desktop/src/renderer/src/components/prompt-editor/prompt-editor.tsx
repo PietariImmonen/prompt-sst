@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { zodResolver } from '@/lib/zod-resolver'
 import * as z from 'zod'
 import { toast } from 'sonner'
 import { useEditor } from '@tiptap/react'
@@ -50,7 +50,7 @@ export function PromptEditor({ prompt, onDismiss }: PromptEditorProps) {
   const [isCreatingTag, setIsCreatingTag] = React.useState(false)
 
   const form = useForm<PromptEditFormValues>({
-    resolver: zodResolver(promptEditSchema),
+    resolver: zodResolver(promptEditSchema as any),
     defaultValues: {
       title: prompt.title || '',
       content: prompt.content || '',

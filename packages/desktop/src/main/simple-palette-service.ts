@@ -2,6 +2,7 @@ import { app, BrowserWindow, globalShortcut, ipcMain, screen, clipboard } from '
 import { join } from 'path'
 import { execSync } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
+import { checkAccessibilityPermissions } from './capture-service.js'
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
@@ -208,6 +209,18 @@ export class SimplePaletteService {
 
   private async insertPrompt(promptText: string) {
     try {
+      // Check accessibility permissions on macOS before trying keyboard automation
+      if (process.platform === 'darwin') {
+        const hasAccess = await checkAccessibilityPermissions()
+        if (!hasAccess) {
+          console.error('❌ Accessibility permissions denied, cannot insert prompt')
+          // Fallback: just copy to clipboard
+          clipboard.writeText(promptText)
+          console.log('📋 Prompt copied to clipboard as fallback')
+          return
+        }
+      }
+
       // Simple clipboard-based insertion
       const originalClipboard = clipboard.readText()
       clipboard.writeText(promptText)

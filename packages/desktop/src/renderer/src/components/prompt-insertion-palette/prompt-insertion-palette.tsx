@@ -603,7 +603,7 @@ export function PromptInsertionPalette() {
         onValueChange={setQuery}
         shouldFilter={false}
         className="border-none shadow-none"
-        onKeyDown={(event) => {
+        onKeyDown={(event: { key: string; preventDefault: () => void }) => {
           if (event.key === 'Tab') {
             event.preventDefault()
           }

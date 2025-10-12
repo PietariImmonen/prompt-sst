@@ -16,29 +16,53 @@ import { join } from 'path'
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 console.log(process.execPath)
 
-// Add function to check and request accessibility permissions
-async function checkAccessibilityPermissions(): Promise<boolean> {
+// Cached permission status to avoid repeated checks
+let accessibilityPermissionGranted: boolean | null = null
+let lastPermissionCheck = 0
+const PERMISSION_CHECK_INTERVAL = 5000 // Check at most every 5 seconds
+
+// Add function to check and request accessibility permissions - exported for reuse
+export async function checkAccessibilityPermissions(): Promise<boolean> {
   if (process.platform !== 'darwin') return true
 
+  // Use cached result if available and recent
+  const now = Date.now()
+  if (
+    accessibilityPermissionGranted !== null &&
+    now - lastPermissionCheck < PERMISSION_CHECK_INTERVAL
+  ) {
+    return accessibilityPermissionGranted
+  }
+
+  lastPermissionCheck = now
+
   try {
-    // Test if we can access System Events
+    // Test if we can access System Events with a simple, safe command
     execSync(
       'osascript -e "tell application \\"System Events\\" to return name of first process"',
       {
-        timeout: 1000
+        timeout: 2000,
+        stdio: 'pipe' // Capture output to avoid noise
       }
     )
+    accessibilityPermissionGranted = true
     return true
-  } catch (error) {
-    console.log('Accessibility permissions not granted')
+  } catch (error: any) {
+    console.error('❌ Accessibility permissions check failed:', error?.message || error)
+    accessibilityPermissionGranted = false
 
     // Show dialog to user
     const result = await dialog.showMessageBox({
       type: 'warning',
       title: 'Accessibility Permissions Required',
-      message: 'This app needs Accessibility permissions to capture text.',
+      message: 'This app needs Accessibility permissions to work properly.',
       detail:
-        'Please go to System Preferences > Security & Privacy > Privacy > Accessibility and add this app.',
+        'Please:\n\n' +
+        '1. Open System Preferences > Security & Privacy > Privacy > Accessibility\n' +
+        '2. Click the lock icon to make changes\n' +
+        '3. Add this app to the list\n' +
+        '4. Make sure the checkbox next to the app is checked\n\n' +
+        'You may need to restart the app after granting permissions.',
       buttons: ['Open System Preferences', 'Cancel']
     })
 
@@ -170,7 +194,14 @@ async function readHighlightedText(): Promise<{
   try {
     // Force copy the selection on macOS with simplified approach
     if (process.platform === 'darwin') {
-      await checkAccessibilityPermissions()
+      const hasAccess = await checkAccessibilityPermissions()
+      if (!hasAccess) {
+        return {
+          content: '',
+          bookmark: { title: undefined, url: undefined },
+          method: 'clipboard'
+        }
+      }
       // Use simpler AppleScript command for better reliability
       execSync(
         'osascript -e \'tell application "System Events" to keystroke "c" using {command down}\'',
