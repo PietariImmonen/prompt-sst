@@ -19,6 +19,11 @@ const migrator = new sst.aws.Function("DatabaseMigrator", {
       to: "./migrations",
     },
   ],
+  environment: {
+    DATABASE_URL: secret.NeonDatabaseUrl.value,
+  },
+  timeout: "2 minutes",
+  memory: "512 MB",
 });
 
 if (!$dev) {
