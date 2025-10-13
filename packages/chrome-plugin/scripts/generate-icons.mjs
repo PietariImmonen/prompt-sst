@@ -1,56 +1,34 @@
 import sharp from 'sharp';
-import { mkdirSync } from 'fs';
-import { join } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const sizes = [16, 32, 48, 64, 128];
-const outputDir = join(process.cwd(), 'assets');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Ensure assets directory exists
-try {
-  mkdirSync(outputDir, { recursive: true });
-} catch (e) {
-  // Directory already exists
-}
-
-// Create a simple blue square with white "PS" text as SVG
-const createSVG = (size) => `
-<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-  <rect width="${size}" height="${size}" fill="#3B82F6" rx="${size * 0.15}"/>
-  <text
-    x="50%"
-    y="50%"
-    dominant-baseline="middle"
-    text-anchor="middle"
-    fill="white"
-    font-family="Arial, sans-serif"
-    font-weight="bold"
-    font-size="${size * 0.5}">PS</text>
-</svg>`;
+const SIZES = [16, 32, 48, 64, 128];
+const INPUT_ICON = resolve(__dirname, '../assets/clyo.png');
+const OUTPUT_DIR = resolve(__dirname, '../assets');
 
 async function generateIcons() {
-  console.log('Generating icons...');
+  try {
+    console.log(`Reading input icon from: ${INPUT_ICON}`);
+    const image = sharp(INPUT_ICON);
+    const metadata = await image.metadata();
+    console.log(`Input icon format: ${metadata.format}, size: ${metadata.width}x${metadata.height}`);
 
-  for (const size of sizes) {
-    const svg = Buffer.from(createSVG(size));
-    const outputPath = join(outputDir, `icon${size}.png`);
+    for (const size of SIZES) {
+      const outputPath = resolve(OUTPUT_DIR, `icon${size}.png`);
+      console.log(`Generating ${size}x${size} icon...`);
+      await image
+        .resize(size, size)
+        .toFile(outputPath);
+      console.log(`✅ Created ${outputPath}`);
+    }
 
-    await sharp(svg)
-      .resize(size, size)
-      .png()
-      .toFile(outputPath);
-
-    console.log(`✓ Created icon${size}.png`);
+    console.log('🚀 All icons generated successfully!');
+  } catch (error) {
+    console.error('❌ Error generating icons:', error);
   }
-
-  // Also create a default icon.png (using 128 size)
-  const svg = Buffer.from(createSVG(128));
-  await sharp(svg)
-    .resize(128, 128)
-    .png()
-    .toFile(join(outputDir, 'icon.png'));
-
-  console.log('✓ Created icon.png');
-  console.log('\n✅ All icons generated successfully!');
 }
 
-generateIcons().catch(console.error);
+generateIcons();
