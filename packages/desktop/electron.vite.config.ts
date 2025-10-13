@@ -21,13 +21,23 @@ export default defineConfig({
         '@desktop': resolve(__dirname, 'src/renderer/src'),
         '@': resolve(__dirname, 'src/renderer/src'),
         '@prompt-saver/core': resolve(__dirname, '../core/src'),
-        '@prompt-saver/functions': resolve(__dirname, '../functions/src')
+        '@prompt-saver/functions': resolve(__dirname, '../functions/src'),
+        // Polyfill Node.js modules for browser compatibility
+        'node:async_hooks': resolve(__dirname, 'src/renderer/src/polyfills/async-hooks.ts')
       }
     },
     optimizeDeps: {
       // Our installed react-router-dom exposes only dist/index.js; skipping prebundle
       // avoids Vite expecting a non-existent dist/index.mjs entry.
       exclude: ['react-router-dom', 'react-router']
+    },
+    build: {
+      rollupOptions: {
+        external: [
+          /^sst(\/.*)?$/,
+          /^postgres(\/.*)?$/
+        ]
+      }
     },
     define: {
       'process.env': {},

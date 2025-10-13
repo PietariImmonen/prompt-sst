@@ -11,6 +11,7 @@ import { createIntegratedCaptureService } from './integrated-capture-service.js'
 import { TrayService } from './tray-service.js'
 import { BackgroundDataService } from './background-data-service.js'
 import { TranscriptionService } from './transcription-service.js'
+import { TranscriptionReminderService } from './transcription-reminder-service.js'
 import {
   logger,
   logServiceStart,
@@ -61,6 +62,7 @@ let trayService: TrayService | null = null
 let backgroundDataService: BackgroundDataService | null = null
 let captureService: any = null
 let transcriptionService: TranscriptionService | null = null
+let transcriptionReminderService: TranscriptionReminderService | null = null
 let isQuitting = false
 
 const pendingAuthCallbacks: AuthCallbackPayload[] = []
@@ -310,6 +312,14 @@ ipcMain.handle('request-microphone-access', async () => {
   return true
 })
 
+// Handle transcription start from reminder dot
+ipcMain.on('transcription:start-from-reminder', () => {
+  console.log('🟣 Transcription requested from reminder dot')
+  if (transcriptionService) {
+    transcriptionService.startTranscription()
+  }
+})
+
 // Handler for auth sync from main window to background service
 ipcMain.on(
   'sync-auth-to-background-service',
@@ -530,6 +540,16 @@ app.whenReady().then(async () => {
       console.log('⚠️  Transcription service disabled (no API key configured)')
     }
 
+    // Initialize ambient reminder service (works alongside transcription availability)
+    await logServiceStart('TranscriptionReminderService')
+    transcriptionReminderService = new TranscriptionReminderService()
+    const reminderInitialized = await transcriptionReminderService.initialize()
+    await logServiceReady('TranscriptionReminderService')
+
+    if (!reminderInitialized) {
+      console.log('⚠️  Transcription reminder service unavailable on this platform')
+    }
+
     // Create main window
     createWindow()
 
@@ -661,6 +681,9 @@ app.on('will-quit', async () => {
     }
 
     // Dispose services in reverse order with individual error handling
+    await disposeService(transcriptionReminderService, 'TranscriptionReminderService', () =>
+      transcriptionReminderService?.dispose()
+    )
     await disposeService(transcriptionService, 'TranscriptionService', () =>
       transcriptionService?.dispose()
     )

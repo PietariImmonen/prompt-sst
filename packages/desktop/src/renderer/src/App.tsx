@@ -22,6 +22,7 @@ import { CallbackPage } from '@/routes/auth/callback/callback'
 import OnboardingPage from '@/routes/onboarding'
 import PromptEditorPage from '@/pages/prompt-editor'
 import TranscriptionOverlayPage from '@/pages/transcription-overlay'
+import TranscriptionReminderDot from '@/pages/transcription-reminder-dot'
 
 const SplashScreen = ({ message = 'Loading workspace…' }: { message?: string }) => {
   return (
@@ -215,6 +216,12 @@ function App(): JSX.Element {
   // Handle special route for transcription overlay
   if (location === '#transcription-overlay') {
     return <TranscriptionOverlayPage />
+  }
+
+  // Transcription reminder is handled in main.tsx to prevent CSS loading
+  // This code is unreachable but kept for reference
+  if (location === '#transcription-reminder') {
+    return <TranscriptionReminderDot />
   }
 
   return (
