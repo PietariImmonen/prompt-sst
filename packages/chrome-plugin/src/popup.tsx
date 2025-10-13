@@ -36,9 +36,6 @@ function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
     // Update status immediately
     updateStatus();
 
-    // Update status every 5 seconds
-    const interval = setInterval(updateStatus, 5000);
-
     // Listen for sync events from background
     const listener = (message: {
       type: string;
@@ -58,7 +55,6 @@ function LoggedInContent({ auth }: { auth: ReturnType<typeof useAuth> }) {
     chrome.runtime.onMessage.addListener(listener);
 
     return () => {
-      clearInterval(interval);
       chrome.runtime.onMessage.removeListener(listener);
     };
   }, []);

@@ -192,22 +192,9 @@ export class BackgroundDataService {
       // Set up MQTT connection for realtime poke notifications
       this.connectToRealtime()
 
-      // DISABLED: Periodic sync is not needed - Replicache in renderer handles all sync
-      // The background service only needs data for offline prompt capture
-      // Set up periodic sync every 5 minutes as fallback (only to keep cache fresh)
-      this.syncInterval = setInterval(
-        async () => {
-          try {
-            await this.syncPrompts()
-          } catch (error) {
-            console.warn('Periodic sync failed:', error)
-            this.connectionStatus = 'error'
-          }
-        },
-        5 * 60 * 1000
-      ) // 5 minutes instead of 30 seconds
-
-      console.log('Data sync started successfully (5 minute interval)')
+      // Rely solely on poke notifications for updates
+      // This significantly reduces database connections when the app is running in background
+      console.log('Data sync started successfully (using poke notifications only)')
     } catch (error) {
       console.error('Failed to start data sync:', error)
       this.connectionStatus = 'error'

@@ -137,7 +137,7 @@ export class TranscriptionService {
     }
   }
 
-  private async startTranscription() {
+  public async startTranscription() {
     try {
       console.log('▶️  Starting transcription...')
       this.isActive = true
