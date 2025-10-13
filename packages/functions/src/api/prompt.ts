@@ -65,6 +65,7 @@ export namespace PromptApi {
         const actor = assertActor("user");
         const body = c.req.valid("json");
         const result = await Prompt.create(body);
+        console.log(actor.properties);
         await Replicache.poke({
           actor: "system",
           workspaceID: actor.properties.workspaceID,

@@ -3,15 +3,17 @@ import { createId } from '@paralleldrive/cuid2'
 import mqtt, { MqttClient } from 'mqtt'
 
 import { useAuth } from '@/hooks/use-auth'
-import { workspaceStore } from '../workspace-provider/workspace-context'
 import { bus } from './bus'
 
-export function RealtimeProvider(props: { children: React.ReactElement }) {
+export function RealtimeProvider(props: {
+  children: React.ReactElement
+  workspaceID: string
+}) {
   const auth = useAuth()
   const connectionRef = React.useRef<MqttClient | null>(null)
 
   React.useEffect(() => {
-    if (!auth.current || !auth.isReady) {
+    if (!auth.current || !auth.isReady || !props.workspaceID) {
       return
     }
 
@@ -29,8 +31,6 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
         const url = new URL(`wss://${endpoint}/mqtt`)
         url.searchParams.set('x-amz-customauthorizer-name', authorizer)
 
-        const workspace = workspaceStore.get()
-
         const connection = mqtt.connect(url.toString(), {
           protocolVersion: 5,
           manualConnect: true,
@@ -41,10 +41,9 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
 
         connection.on('connect', async () => {
           console.log('WS connected')
-          if (!workspace) return
-          console.log('subscribing to', workspace.id)
+          console.log('subscribing to', props.workspaceID)
           await connection.subscribeAsync(
-            `prompt-saver/${import.meta.env.VITE_STAGE}/${workspace.id}/all/#`,
+            `prompt-saver/${import.meta.env.VITE_STAGE}/${props.workspaceID}/all/#`,
             { qos: 1 }
           )
         })
@@ -81,7 +80,7 @@ export function RealtimeProvider(props: { children: React.ReactElement }) {
         connectionRef.current = null
       }
     }
-  }, [auth, auth.isReady])
+  }, [auth, auth.isReady, props.workspaceID])
 
   return props.children
 }

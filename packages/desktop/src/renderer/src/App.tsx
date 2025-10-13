@@ -167,13 +167,13 @@ const AuthenticatedApp = () => {
   }
 
   return (
-    <RealtimeProvider>
-      <ReplicacheProvider
-        token={activeAccount.token}
-        workspaceID={workspace.id}
-        email={activeAccount.email}
-      >
-        <WorkspaceProvider workspace={workspace}>
+    <WorkspaceProvider workspace={workspace}>
+      <RealtimeProvider workspaceID={workspace.id}>
+        <ReplicacheProvider
+          token={activeAccount.token}
+          workspaceID={workspace.id}
+          email={activeAccount.email}
+        >
           <PromptCaptureProvider>
             <OnboardingRouter>
               <Routes>
@@ -188,9 +188,9 @@ const AuthenticatedApp = () => {
               </Routes>
             </OnboardingRouter>
           </PromptCaptureProvider>
-        </WorkspaceProvider>
-      </ReplicacheProvider>
-    </RealtimeProvider>
+        </ReplicacheProvider>
+      </RealtimeProvider>
+    </WorkspaceProvider>
   )
 }
 

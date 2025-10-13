@@ -51,6 +51,14 @@ export class BackgroundDataService {
     this.setupIpcHandlers()
   }
 
+  private getClientGroupID(): string {
+    if (!this.workspaceId) {
+      throw new Error('workspaceId missing when computing clientGroupID')
+    }
+    const clientGroupID = `bg-${this.workspaceId}`
+    return clientGroupID.length > 36 ? clientGroupID.slice(0, 36) : clientGroupID
+  }
+
   async initialize() {
     if (this.isInitialized) {
       return
@@ -232,6 +240,7 @@ export class BackgroundDataService {
 
       // Use Replicache pull endpoint to get all prompts
       const pullURL = `${this.apiEndpoint}/sync/pull`
+      const clientGroupID = this.getClientGroupID()
       const response = await fetch(pullURL, {
         method: 'POST',
         headers: {
@@ -240,7 +249,7 @@ export class BackgroundDataService {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          clientGroupID: 'background-service',
+          clientGroupID,
           cookie: null,
           pullVersion: 1,
           schemaVersion: '8'
