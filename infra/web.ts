@@ -27,7 +27,7 @@ export const web = new sst.aws.Nextjs("Web", {
       : customDomainEnabled
         ? `https://${domain}`
         : "https://dummy-domain.com", // This will be replaced by the actual URL
-    NEXT_PUBLIC_API_URL: api.url.apply((url) => url + "/internal"),
+    NEXT_PUBLIC_API_URL: api.url,
     NEXT_PUBLIC_AUTH_URL: auth.url,
   },
 });

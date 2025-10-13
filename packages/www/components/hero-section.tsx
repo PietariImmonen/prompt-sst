@@ -1,7 +1,7 @@
+"use client";
+
 import React from "react";
-import { ChevronRight, Mail, SendHorizonal } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import { Mail, SendHorizonal } from "lucide-react";
 
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,94 @@ const transitionVariants = {
 };
 
 export default function HeroSection() {
+  const [email, setEmail] = React.useState("");
+  const [status, setStatus] = React.useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [message, setMessage] = React.useState("");
+
+  // Check localStorage on mount
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const alreadySubmitted = localStorage.getItem("clyo_waitlist_submitted");
+      const savedEmail = localStorage.getItem("clyo_waitlist_email");
+      if (alreadySubmitted === "true") {
+        setStatus("success");
+        setMessage("You've already joined the waitlist!");
+        if (savedEmail) {
+          setEmail(savedEmail);
+        }
+      }
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Check localStorage first
+    if (typeof window !== "undefined") {
+      const alreadySubmitted = localStorage.getItem("clyo_waitlist_submitted");
+      if (alreadySubmitted === "true") {
+        setStatus("error");
+        setMessage("You've already joined the waitlist!");
+        return;
+      }
+    }
+
+    setStatus("loading");
+
+    try {
+      // Collect browser metadata and UTM parameters
+      const urlParams = new URLSearchParams(window.location.search);
+
+      const metadata = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        referrer: document.referrer || undefined,
+        screenResolution: `${window.screen.width}x${window.screen.height}`,
+        utmSource: urlParams.get("utm_source") || undefined,
+        utmMedium: urlParams.get("utm_medium") || undefined,
+        utmCampaign: urlParams.get("utm_campaign") || undefined,
+        utmTerm: urlParams.get("utm_term") || undefined,
+        utmContent: urlParams.get("utm_content") || undefined,
+      };
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+
+      const response = await fetch(`${apiUrl}/waitlist/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          source: "website",
+          metadata,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setStatus("success");
+        setMessage(data.result?.message || "Successfully joined the waitlist!");
+        setEmail("");
+        if (typeof window !== "undefined") {
+          localStorage.setItem("clyo_waitlist_submitted", "true");
+          localStorage.setItem("clyo_waitlist_email", email);
+        }
+      } else {
+        setStatus("error");
+        setMessage(data.message || "Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      setStatus("error");
+      setMessage("Network error. Please check your connection and try again.");
+      console.error("Waitlist submission error:", error);
+    }
+  };
+
   return (
     <>
       <HeroHeader />
@@ -84,21 +172,35 @@ export default function HeroSection() {
                   }
                   className="mt-10 flex items-center gap-2"
                 >
-                  <form action="" className="mx-auto max-w-sm">
-                    <div className="bg-background has-[input:focus]:ring-muted relative grid grid-cols-[1fr_auto] items-center rounded-[calc(var(--radius)+0.75rem)] border pr-3 shadow shadow-zinc-950/5 has-[input:focus]:ring-2">
+                  <form onSubmit={handleSubmit} className="mx-auto max-w-sm">
+                    <div className="bg-background has-[input:focus]:ring-muted w-sm relative grid grid-cols-[1fr_auto] items-center rounded-[calc(var(--radius)+0.75rem)] border pr-3 shadow shadow-zinc-950/5 has-[input:focus]:ring-2">
                       <Mail className="text-caption pointer-events-none absolute inset-y-0 left-5 my-auto size-5" />
                       <input
                         placeholder="Your email address"
                         className="h-14 w-full bg-transparent pl-12 focus:outline-none"
                         type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={status === "loading" || status === "success"}
                       />
 
                       <div className="md:pr-1.5 lg:pr-0">
                         <Button
+                          type="submit"
                           aria-label="submit"
                           className="rounded-(--radius)"
+                          disabled={
+                            status === "loading" || status === "success"
+                          }
                         >
-                          <span className="hidden md:block">Join Waitlist</span>
+                          <span className="hidden md:block">
+                            {status === "loading"
+                              ? "Joining..."
+                              : status === "success"
+                                ? "Joined!"
+                                : "Join Waitlist"}
+                          </span>
                           <SendHorizonal
                             className="relative mx-auto size-5 md:hidden"
                             strokeWidth={2}
@@ -106,6 +208,13 @@ export default function HeroSection() {
                         </Button>
                       </div>
                     </div>
+                    {message && (
+                      <p
+                        className={`mt-3 text-center text-sm ${status === "success" ? "text-green-500" : "text-red-500"}`}
+                      >
+                        {message}
+                      </p>
+                    )}
                   </form>
                 </AnimatedGroup>
               </div>

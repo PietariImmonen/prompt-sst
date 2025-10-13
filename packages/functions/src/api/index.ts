@@ -10,6 +10,7 @@ import { auth } from "./auth";
 import { OnboardingApi } from "./onboarding";
 import { PromptApi } from "./prompt";
 import { ReplicacheApi } from "./replicache";
+import { WaitlistApi } from "./waitlist";
 import { WorkspaceApi } from "./workspace";
 
 const app = new OpenAPIHono();
@@ -20,6 +21,8 @@ app
     c.header("Cache-Control", "no-store");
     return next();
   })
+  // Register public routes before auth middleware
+  .route("/waitlist", WaitlistApi.route)
   .use(auth)
   .onError((error, c) => {
     if (error instanceof VisibleError) {
