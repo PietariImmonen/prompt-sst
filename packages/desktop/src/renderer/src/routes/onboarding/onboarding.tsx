@@ -45,25 +45,22 @@ export function OnboardingPage() {
     if (rep) {
       try {
         // Get tags for the selected role and example prompt
-        // const { getTagsForRole } = await import('@prompt-saver/core/domain/onboarding/role-tags')
+        const { createRoleTags } = await import('@prompt-saver/core/domain/onboarding/create-role-tags')
         const { getExamplePromptForRole } = await import(
           '@prompt-saver/core/domain/onboarding/example-prompts'
         )
 
-        // const tagNames = getTagsForRole(role)
         const promptData = getExamplePromptForRole(role)
         setExamplePrompt(promptData)
 
-        // Create tags via Replicache mutator one by one
-        // for (const name of tagNames) {
-        //   await rep.mutate.tag_create({ name })
-        // }
+        // Create role-specific tags using the core domain function
+        await createRoleTags(role)
 
         // Wait a bit for tags to be created
         await new Promise((resolve) => setTimeout(resolve, 200))
       } catch (error) {
-        console.error('Failed to create example prompt:', error)
-        toast.error('Failed to create example prompt')
+        console.error('Failed to create example prompt or tags:', error)
+        toast.error('Failed to create example prompt or tags')
       }
     }
 
