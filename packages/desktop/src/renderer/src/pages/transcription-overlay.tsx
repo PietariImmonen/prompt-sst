@@ -224,7 +224,17 @@ const TranscriptionOverlayPage = () => {
       scheduleFlush(600)
     }
 
-    const handleImproveComplete = (_event: any, improvedTextResult: string) => {
+    const handleImproveComplete = (_event: any, payload: unknown) => {
+      const improvedTextResult =
+        typeof payload === 'string' ? payload : (payload as { text?: string })?.text
+
+      if (!improvedTextResult) {
+        console.warn('⚠️  Received improvement payload without text')
+        setIsImproving(false)
+        setOverlayState('finalized')
+        return
+      }
+
       console.log('✅ Improvement complete, received text length:', improvedTextResult.length)
       setImprovedText(improvedTextResult)
       setIsImproving(false)

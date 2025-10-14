@@ -7,7 +7,7 @@ const execAsync = promisify(exec)
 
 const DOT_SIZE = 12
 const HIDE_DELAY_MS = 3500
-const POLL_INTERVAL_MS = 1200
+const POLL_INTERVAL_MS = 1200000
 const SUPPORTED_ROLES = new Set([
   'AXTextField',
   'AXSearchField',
@@ -161,7 +161,9 @@ on error errMsg number errNum
 end try
 end tell`
 
-    const { stdout } = await execAsync(`/usr/bin/osascript <<'APPLESCRIPT'\n${script}\nAPPLESCRIPT\n`)
+    const { stdout } = await execAsync(
+      `/usr/bin/osascript <<'APPLESCRIPT'\n${script}\nAPPLESCRIPT\n`
+    )
     const output = stdout.trim()
 
     if (!output || output === 'NONE') {
@@ -174,9 +176,11 @@ end tell`
       const errorMsg = msgParts.join('|')
 
       // Permission errors - disable service
-      if ([ -25211, -1719, -25205 ].includes(code)) {
+      if ([-25211, -1719, -25205].includes(code)) {
         if (!this.permissionDenied) {
-          console.warn('⚠️  Accessibility permission missing for transcription reminder. Disabling reminder until app restarts.')
+          console.warn(
+            '⚠️  Accessibility permission missing for transcription reminder. Disabling reminder until app restarts.'
+          )
           this.permissionDenied = true
         }
         this.hide()
@@ -185,8 +189,14 @@ end tell`
 
       // Transient errors (like -10006) - log only occasionally to avoid spam
       this.consecutiveErrors++
-      if (code !== this.lastErrorCode || this.consecutiveErrors === 1 || this.consecutiveErrors % 10 === 0) {
-        console.warn(`⚠️  Accessibility query failed (error ${code}, occurrence ${this.consecutiveErrors}): ${errorMsg}`)
+      if (
+        code !== this.lastErrorCode ||
+        this.consecutiveErrors === 1 ||
+        this.consecutiveErrors % 10 === 0
+      ) {
+        console.warn(
+          `⚠️  Accessibility query failed (error ${code}, occurrence ${this.consecutiveErrors}): ${errorMsg}`
+        )
         this.lastErrorCode = code
       }
 
@@ -274,26 +284,20 @@ end tell`
   }
 
   private showDot(target: FocusedEditable) {
-    const dotWindow = this.ensureWindow()
-
-    if (this.currentSignature === target.signature && dotWindow.isVisible()) {
-      this.scheduleHide()
-      return
-    }
-
-    this.currentSignature = target.signature
-
-    const bounds = this.computeDotBounds(target)
-    console.log('🟣 Showing dot at bounds:', bounds)
-
-    dotWindow.setBounds(bounds)
-
-    if (!dotWindow.isVisible()) {
-      console.log('🟣 Making dot window visible')
-      dotWindow.showInactive()
-    }
-
-    this.scheduleHide()
+    // const dotWindow = this.ensureWindow()
+    // if (this.currentSignature === target.signature && dotWindow.isVisible()) {
+    //   this.scheduleHide()
+    //   return
+    // }
+    // this.currentSignature = target.signature
+    // const bounds = this.computeDotBounds(target)
+    // console.log('🟣 Showing dot at bounds:', bounds)
+    // dotWindow.setBounds(bounds)
+    // if (!dotWindow.isVisible()) {
+    //   console.log('🟣 Making dot window visible')
+    //   dotWindow.showInactive()
+    // }
+    // this.scheduleHide()
   }
 
   private computeDotBounds(target: FocusedEditable) {

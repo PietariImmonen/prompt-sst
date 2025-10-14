@@ -138,20 +138,52 @@ export namespace PromptApi {
             `[Improve] Starting improvement for ${body.text.length} characters`,
           );
 
-          let improvedText = "";
+          const improvement = await LLM.improveText({ text: body.text });
+          const processor = improvement.processor;
 
-          // Collect all tokens from LLM
-          for await (const token of LLM.improveText({ text: body.text })) {
-            improvedText += token;
+          console.log(
+            `[Improve] Classified transcription intent as ${improvement.intent}`,
+          );
+
+          const improvedText = improvement.text;
+
+          const titlePrefix =
+            improvement.intent === "compose_email"
+              ? "Email draft"
+              : improvement.intent === "refine_prompt"
+                ? "Prompt draft"
+                : "Improved text";
+
+          const promptTitle =
+            `${titlePrefix}: ${improvedText.substring(0, 80).trim()}`.slice(
+              0,
+              100,
+            );
+
+          const metadata: Record<string, string | number> = {
+            transcriptionIntent: improvement.intent,
+            transcriptionIntentLabel: processor.label,
+          };
+
+          if (improvement.confidence !== undefined) {
+            metadata.transcriptionConfidence = improvement.confidence;
+          }
+
+          if (
+            typeof improvement.rationale === "string" &&
+            improvement.rationale.length > 0
+          ) {
+            metadata.transcriptionRationale = improvement.rationale;
           }
 
           // Create prompt with improved text
           const result = await Prompt.create({
-            title: improvedText.substring(0, 100).trim() || "Improved Prompt",
+            title: promptTitle || "Improved Prompt",
             content: improvedText,
             source: "transcription_improved",
             categoryPath: "/",
             visibility: "private",
+            metadata,
           });
 
           // Poke Replicache to sync
@@ -167,6 +199,11 @@ export namespace PromptApi {
           return c.json({
             improvedText,
             promptID: result.id,
+            intent: improvement.intent,
+            confidence: improvement.confidence,
+            rationale: improvement.rationale,
+            intentLabel: processor.label,
+            intentDescription: processor.description,
           });
         } catch (error) {
           console.error(error);

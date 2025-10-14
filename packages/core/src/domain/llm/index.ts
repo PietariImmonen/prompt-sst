@@ -7,6 +7,19 @@ import { zod } from "../../util/zod";
 import { Prompt } from "../prompt";
 import { Prompts } from "../prompts";
 import { Tag } from "../tag";
+import {
+  getTranscriptionProcessor,
+  TRANSCRIPTION_PROCESSORS,
+  transcriptionIntentValues,
+} from "./transcription";
+import type {
+  TranscriptionIntent,
+  TranscriptionProcessor,
+} from "./transcription";
+
+export const TranscriptionIntentSchema = z.enum(
+  transcriptionIntentValues as [TranscriptionIntent, ...TranscriptionIntent[]],
+);
 
 const AnalyzePromptInputSchema = z.object({
   promptID: z.string().cuid2(),
@@ -24,9 +37,73 @@ const openRouterClient = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
 });
 
-const ImproveTextInputSchema = z.object({
+const ClassifyTranscriptionInputSchema = z.object({
   text: z.string().min(1).max(10000),
 });
+
+const ClassifyTranscriptionResponseSchema = z
+  .object({
+    intent: TranscriptionIntentSchema,
+    confidence: z.number().min(0).max(1).optional(),
+    rationale: z.string().optional(),
+  })
+  .catchall(z.unknown());
+
+const ImproveTextInputSchema = z.object({
+  text: z.string().min(1).max(10000),
+  intent: TranscriptionIntentSchema.optional(),
+});
+
+const extractJsonObject = (content: string): unknown => {
+  const trimmed = content.trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch (error) {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) {
+      throw error;
+    }
+    const candidate = trimmed.slice(start, end + 1);
+    try {
+      return JSON.parse(candidate);
+    } catch (inner) {
+      const normalized = candidate
+        .replace(/""/g, '"')
+        .replace(/'(\w+)':/g, '"$1":')
+        .replace(/: '(.*?)'/g, ': "$1"');
+      return JSON.parse(normalized);
+    }
+  }
+};
+
+const heuristicClassification = (
+  text: string,
+): { intent: TranscriptionIntent; confidence: number; rationale: string } => {
+  const lower = text.toLowerCase();
+
+  if (/(email|inbox|mail|send|dear|subject)/.test(lower)) {
+    return {
+      intent: "compose_email",
+      confidence: 0.55,
+      rationale: "Detected email-related keywords",
+    };
+  }
+
+  if (/(prompt|workflow|instruct|assistant|ai\s+prompt)/.test(lower)) {
+    return {
+      intent: "refine_prompt",
+      confidence: 0.55,
+      rationale: "Detected prompt engineering cues",
+    };
+  }
+
+  return {
+    intent: "polish",
+    confidence: 0.4,
+    rationale: "Defaulted to polish with no strong intent signals",
+  };
+};
 
 export namespace LLM {
   export const analyzePrompt = zod(AnalyzePromptInputSchema, async (input) => {
@@ -162,47 +239,128 @@ export namespace LLM {
     }
   });
 
+  export const classifyTranscriptionIntent = zod(
+    ClassifyTranscriptionInputSchema,
+    async (input) => {
+      try {
+        console.log(
+          `[LLM] Classifying transcription intent for ${input.text.length} characters`,
+        );
+
+        const completion = await openRouterClient.chat.completions.create({
+          model: "openai/gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: Prompts.classifyTranscriptionIntent(),
+            },
+            {
+              role: "user",
+              content: input.text,
+            },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0,
+          max_tokens: 150,
+        });
+
+        const responseContent = completion.choices[0]?.message?.content;
+        if (!responseContent) {
+          throw new Error("Empty classification response from OpenRouter");
+        }
+
+        try {
+          const parsed = extractJsonObject(responseContent);
+          const validated = ClassifyTranscriptionResponseSchema.safeParse(parsed);
+          if (!validated.success) {
+            throw validated.error;
+          }
+
+          return validated.data;
+        } catch (parseError) {
+          console.warn(
+            `[LLM] Unable to parse classification response, using heuristic fallback`,
+            parseError,
+            `\nRaw response: ${responseContent}`,
+          );
+          return heuristicClassification(input.text);
+        }
+      } catch (error) {
+        console.error(
+          `[LLM] Classification error, defaulting to heuristic intent`,
+          error,
+        );
+        return heuristicClassification(input.text);
+      }
+    },
+  );
+
   /**
-   * Improve transcribed text using an LLM to make it clearer and more structured
-   * Returns an async generator that yields tokens as they stream from the LLM
+   * Improve transcribed text by routing it through the best-performing processor.
+   * Returns the full processed text alongside metadata about the selected intent.
    */
-  export async function* improveText(
+  export async function improveText(
     input: z.infer<typeof ImproveTextInputSchema>,
-  ): AsyncGenerator<string> {
+  ): Promise<{
+    intent: TranscriptionIntent;
+    processor: TranscriptionProcessor;
+    text: string;
+    confidence?: number;
+    rationale?: string;
+  }> {
     const validated = ImproveTextInputSchema.parse(input);
 
-    const systemPrompt = Prompts.improveTranscribedText();
+    const classification = validated.intent
+      ? { intent: validated.intent as TranscriptionIntent }
+      : await classifyTranscriptionIntent({ text: validated.text });
+
+    const resolvedIntent =
+      TRANSCRIPTION_PROCESSORS.find(
+        (processor) => processor.intent === classification.intent,
+      )?.intent ?? ("polish" as TranscriptionIntent);
+
+    const processor = getTranscriptionProcessor(resolvedIntent);
+
+    const confidenceText =
+      typeof (classification as { confidence?: number }).confidence === "number"
+        ? ` (confidence=${(classification as { confidence: number }).confidence.toFixed(2)})`
+        : "";
 
     console.log(
-      `[LLM] Starting text improvement for ${validated.text.length} characters`,
+      `[LLM] Routing transcription to intent="${resolvedIntent}" using ${processor.model}${confidenceText}`,
     );
 
-    // Call LLM with streaming enabled
-    const stream = await openRouterClient.chat.completions.create({
-      model: "z-ai/glm-4.5-air:free",
+    const completion = await openRouterClient.chat.completions.create({
+      model: processor.model,
       messages: [
         {
           role: "system",
-          content: systemPrompt,
+          content: processor.systemPrompt(),
         },
         {
           role: "user",
           content: validated.text,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 2000,
-      stream: true,
+      temperature: processor.temperature,
+      max_tokens: processor.maxTokens,
     });
 
-    // Stream tokens back to caller
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        yield content;
-      }
+    const messageContent = completion.choices[0]?.message?.content?.trim();
+    if (!messageContent) {
+      throw new Error(
+        `Empty response from processor for intent ${resolvedIntent}`,
+      );
     }
 
-    console.log(`[LLM] Text improvement completed`);
+    console.log(`[LLM] Completed ${resolvedIntent} processing`);
+
+    return {
+      intent: resolvedIntent,
+      processor,
+      text: messageContent,
+      confidence: (classification as { confidence?: number }).confidence,
+      rationale: (classification as { rationale?: string }).rationale,
+    };
   }
 }
