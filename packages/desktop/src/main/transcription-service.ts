@@ -42,6 +42,9 @@ export class TranscriptionService {
   private shortcut = process.platform === 'darwin' ? 'Command+Shift+F' : 'Control+Shift+F'
   private enabled = false
   private previousFocusedWindow: BrowserWindow | null = null
+  private apiEndpoint: string | null = null
+  private authToken: string | null = null
+  private workspaceId: string | null = null
 
   constructor() {
     console.log('🎙️ Initializing TranscriptionService')
@@ -113,6 +116,20 @@ export class TranscriptionService {
       console.log('🛑 Manual stop requested from overlay (no text)')
       this.hideOverlay()
       this.broadcastState({ state: 'cancelled' })
+    })
+
+    // Handle improvement request from overlay
+    ipcMain.on('transcription:improve', async (_event, text: string) => {
+      console.log('✨ Improvement requested for text:', text.substring(0, 50))
+      try {
+        await this.improveText(text)
+      } catch (error) {
+        console.error('❌ Failed to improve text:', error)
+        this.overlayWindow?.webContents.send(
+          'transcription:improve-error',
+          error instanceof Error ? error.message : 'Failed to improve text'
+        )
+      }
     })
 
     // Handle status requests (for test page)
@@ -467,6 +484,67 @@ export class TranscriptionService {
 
   isEnabled(): boolean {
     return this.enabled
+  }
+
+  /**
+   * Set authentication details for API calls
+   */
+  setAuth(authData: {
+    token: string | null
+    apiEndpoint: string | null
+    workspaceId: string | null
+  }) {
+    console.log('🔐 Setting auth for transcription service')
+    this.authToken = authData.token
+    this.apiEndpoint = authData.apiEndpoint
+    this.workspaceId = authData.workspaceId
+  }
+
+  /**
+   * Improve transcribed text using LLM API
+   */
+  private async improveText(text: string): Promise<void> {
+    if (!this.apiEndpoint || !this.authToken || !this.workspaceId) {
+      throw new Error('Cannot improve text: missing API endpoint, auth token, or workspace ID')
+    }
+
+    try {
+      const response = await fetch(`${this.apiEndpoint}prompt/improve-from-transcription`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.authToken}`,
+          'Content-Type': 'application/json',
+          'x-prompt-saver-workspace': this.workspaceId
+        },
+        body: JSON.stringify({ text })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`API error: ${response.status} ${response.statusText} - ${errorText}`)
+      }
+
+      const result = (await response.json()) as {
+        improvedText?: string
+        promptID?: string
+        error?: string
+      }
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      // Send the improved text directly to overlay
+      if (result.improvedText) {
+        this.overlayWindow?.webContents.send('transcription:improve-complete', result.improvedText)
+        console.log('✅ Text improvement complete')
+      } else {
+        throw new Error('No improved text in response')
+      }
+    } catch (error) {
+      console.error('❌ Error improving text:', error)
+      throw error
+    }
   }
 
   async dispose() {

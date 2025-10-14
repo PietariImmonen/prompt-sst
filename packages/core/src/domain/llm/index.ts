@@ -24,6 +24,10 @@ const openRouterClient = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
 });
 
+const ImproveTextInputSchema = z.object({
+  text: z.string().min(1).max(10000),
+});
+
 export namespace LLM {
   export const analyzePrompt = zod(AnalyzePromptInputSchema, async (input) => {
     try {
@@ -157,4 +161,44 @@ export namespace LLM {
       );
     }
   });
+
+  /**
+   * Improve transcribed text using an LLM to make it clearer and more structured
+   * Returns an async generator that yields tokens as they stream from the LLM
+   */
+  export async function* improveText(input: z.infer<typeof ImproveTextInputSchema>): AsyncGenerator<string> {
+    const validated = ImproveTextInputSchema.parse(input);
+
+    const systemPrompt = Prompts.improveTranscribedText();
+
+    console.log(`[LLM] Starting text improvement for ${validated.text.length} characters`);
+
+    // Call LLM with streaming enabled
+    const stream = await openRouterClient.chat.completions.create({
+      model: "openai/gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        {
+          role: "user",
+          content: validated.text,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
+      stream: true,
+    });
+
+    // Stream tokens back to caller
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) {
+        yield content;
+      }
+    }
+
+    console.log(`[LLM] Text improvement completed`);
+  }
 }

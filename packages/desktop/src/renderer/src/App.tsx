@@ -210,7 +210,7 @@ const Content = () => {
   return <AuthenticatedApp />
 }
 
-function App(): JSX.Element {
+function App() {
   const location = window.location.hash
 
   // Handle special route for transcription overlay

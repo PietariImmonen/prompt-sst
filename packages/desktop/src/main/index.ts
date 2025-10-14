@@ -348,6 +348,15 @@ ipcMain.on(
         console.error('Failed to set auth on background service:', error)
       })
     }
+    // Also sync auth to transcription service for improvement feature
+    if (transcriptionService && authData.token && authData.apiEndpoint && authData.workspaceId) {
+      console.log('Main process: Syncing auth to transcription service')
+      transcriptionService.setAuth({
+        token: authData.token,
+        apiEndpoint: authData.apiEndpoint,
+        workspaceId: authData.workspaceId
+      })
+    }
   }
 )
 

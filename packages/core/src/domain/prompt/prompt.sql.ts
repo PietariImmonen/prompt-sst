@@ -20,7 +20,14 @@ export const prompt = pgTable(
     content: text("content").notNull(),
     source: varchar("source", {
       length: 32,
-      enum: ["chatgpt", "claude", "gemini", "grok", "other"],
+      enum: [
+        "chatgpt",
+        "claude",
+        "gemini",
+        "grok",
+        "transcription_improved",
+        "other",
+      ],
     })
       .notNull()
       .default("other"),

@@ -1,10 +1,16 @@
-import { useCallback, useEffect, useRef } from 'react'
-import { Loader2, Mic, MicOff, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Loader2, Mic, MicOff, X, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import useTranscribe from '@/hooks/useTranscribe'
 import { isActiveState } from '@soniox/speech-to-text-web'
 
+type OverlayState = 'transcribing' | 'finalized' | 'improving' | 'improved'
+
 const TranscriptionOverlayPage = () => {
+  const [overlayState, setOverlayState] = useState<OverlayState>('transcribing')
+  const [improvedText, setImprovedText] = useState('')
+  const [isImproving, setIsImproving] = useState(false)
+
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasFlushedRef = useRef(false)
   const latestFinalTextRef = useRef('')
@@ -27,8 +33,8 @@ const TranscriptionOverlayPage = () => {
 
       const trimmed = rawText?.trim() ?? ''
       if (trimmed.length > 0) {
-        console.log('📤 Sending complete transcription for insertion:', trimmed)
-        window.electron.ipcRenderer.send('transcription:insert-text', trimmed)
+        console.log('📤 Finalizing transcription:', trimmed)
+        setOverlayState('finalized')
       } else {
         console.log('⚠️  No text to insert, closing overlay')
         window.electron.ipcRenderer.send('transcription:stop-manual')
@@ -36,6 +42,37 @@ const TranscriptionOverlayPage = () => {
     },
     [clearFlushTimer]
   )
+
+  const handleImprove = useCallback(() => {
+    const text = `${latestFinalTextRef.current}${latestPreviewRef.current}`.trim()
+    if (text.length === 0) {
+      console.log('⚠️  No text to improve')
+      return
+    }
+
+    console.log('✨ Starting improvement for text:', text)
+    setIsImproving(true)
+    setImprovedText('')
+    setOverlayState('improving')
+    window.electron.ipcRenderer.send('transcription:improve', text)
+  }, [])
+
+  const handleInsertOriginal = useCallback(() => {
+    const text = `${latestFinalTextRef.current}${latestPreviewRef.current}`.trim()
+    if (text.length > 0) {
+      console.log('📤 Inserting original text:', text)
+      window.electron.ipcRenderer.send('transcription:insert-text', text)
+    } else {
+      window.electron.ipcRenderer.send('transcription:stop-manual')
+    }
+  }, [])
+
+  const handleInsertImproved = useCallback(() => {
+    if (improvedText.length > 0) {
+      console.log('📤 Inserting improved text:', improvedText)
+      window.electron.ipcRenderer.send('transcription:insert-text', improvedText)
+    }
+  }, [improvedText])
 
   const flushCombinedTranscript = useCallback(() => {
     if (hasFlushedRef.current) {
@@ -68,6 +105,17 @@ const TranscriptionOverlayPage = () => {
     latestPreviewRef.current = ''
     clearFlushTimer()
   }, [clearFlushTimer])
+
+  // Dev mode: Use mock text for testing
+  const handleUseMockText = useCallback(() => {
+    const mockText =
+      'um so like I want to uh create a feature that like you know improves the transcribed text and makes it uh clearer and more structured you know what I mean'
+    console.log('🧪 Using mock text for testing:', mockText)
+    latestFinalTextRef.current = mockText
+    latestPreviewRef.current = ''
+    setOverlayState('finalized')
+    hasFlushedRef.current = true
+  }, [])
 
   // Get API key from environment
   const apiKey = import.meta.env.VITE_SONIOX_API_KEY ?? ''
@@ -110,6 +158,9 @@ const TranscriptionOverlayPage = () => {
     const handleStart = () => {
       console.log('🎛️  Overlay received start command')
       resetSession()
+      setOverlayState('transcribing')
+      setImprovedText('')
+      setIsImproving(false)
       startTranscription()
     }
 
@@ -119,12 +170,32 @@ const TranscriptionOverlayPage = () => {
       scheduleFlush(600)
     }
 
+    const handleImproveComplete = (_event: any, improvedTextResult: string) => {
+      console.log('✅ Improvement complete, received text length:', improvedTextResult.length)
+      setImprovedText(improvedTextResult)
+      setIsImproving(false)
+      setOverlayState('improved')
+    }
+
+    const handleImproveError = (_event: any, error: string) => {
+      console.error('❌ Improvement error:', error)
+      setIsImproving(false)
+      setOverlayState('finalized')
+    }
+
     window.electron.ipcRenderer.on('transcription:start', handleStart)
     window.electron.ipcRenderer.on('transcription:stop', handleStop)
+    window.electron.ipcRenderer.on('transcription:improve-complete', handleImproveComplete)
+    window.electron.ipcRenderer.on('transcription:improve-error', handleImproveError)
 
     return () => {
       window.electron.ipcRenderer.removeListener('transcription:start', handleStart)
       window.electron.ipcRenderer.removeListener('transcription:stop', handleStop)
+      window.electron.ipcRenderer.removeListener(
+        'transcription:improve-complete',
+        handleImproveComplete
+      )
+      window.electron.ipcRenderer.removeListener('transcription:improve-error', handleImproveError)
     }
   }, [resetSession, scheduleFlush, startTranscription, stopTranscription])
 
@@ -212,27 +283,105 @@ const TranscriptionOverlayPage = () => {
 
         {missingApiKey && !error && (
           <div className="mb-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-300">
-            Soniox API key is missing. Update your desktop environment configuration and restart the app.
+            Soniox API key is missing. Update your desktop environment configuration and restart the
+            app.
           </div>
         )}
 
-        {/* Preview text */}
-        <div className="min-h-[40px] rounded bg-white/5 px-2 py-1.5">
-          {displayText ? (
-            <p className="text-sm text-white/80">{displayText}</p>
-          ) : isRecording ? (
-            <p className="text-xs italic text-white/40">
-              🎤 Listening... Speak clearly and loudly into your mic
-            </p>
-          ) : (
-            <p className="text-xs italic text-white/40">Start speaking...</p>
-          )}
-        </div>
+        {/* Transcribing state: Preview text */}
+        {overlayState === 'transcribing' && (
+          <>
+            <div className="min-h-[40px] rounded bg-white/5 px-2 py-1.5">
+              {displayText ? (
+                <p className="text-sm text-white/80">{displayText}</p>
+              ) : isRecording ? (
+                <p className="text-xs italic text-white/40">
+                  🎤 Listening... Speak clearly and loudly into your mic
+                </p>
+              ) : (
+                <p className="text-xs italic text-white/40">Start speaking...</p>
+              )}
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <div className="text-[10px] text-white/30">
+                Press {process.platform === 'darwin' ? 'Cmd+Shift+F' : 'Ctrl+Shift+F'} or Esc to stop
+              </div>
+              {import.meta.env.DEV && (
+                <Button
+                  onClick={handleUseMockText}
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 px-2 text-[10px] text-yellow-400 hover:bg-yellow-400/10"
+                >
+                  🧪 Use Mock Text
+                </Button>
+              )}
+            </div>
+          </>
+        )}
 
-        {/* Keyboard hint */}
-        <div className="mt-2 text-center text-[10px] text-white/30">
-          Press {process.platform === 'darwin' ? 'Cmd+Shift+F' : 'Ctrl+Shift+F'} or Esc to stop
-        </div>
+        {/* Finalized state: Show Improve and Insert buttons */}
+        {overlayState === 'finalized' && (
+          <>
+            <div className="mb-2 min-h-[60px] rounded bg-white/5 px-2 py-1.5">
+              <p className="text-sm text-white/80">{allText}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleImprove}
+                disabled={isImproving}
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                size="sm"
+              >
+                <Sparkles className="mr-1 h-3 w-3" />
+                Improve
+              </Button>
+              <Button onClick={handleInsertOriginal} variant="outline" className="flex-1" size="sm">
+                Insert Original
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Improving state: Show loading spinner */}
+        {overlayState === 'improving' && (
+          <>
+            <div className="mb-2 flex min-h-[80px] items-center justify-center rounded bg-purple-900/20">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
+                <p className="text-xs text-white/60">Improving text...</p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Improved state: Show improved text with insert option */}
+        {overlayState === 'improved' && (
+          <>
+            <div className="mb-2">
+              <p className="mb-1 text-xs text-white/50">Original:</p>
+              <div className="mb-2 rounded bg-white/5 px-2 py-1.5">
+                <p className="text-xs text-white/60">{allText}</p>
+              </div>
+              <p className="mb-1 text-xs text-white/50">Improved:</p>
+              <div className="mb-2 rounded bg-purple-900/20 px-2 py-1.5">
+                <p className="text-sm text-white/80">{improvedText}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleInsertImproved}
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                size="sm"
+              >
+                Insert Improved
+              </Button>
+              <Button onClick={handleInsertOriginal} variant="outline" className="flex-1" size="sm">
+                Insert Original
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

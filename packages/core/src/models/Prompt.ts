@@ -11,7 +11,16 @@ export const PromptSchema = createSelectSchema(prompt, {
   title: (schema) => schema.trim().min(1),
   content: (schema) => schema.min(1),
   source: () =>
-    z.enum(["chatgpt", "claude", "gemini", "grok", "other"]).default("other"),
+    z
+      .enum([
+        "chatgpt",
+        "claude",
+        "gemini",
+        "grok",
+        "transcription_improved",
+        "other",
+      ])
+      .default("other"),
   categoryPath: (schema) => schema.trim().min(1),
   visibility: () => z.enum(["private", "workspace"]).default("private"),
   isFavorite: (schema) => schema.default(false),

@@ -1,11 +1,9 @@
 import { PromptOverlay } from '@/components/prompt-insertion-palette'
 
-function OverlayApp(): JSX.Element {
+function OverlayApp() {
   console.log('OverlayApp: Initializing standalone overlay application')
 
-  return (
-    <PromptOverlay />
-  )
+  return <PromptOverlay />
 }
 
 export default OverlayApp
