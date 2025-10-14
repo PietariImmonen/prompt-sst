@@ -136,11 +136,12 @@ function AppSidebar() {
 const SidebarLayout = () => {
   return (
     <SidebarProvider defaultOpen={true}>
+      <div className="title-bar" />
       <PromptInsertionPalette />
-      <div className="flex min-h-screen w-full bg-black text-foreground">
+      <div className="flex min-h-screen w-full bg-black text-foreground pt-4">
         <AppSidebar />
         <SidebarInset>
-          <div className="flex flex-1 flex-col pt-0">
+          <div className="flex flex-1 flex-col pt-8">
             <Outlet />
           </div>
         </SidebarInset>

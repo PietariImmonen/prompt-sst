@@ -372,6 +372,8 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     icon,
+    titleBarStyle: 'hidden',
+    transparent: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false
