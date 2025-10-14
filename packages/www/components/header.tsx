@@ -1,18 +1,14 @@
 "use client";
 
 import React from "react";
-import { Menu, X } from "lucide-react";
-import { useScroll } from "motion/react";
+import { useScroll } from "framer-motion";
 import Link from "next/link";
 
 import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const menuItems = [];
-
 export const HeroHeader = () => {
-  const [menuState, setMenuState] = React.useState(false);
+  //   const [menuState, setMenuState] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
 
   const { scrollYProgress } = useScroll();
@@ -27,7 +23,7 @@ export const HeroHeader = () => {
   return (
     <header>
       <nav
-        data-state={menuState && "active"}
+        // data-state={menuState && "active"}
         className={cn(
           "fixed z-20 w-full border-b transition-colors duration-150",
           scrolled && "bg-background/50 backdrop-blur-3xl",

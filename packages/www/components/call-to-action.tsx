@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Mail, SendHorizonal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
