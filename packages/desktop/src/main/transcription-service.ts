@@ -231,9 +231,9 @@ export class TranscriptionService {
     // Create overlay window
     this.overlayWindow = new BrowserWindow({
       width: 320,
-      height: 140,
-      x: Math.min(cursorPoint.x + 20, display.bounds.x + display.bounds.width - 340),
-      y: Math.min(cursorPoint.y + 20, display.bounds.y + display.bounds.height - 160),
+      height: 160,
+      x: Math.min(cursorPoint.x + 20, display.bounds.x + display.bounds.width - 360),
+      y: Math.min(cursorPoint.y + 20, display.bounds.y + display.bounds.height - 200),
       frame: false,
       transparent: true,
       alwaysOnTop: true,

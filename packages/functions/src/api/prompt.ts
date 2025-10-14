@@ -128,7 +128,8 @@ export namespace PromptApi {
           },
         },
       }),
-      async (c) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      async (c: any) => {
         try {
           const actor = assertActor("user");
           const body = c.req.valid("json");
