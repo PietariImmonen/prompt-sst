@@ -56,7 +56,7 @@ function AppSidebar() {
       variant="inset"
       className={`border-r border-border/60 bg-sidebar text-sidebar-foreground w-[10rem]`}
     >
-      <SidebarHeader className="border-b border-border/60">
+      <SidebarHeader className="border-b border-border/60 pt-9">
         <div className="flex items-center gap-2 px-2 py-1">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary-foreground text-primary-foreground">
             <img src={icon} alt="CLYO" className="h-10 w-10" />
@@ -138,7 +138,7 @@ const SidebarLayout = () => {
     <SidebarProvider defaultOpen={true}>
       <div className="title-bar" />
       <PromptInsertionPalette />
-      <div className="flex min-h-screen w-full bg-black text-foreground pt-4">
+      <div className="flex min-h-screen w-full bg-black text-foreground">
         <AppSidebar />
         <SidebarInset>
           <div className="flex flex-1 flex-col pt-8">
