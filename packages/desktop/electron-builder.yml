@@ -50,5 +50,6 @@ publish:
   provider: github
   owner: PietariImmonen
   repo: prompt-sst
+  releaseType: release
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

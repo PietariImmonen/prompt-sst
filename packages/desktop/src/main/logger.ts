@@ -214,6 +214,7 @@ export class ProductionLogger {
     backgroundDataService?: boolean
     captureService?: boolean
     transcriptionService?: boolean
+    autoUpdaterService?: boolean
     mainWindow?: boolean
   }) {
     await this.info('app-state', 'Application state snapshot', {
