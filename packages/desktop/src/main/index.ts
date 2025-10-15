@@ -341,6 +341,10 @@ ipcMain.handle('updater:quit-and-install', () => {
   }
 })
 
+ipcMain.handle('app:get-version', () => {
+  return app.getVersion()
+})
+
 // Handler for auth sync from main window to background service
 ipcMain.on(
   'sync-auth-to-background-service',

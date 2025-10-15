@@ -10,6 +10,7 @@ import {
 import { Input } from '@desktop/components/ui/input'
 import { Label } from '@desktop/components/ui/label'
 import { Switch } from '@desktop/components/ui/switch'
+import { Progress } from '@desktop/components/ui/progress'
 
 import { Shell } from '@desktop/components/layout/shell'
 
@@ -17,19 +18,32 @@ import { useReplicache, useSubscribe } from '@/hooks/use-replicache'
 
 import { UserSettingsStore } from '@/data/user-settings'
 import { UserSettings } from '@prompt-saver/core/models/UserSettings'
+import { useDesktopUpdater } from '@/hooks/use-desktop-updater'
 
 const SettingsPage = () => {
   const rep = useReplicache()
   const [isSaving, _setIsSaving] = useState(false)
   const [isLoading, _setIsLoading] = useState(true)
+  const {
+    appVersion,
+    updaterEvent,
+    availableVersion,
+    isCheckingUpdate,
+    isDownloadingUpdate,
+    updaterAvailable,
+    statusLabel,
+    showInstallButton,
+    showDownloadProgress,
+    progressValue,
+    checkForUpdates,
+    downloadUpdate,
+    installUpdate
+  } = useDesktopUpdater()
 
   // Fetch current settings using Replicache
   const userSettings = useSubscribe(UserSettingsStore.get(), {
     dependencies: []
   })
-
-  console.log('SettingsPage: userSettings', userSettings)
-
   const updateSettings = async (settings: UserSettings) => {
     if (!rep) return
     try {
@@ -38,6 +52,8 @@ const SettingsPage = () => {
       console.error('SettingsPage: error updating settings', error)
     }
   }
+
+  console.log('SettingsPage: userSettings', userSettings)
 
   if (isLoading) {
     return (
@@ -131,14 +147,79 @@ const SettingsPage = () => {
                   }
                 />
               </div>
-            </CardContent>
-          </Card>
+          </CardContent>
+        </Card>
 
-          <div className="flex justify-end">
-            <Button onClick={() => updateSettings(userSettings)} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Settings'}
-            </Button>
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Application Updates</CardTitle>
+            <CardDescription>Check for the latest release and install updates.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Current version: {appVersion ?? 'Detecting…'}
+            </div>
+            {!updaterAvailable && (
+              <p className="text-sm text-muted-foreground">
+                Auto-updates are unavailable in this environment.
+              </p>
+            )}
+            <div className="space-y-2 rounded-md border border-border bg-muted/40 p-4">
+              <p className="text-sm font-medium text-foreground">{statusLabel}</p>
+              {availableVersion && updaterEvent !== 'update-downloaded' && (
+                <p className="text-sm text-muted-foreground">
+                  Version {availableVersion} is available to download.
+                </p>
+              )}
+              {availableVersion && updaterEvent === 'update-downloaded' && (
+                <p className="text-sm text-muted-foreground">
+                  Version {availableVersion} is ready to install. Restart to finish updating.
+                </p>
+              )}
+              {showDownloadProgress && typeof progressValue === 'number' && (
+                <div className="space-y-2">
+                  <Progress value={progressValue} />
+                  <p className="text-xs text-muted-foreground">
+                    Downloading update… {progressValue}%
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={checkForUpdates}
+                disabled={!updaterAvailable || isCheckingUpdate || isDownloadingUpdate}
+              >
+                {isCheckingUpdate ? 'Checking…' : 'Check for Updates'}
+              </Button>
+              {updaterAvailable &&
+                (updaterEvent === 'update-available' ||
+                  updaterEvent === 'download-progress' ||
+                  updaterEvent === 'download-started') && (
+                <Button
+                  onClick={downloadUpdate}
+                  disabled={isDownloadingUpdate || updaterEvent === 'download-progress' || updaterEvent === 'download-started'}
+                >
+                  {isDownloadingUpdate || updaterEvent === 'download-progress' ||
+                  updaterEvent === 'download-started'
+                    ? 'Downloading…'
+                    : 'Download Update'}
+                </Button>
+              )}
+              {updaterAvailable && showInstallButton && (
+                <Button onClick={installUpdate} variant="secondary">
+                  Restart & Install
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end">
+          <Button onClick={() => updateSettings(userSettings)} disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Settings'}
+          </Button>
+        </div>
         </div>
       </Shell.Main>
     </Shell>

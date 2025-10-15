@@ -28,6 +28,11 @@ type CaptureStatusPayload = {
   message?: string
 }
 
+type UpdaterStatusPayload = {
+  event: string
+  data?: unknown
+}
+
 type AuthCallbackPayload = {
   id: string
   hash: string
@@ -142,12 +147,46 @@ interface TranscriptionAPI {
   requestMicrophoneAccess: () => Promise<boolean>
 }
 
+interface UpdaterAPI {
+  onStatus: (callback: (payload: UpdaterStatusPayload) => void) => () => void
+  checkForUpdates: () => Promise<void>
+  downloadUpdate: () => Promise<void>
+  quitAndInstall: () => Promise<void>
+  getVersion: () => Promise<string>
+}
+
 const transcription: TranscriptionAPI = {
   getStatus() {
     return ipcRenderer.invoke('transcription:get-status')
   },
   requestMicrophoneAccess() {
     return ipcRenderer.invoke('request-microphone-access')
+  }
+}
+
+const desktopUpdater: UpdaterAPI = {
+  onStatus(callback) {
+    const listener = (_event: Electron.IpcRendererEvent, payload: UpdaterStatusPayload) => {
+      callback(payload)
+    }
+
+    ipcRenderer.on('update-status', listener)
+
+    return () => {
+      ipcRenderer.removeListener('update-status', listener)
+    }
+  },
+  checkForUpdates() {
+    return ipcRenderer.invoke('updater:check-for-updates')
+  },
+  downloadUpdate() {
+    return ipcRenderer.invoke('updater:download-update')
+  },
+  quitAndInstall() {
+    return ipcRenderer.invoke('updater:quit-and-install')
+  },
+  getVersion() {
+    return ipcRenderer.invoke('app:get-version')
   }
 }
 
@@ -166,6 +205,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('promptCapture', promptCapture)
     contextBridge.exposeInMainWorld('desktopAuth', desktopAuth)
     contextBridge.exposeInMainWorld('transcription', transcription)
+    contextBridge.exposeInMainWorld('desktopUpdater', desktopUpdater)
   } catch (error) {
     console.error('Failed to expose preload API', error)
   }
@@ -178,4 +218,6 @@ if (process.contextIsolated) {
   window.desktopAuth = desktopAuth
   // @ts-expect-error fallback when context isolation disabled
   window.transcription = transcription
+  // @ts-expect-error fallback when context isolation disabled
+  window.desktopUpdater = desktopUpdater
 }

@@ -1,6 +1,9 @@
-import { autoUpdater } from 'electron-updater'
+import electronUpdater from 'electron-updater'
 import { app, BrowserWindow } from 'electron'
 import { logger } from './logger.js'
+
+// electron-updater is published as CommonJS, so we need to extract the updater instance
+const { autoUpdater } = electronUpdater
 
 // Configure updater
 autoUpdater.autoDownload = false
@@ -112,6 +115,7 @@ export class AutoUpdaterService {
 
   async downloadUpdate(): Promise<void> {
     try {
+      this.sendStatusToWindow('download-started')
       await autoUpdater.downloadUpdate()
       await logger.info('updater', 'Starting update download')
       console.log('📥 Starting update download...')
@@ -123,6 +127,7 @@ export class AutoUpdaterService {
 
   quitAndInstall(): void {
     try {
+      this.sendStatusToWindow('installing-update')
       autoUpdater.quitAndInstall()
       logger.info('updater', 'Installing update and restarting app')
       console.log('🔄 Installing update and restarting app...')

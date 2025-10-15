@@ -17,6 +17,11 @@ type CaptureStatusPayload = {
   message?: string;
 };
 
+type UpdaterStatusPayload = {
+  event: string;
+  data?: unknown;
+};
+
 type AuthCallbackPayload = {
   id: string;
   hash: string;
@@ -58,11 +63,20 @@ type TranscriptionAPI = {
   requestMicrophoneAccess: () => Promise<boolean>;
 };
 
+type UpdaterAPI = {
+  onStatus: (callback: (payload: UpdaterStatusPayload) => void) => () => void;
+  checkForUpdates: () => Promise<void>;
+  downloadUpdate: () => Promise<void>;
+  quitAndInstall: () => Promise<void>;
+  getVersion: () => Promise<string>;
+};
+
 declare global {
   interface Window {
     electron: ElectronAPI;
     promptCapture: PromptCaptureAPI;
     desktopAuth: DesktopAuthAPI;
     transcription: TranscriptionAPI;
+    desktopUpdater: UpdaterAPI;
   }
 }
