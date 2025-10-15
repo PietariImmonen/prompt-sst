@@ -13,6 +13,12 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+  - node_modules/@noble/**
+  - node_modules/@paralleldrive/**
+  - node_modules/robotjs/**
+  - node_modules/mqtt/**
+  - node_modules/replicache/**
+  - node_modules/@soniox/**
 icon: build/icon.png
 win:
   executableName: clyo-desktop

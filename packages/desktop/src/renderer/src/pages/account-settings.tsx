@@ -149,77 +149,79 @@ const AccountSettingsPage = () => {
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-card/80 backdrop-blur border-border/60">
-          <CardHeader>
-            <CardTitle>Application Updates</CardTitle>
-            <CardDescription>Manage desktop release updates.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              Current version: {appVersion ?? 'Detecting…'}
-            </div>
-            {!updaterAvailable && (
-              <p className="text-sm text-muted-foreground">
-                Auto-updates are unavailable in this environment.
-              </p>
-            )}
-            <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-4">
-              <p className="text-sm font-medium text-foreground">{statusLabel}</p>
-              {availableVersion && updaterEvent !== 'update-downloaded' && (
+          <Card className="bg-card/80 backdrop-blur border-border/60">
+            <CardHeader>
+              <CardTitle>Application Updates</CardTitle>
+              <CardDescription>Manage desktop release updates.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Current version: {appVersion ?? 'Detecting…'}
+              </div>
+              {!updaterAvailable && (
                 <p className="text-sm text-muted-foreground">
-                  Version {availableVersion} is available to download.
+                  Auto-updates are unavailable in this environment.
                 </p>
               )}
-              {availableVersion && updaterEvent === 'update-downloaded' && (
-                <p className="text-sm text-muted-foreground">
-                  Version {availableVersion} is ready to install. Restart to finish updating.
-                </p>
-              )}
-              {showDownloadProgress && typeof progressValue === 'number' && (
-                <div className="space-y-2">
-                  <Progress value={progressValue} />
-                  <p className="text-xs text-muted-foreground">
-                    Downloading update… {progressValue}%
+              <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-4">
+                <p className="text-sm font-medium text-foreground">{statusLabel}</p>
+                {availableVersion && updaterEvent !== 'update-downloaded' && (
+                  <p className="text-sm text-muted-foreground">
+                    Version {availableVersion} is available to download.
                   </p>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={checkForUpdates}
-                disabled={!updaterAvailable || isCheckingUpdate || isDownloadingUpdate}
-              >
-                {isCheckingUpdate ? 'Checking…' : 'Check for Updates'}
-              </Button>
-              {updaterAvailable && showDownloadButton && (
+                )}
+                {availableVersion && updaterEvent === 'update-downloaded' && (
+                  <p className="text-sm text-muted-foreground">
+                    Version {availableVersion} is ready to install. Restart to finish updating.
+                  </p>
+                )}
+                {showDownloadProgress && typeof progressValue === 'number' && (
+                  <div className="space-y-2">
+                    <Progress value={progressValue} />
+                    <p className="text-xs text-muted-foreground">
+                      Downloading update… {progressValue}%
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
                 <Button
-                  onClick={downloadUpdate}
-                  disabled={
-                    isDownloadingUpdate ||
+                  onClick={checkForUpdates}
+                  disabled={!updaterAvailable || isCheckingUpdate || isDownloadingUpdate}
+                  className="cursor-pointer"
+                >
+                  {isCheckingUpdate ? 'Checking…' : 'Check for Updates'}
+                </Button>
+                {updaterAvailable && showDownloadButton && (
+                  <Button
+                    onClick={downloadUpdate}
+                    disabled={
+                      isDownloadingUpdate ||
+                      updaterEvent === 'download-progress' ||
+                      updaterEvent === 'download-started'
+                    }
+                  >
+                    {isDownloadingUpdate ||
                     updaterEvent === 'download-progress' ||
                     updaterEvent === 'download-started'
-                  }
-                >
-                  {isDownloadingUpdate || updaterEvent === 'download-progress' ||
-                  updaterEvent === 'download-started'
-                    ? 'Downloading…'
-                    : 'Download Update'}
-                </Button>
-              )}
-              {updaterAvailable && showInstallButton && (
-                <Button onClick={installUpdate} variant="secondary">
-                  Restart & Install
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                      ? 'Downloading…'
+                      : 'Download Update'}
+                  </Button>
+                )}
+                {updaterAvailable && showInstallButton && (
+                  <Button onClick={installUpdate} variant="secondary">
+                    Restart & Install
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        {account.workspaces && account.workspaces.length > 0 && (
-          <Card className="bg-card/80 backdrop-blur border-border/60">
+          {account.workspaces && account.workspaces.length > 0 && (
+            <Card className="bg-card/80 backdrop-blur border-border/60">
               <CardHeader>
                 <CardTitle>Workspaces</CardTitle>
                 <CardDescription>Your active workspaces</CardDescription>
