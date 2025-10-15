@@ -74,15 +74,17 @@ jobs:
           git commit -m "chore(desktop): bump version to $NEW_VERSION"
           git push
 
-      - name: Generate environment files
-        run: bun run --filter @clyo/desktop env:generate -- --mode production
-        env:
-          NODE_ENV: production
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_AUTH_URL: ${{ secrets.VITE_AUTH_URL }}
-          VITE_STAGE: production
-          VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
-          VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
+      - name: Create environment file
+        run: |
+          cd packages/desktop
+          cat > .env.production << EOF
+          VITE_API_URL=${{ secrets.VITE_API_URL }}
+          VITE_AUTH_URL=${{ secrets.VITE_AUTH_URL }}
+          VITE_STAGE=production
+          VITE_REALTIME_ENDPOINT=${{ secrets.VITE_REALTIME_ENDPOINT }}
+          VITE_AUTHORIZER=${{ secrets.VITE_AUTHORIZER }}
+          EOF
+          echo "✅ Created .env.production file"
 
       - name: Import Code Signing Certificate
         uses: apple-actions/import-codesign-certs@v3
