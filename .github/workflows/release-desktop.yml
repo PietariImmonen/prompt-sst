@@ -52,12 +52,12 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           echo "Current version: $CURRENT_VERSION"
 
-          # Bump patch version (e.g., 0.0.0 -> 0.0.1, 0.0.1 -> 0.0.2)
+          # Bump patch version (e.g., 0.1.0 -> 0.1.1, 0.1.1 -> 0.1.2)
           NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
           echo "New version: $NEW_VERSION"
 
-          # Update package.json
-          npm version $NEW_VERSION --no-git-tag-version
+          # Update package.json version field directly (avoid npm version due to workspace: protocol)
+          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '$NEW_VERSION'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
 
           # Output for later steps
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
