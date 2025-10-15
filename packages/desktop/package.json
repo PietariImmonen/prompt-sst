@@ -33,6 +33,7 @@
     "build:linux": "bun run build && bunx electron-builder --linux"
   },
   "dependencies": {
+    "@electron/notarize": "^3.1.0",
     "@openauthjs/openauth": "^0.4.3",
     "@paralleldrive/cuid2": "^2.2.2",
     "@prompt-saver/core": "workspace:*",
