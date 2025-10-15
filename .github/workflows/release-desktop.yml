@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       version:
@@ -43,31 +43,17 @@ jobs:
         id: version
         run: |
           cd packages/desktop
-
-          # Check if this is a version bump commit - skip if it is
           LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
           if [[ "$LAST_COMMIT_MSG" == *"chore(desktop): bump version"* ]]; then
-            echo "This is a version bump commit, skipping version bump"
+            echo "Skipping version bump"
             CURRENT_VERSION=$(node -p "require('./package.json').version")
             echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
             exit 0
           fi
-
-          # Get current version
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT_VERSION"
-
-          # Bump patch version (e.g., 0.1.0 -> 0.1.1, 0.1.1 -> 0.1.2)
           NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
-          echo "New version: $NEW_VERSION"
-
-          # Update package.json version field directly (avoid npm version due to workspace: protocol)
-          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '$NEW_VERSION'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
-
-          # Output for later steps
+          node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));pkg.version='$NEW_VERSION';fs.writeFileSync('package.json',JSON.stringify(pkg,null,2)+'\\n');"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-
-          # Commit version bump
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add package.json
@@ -84,7 +70,6 @@ jobs:
           VITE_REALTIME_ENDPOINT=${{ secrets.VITE_REALTIME_ENDPOINT }}
           VITE_AUTHORIZER=${{ secrets.VITE_AUTHORIZER }}
           EOF
-          echo "✅ Created .env.production file"
 
       - name: Create temporary SST tsconfig for CI
         run: |
@@ -105,7 +90,6 @@ jobs:
             }
           }
           EOF
-          echo "✅ Created temporary SST tsconfig.json for CI build"
 
       - name: Import Code Signing Certificate
         uses: apple-actions/import-codesign-certs@v3
@@ -116,7 +100,6 @@ jobs:
       - name: Build Electron App
         run: |
           cd packages/desktop
-          # Skip env:generate and typecheck since we already have env vars and SST isn't available
           bunx electron-vite build
         env:
           NODE_ENV: production
@@ -126,30 +109,11 @@ jobs:
           VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
           VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
 
-      - name: Verify Apple Credentials
-        run: |
-          echo "Checking Apple credentials (masked):"
-          echo "APPLE_ID length: ${#APPLE_ID}"
-          echo "APPLE_APP_SPECIFIC_PASSWORD length: ${#APPLE_APP_SPECIFIC_PASSWORD}"
-          echo "APPLE_TEAM_ID length: ${#APPLE_TEAM_ID}"
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
-      - name: Package and Release macOS App
+      - name: Package macOS App
         run: |
           cd packages/desktop
-
-          # Debug: Show environment variables are set
           echo "Environment variables configured for notarization"
-
-          # Only publish on main branch pushes, not on workflow_dispatch or tags without main
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            bunx electron-builder --mac dmg --publish always
-          else
-            bunx electron-builder --mac dmg --publish never
-          fi
+          bunx electron-builder --mac dmg --publish never
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -161,6 +125,36 @@ jobs:
           VITE_STAGE: production
           VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
           VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
+
+      - name: Manually Notarize macOS App
+        run: |
+          cd packages/desktop/dist
+
+          echo "🔍 Checking built files..."
+          ls -lh .
+
+          APP_PATH=$(find . -type d -name "*.app" | head -n 1)
+          DMG_PATH=$(find . -type f -name "*.dmg" | head -n 1)
+
+          echo "Found app: $APP_PATH"
+          echo "Found dmg: $DMG_PATH"
+
+          echo "🚀 Submitting DMG for notarization..."
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait --output-format json
+
+          echo "📦 Stapling notarization ticket..."
+          xcrun stapler staple "$DMG_PATH"
+
+          echo "✅ Verifying notarization..."
+          spctl --assess --type open --verbose "$DMG_PATH"
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload macOS DMG Artifact
         uses: actions/upload-artifact@v4
