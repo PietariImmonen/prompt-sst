@@ -12,6 +12,7 @@ import { TrayService } from './tray-service.js'
 import { BackgroundDataService } from './background-data-service.js'
 import { TranscriptionService } from './transcription-service.js'
 import { TranscriptionReminderService } from './transcription-reminder-service.js'
+import { AutoUpdaterService } from './auto-updater.js'
 import {
   logger,
   logServiceStart,
@@ -63,6 +64,7 @@ let backgroundDataService: BackgroundDataService | null = null
 let captureService: any = null
 let transcriptionService: TranscriptionService | null = null
 let transcriptionReminderService: TranscriptionReminderService | null = null
+let autoUpdaterService: AutoUpdaterService | null = null
 let isQuitting = false
 
 const pendingAuthCallbacks: AuthCallbackPayload[] = []
@@ -320,6 +322,25 @@ ipcMain.on('transcription:start-from-reminder', () => {
   }
 })
 
+// Auto-updater IPC handlers
+ipcMain.handle('updater:check-for-updates', async () => {
+  if (autoUpdaterService) {
+    await autoUpdaterService.checkForUpdates()
+  }
+})
+
+ipcMain.handle('updater:download-update', async () => {
+  if (autoUpdaterService) {
+    await autoUpdaterService.downloadUpdate()
+  }
+})
+
+ipcMain.handle('updater:quit-and-install', () => {
+  if (autoUpdaterService) {
+    autoUpdaterService.quitAndInstall()
+  }
+})
+
 // Handler for auth sync from main window to background service
 ipcMain.on(
   'sync-auth-to-background-service',
@@ -564,12 +585,21 @@ app.whenReady().then(async () => {
     // Create main window
     createWindow()
 
+    // Initialize auto-updater service
+    if (mainWindow) {
+      await logServiceStart('AutoUpdaterService')
+      autoUpdaterService = new AutoUpdaterService()
+      await autoUpdaterService.initialize(mainWindow)
+      await logServiceReady('AutoUpdaterService')
+    }
+
     // Log application state
     await logger.logAppState({
       trayService: trayService.isInitialized(),
       backgroundDataService: backgroundDataService.isHealthy(),
       captureService: captureService?.isListening() || false,
       transcriptionService: transcriptionService?.isEnabled() || false,
+      autoUpdaterService: autoUpdaterService?.isInitialized() || false,
       mainWindow: !!mainWindow
     })
 
@@ -668,6 +698,7 @@ app.on('will-quit', async () => {
       backgroundDataService: backgroundDataService?.isHealthy() || false,
       captureService: captureService?.isListening() || false,
       transcriptionService: transcriptionService?.isEnabled() || false,
+      autoUpdaterService: autoUpdaterService?.isInitialized() || false,
       mainWindow: !!mainWindow
     })
 
@@ -692,6 +723,9 @@ app.on('will-quit', async () => {
     }
 
     // Dispose services in reverse order with individual error handling
+    await disposeService(autoUpdaterService, 'AutoUpdaterService', () =>
+      autoUpdaterService?.dispose()
+    )
     await disposeService(transcriptionReminderService, 'TranscriptionReminderService', () =>
       transcriptionReminderService?.dispose()
     )

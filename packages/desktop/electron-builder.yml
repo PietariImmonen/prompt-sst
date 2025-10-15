@@ -47,7 +47,8 @@ appImage:
   artifactName: clyo-desktop-${version}-linux.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: PietariImmonen
+  repo: prompt-sst
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

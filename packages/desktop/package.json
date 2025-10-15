@@ -4,6 +4,15 @@
   "description": "Electron desktop shell for Clyo",
   "main": "./out/main/index.js",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PietariImmonen/prompt-sst.git",
+    "directory": "packages/desktop"
+  },
+  "author": {
+    "name": "Pietari Immonen",
+    "email": "pietari@example.com"
+  },
   "scripts": {
     "format": "bunx prettier --write .",
     "lint": "bunx eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx",

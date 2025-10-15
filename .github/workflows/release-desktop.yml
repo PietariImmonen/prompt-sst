@@ -1,0 +1,65 @@
+# name: Release Desktop App
+
+# on:
+#   push:
+#     tags:
+#       - "v*.*.*"
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: "Version to release (e.g., 1.0.0)"
+#         required: true
+
+# jobs:
+#   release:
+#     runs-on: ${{ matrix.os }}
+
+#     strategy:
+#       matrix:
+#         os: [macos-latest, windows-latest, ubuntu-latest]
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Setup Bun
+#         uses: oven-sh/setup-bun@v2
+#         with:
+#           bun-version: latest
+
+#       - name: Install dependencies
+#         run: bun install
+
+#       - name: Generate desktop environment files
+#         run: bun run --filter @clyo/desktop env:generate -- --mode production
+#         env:
+#           # Add any required environment variables for your app
+#           NODE_ENV: production
+
+#       # macOS-specific steps for code signing and notarization
+#       - name: Import Code Signing Certificate (macOS)
+#         if: matrix.os == 'macos-latest'
+#         uses: apple-actions/import-codesign-certs@v3
+#         with:
+#           p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
+#           p12-password: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+
+#       - name: Build and Release (macOS)
+#         if: matrix.os == 'macos-latest'
+#         run: |
+#           cd packages/desktop
+#           bun run build
+#           bunx electron-builder --mac --publish always
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#           APPLE_ID: ${{ secrets.APPLE_ID }}
+#           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+#           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+#           CSC_NAME: ${{ secrets.CSC_NAME }}
+
+#       - name: Upload artifacts
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: release-${{ matrix.os }}
+#           path: packages/desktop/dist/*.{dmg}
+#           if-no-files-found: ignore
