@@ -126,36 +126,6 @@ jobs:
           VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
           VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
 
-      - name: Manually Notarize macOS App
-        run: |
-          cd packages/desktop/dist
-
-          echo "🔍 Checking built files..."
-          ls -lh .
-
-          APP_PATH=$(find . -type d -name "*.app" | head -n 1)
-          DMG_PATH=$(find . -type f -name "*.dmg" | head -n 1)
-
-          echo "Found app: $APP_PATH"
-          echo "Found dmg: $DMG_PATH"
-
-          echo "🚀 Submitting DMG for notarization..."
-          xcrun notarytool submit "$DMG_PATH" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait --output-format json
-
-          echo "📦 Stapling notarization ticket..."
-          xcrun stapler staple "$DMG_PATH"
-
-          echo "✅ Verifying notarization..."
-          spctl --assess --type open --verbose "$DMG_PATH"
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
       - name: Upload macOS DMG Artifact
         uses: actions/upload-artifact@v4
         with:
