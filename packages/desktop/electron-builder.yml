@@ -33,7 +33,6 @@ mac:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize:
-    appBundleId: io.sstreplicache.clyo
     teamId: ${APPLE_TEAM_ID}
 dmg:
   artifactName: clyo-desktop-${version}-mac.${ext}
