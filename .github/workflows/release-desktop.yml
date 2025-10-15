@@ -92,10 +92,22 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
 
-      - name: Build and Release macOS App
+      - name: Build Electron App
         run: |
           cd packages/desktop
-          bun run build
+          # Skip env:generate and typecheck since we already have env vars and SST isn't available
+          bunx electron-vite build
+        env:
+          NODE_ENV: production
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_AUTH_URL: ${{ secrets.VITE_AUTH_URL }}
+          VITE_STAGE: production
+          VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
+          VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
+
+      - name: Package and Release macOS App
+        run: |
+          cd packages/desktop
           # Only publish on main branch pushes, not on workflow_dispatch or tags without main
           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
             bunx electron-builder --mac dmg --publish always
