@@ -25,7 +25,7 @@
     "start": "bunx electron-vite preview",
     "dev": "electron-vite dev",
     "build": "bun run env:generate -- --mode production && bun run typecheck && bunx electron-vite build",
-    "postinstall": "bunx electron-builder install-app-deps",
+    "rebuild": "bunx electron-rebuild",
     "build:unpack": "bun run build && bunx electron-builder --dir",
     "build:win": "bun run build && bunx electron-builder --win",
     "build:mac": "bun run build && bunx electron-builder --mac",
