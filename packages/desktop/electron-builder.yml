@@ -32,10 +32,7 @@ mac:
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  notarize:
-    teamId: ${APPLE_TEAM_ID}
-    appleId: ${APPLE_ID}
-    appleIdPassword: ${APPLE_APP_SPECIFIC_PASSWORD}
+  notarize: false
 dmg:
   artifactName: clyo-desktop-${version}-mac.${ext}
 linux:

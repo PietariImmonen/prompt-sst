@@ -126,9 +126,24 @@ jobs:
           VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
           VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
 
+      - name: Verify Apple Credentials
+        run: |
+          echo "Checking Apple credentials (masked):"
+          echo "APPLE_ID length: ${#APPLE_ID}"
+          echo "APPLE_APP_SPECIFIC_PASSWORD length: ${#APPLE_APP_SPECIFIC_PASSWORD}"
+          echo "APPLE_TEAM_ID length: ${#APPLE_TEAM_ID}"
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
       - name: Package and Release macOS App
         run: |
           cd packages/desktop
+
+          # Debug: Show environment variables are set
+          echo "Environment variables configured for notarization"
+
           # Only publish on main branch pushes, not on workflow_dispatch or tags without main
           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
             bunx electron-builder --mac dmg --publish always
