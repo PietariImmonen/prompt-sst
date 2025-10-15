@@ -1,6 +1,6 @@
 const { notarize } = require('@electron/notarize')
 
-exports.default = async function notarizing(context) {
+module.exports = async function notarizing(context) {
   const { electronPlatformName, appOutDir } = context
 
   // Only notarize on macOS
@@ -28,6 +28,7 @@ exports.default = async function notarizing(context) {
 
   try {
     await notarize({
+      tool: 'notarytool',
       appPath,
       appleId,
       appleIdPassword,
