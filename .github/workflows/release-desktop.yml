@@ -39,6 +39,16 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Build workspace dependencies
+        run: |
+          # Build core package first (required by desktop)
+          cd packages/core
+          bun run build || echo "Core package has no build step"
+
+          # Build functions package if needed
+          cd ../functions
+          bun run build || echo "Functions package has no build step"
+
       - name: Rebuild native modules for Electron
         run: |
           cd packages/desktop

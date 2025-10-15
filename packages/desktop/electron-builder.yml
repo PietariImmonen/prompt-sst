@@ -17,8 +17,10 @@ asarUnpack:
   - node_modules/@paralleldrive/**
   - node_modules/robotjs/**
   - node_modules/mqtt/**
+  - node_modules/mqtt-packet/**
   - node_modules/replicache/**
   - node_modules/@soniox/**
+  - node_modules/ws/**
 icon: build/icon.png
 win:
   executableName: clyo-desktop
