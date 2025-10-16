@@ -1,6 +1,6 @@
 {
   "name": "@clyo/desktop",
-  "version": "0.1.28",
+  "version": "0.1.29",
   "description": "Electron desktop shell for Clyo",
   "main": "./out/main/index.js",
   "type": "module",
@@ -92,7 +92,6 @@
     "react-router-dom": "^6.28.0",
     "recharts": "^3.2.1",
     "replicache": "^15.0.1",
-    
     "sonner": "^2.0.7",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
