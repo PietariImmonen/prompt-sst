@@ -32,12 +32,18 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+
       - name: Setup Python for node-gyp
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install sst
+      - name: Install SST
         run: "curl -fsSL https://ion.sst.dev/install | bash"
 
       - name: Configure Production AWS credentials
@@ -46,23 +52,13 @@ jobs:
           role-to-assume: arn:aws:iam::093827727335:role/prompt-saver-production-github
           aws-region: eu-north-1
 
-      # Install monorepo deps with Bun (for SST, other packages)
-      - name: Install monorepo dependencies
+      # 🧩 Install monorepo dependencies with pnpm
+      - name: Install monorepo dependencies (pnpm)
         run: |
-          rm -rf node_modules
-          rm -rf ~/.bun/install/cache
-          rm -rf packages/**/node_modules
-          bun install --frozen-lockfile
+          rm -rf node_modules packages/**/node_modules
+          pnpm install --frozen-lockfile
 
-      # Ensure all transitive dependencies are installed
-      - name: Install desktop dependencies
-        run: |
-          cd packages/desktop
-          bun install --frozen-lockfile
-          # Also install dependencies for workspace packages
-          cd ../core
-          bun install --frozen-lockfile
-
+      # 🧱 Deploy SST using pnpm-installed deps
       - name: Deploy SST
         run: |
           unset AWS_PROFILE
@@ -107,15 +103,11 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
 
-      # 🏗️ Build Electron app using npm-installed dependencies
+      # 🏗️ Build Electron App (Bun used as runtime, deps installed via pnpm)
       - name: Build Electron App
         run: |
           cd packages/desktop
-          # Clean dist directory completely to avoid file conflicts
-          rm -rf dist
-          rm -rf out
-          # Also clean any electron-builder cache
-          rm -rf ~/.electron-builder
+          rm -rf dist out ~/.electron-builder
           bun run build:mac
         env:
           NODE_ENV: production
@@ -132,23 +124,18 @@ jobs:
       - name: Verify DMG Contents
         run: |
           cd packages/desktop/dist
-          # List DMG files
           ls -lh *.dmg
-          # Mount the DMG to verify contents
           DMG_FILE=$(ls *.dmg | head -n 1)
           echo "Verifying DMG: $DMG_FILE"
           hdiutil attach "$DMG_FILE" -mountpoint /tmp/clyo-verify
-          # Check if critical dependencies exist
           echo "Checking for mqtt dependencies..."
           if [ -d "/tmp/clyo-verify/Clyo Desktop.app/Contents/Resources/app.asar.unpacked/node_modules/mqtt" ]; then
             echo "✅ mqtt found in unpacked asar"
           else
             echo "⚠️ mqtt not found in unpacked asar"
           fi
-          # List what's in the unpacked directory
           echo "Contents of app.asar.unpacked:"
           ls -la "/tmp/clyo-verify/Clyo Desktop.app/Contents/Resources/app.asar.unpacked/" || echo "No unpacked directory found"
-          # Unmount
           hdiutil detach /tmp/clyo-verify
         continue-on-error: true
 

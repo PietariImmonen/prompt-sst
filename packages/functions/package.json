@@ -9,7 +9,7 @@
     "@aws-sdk/s3-request-presigner": "^3.730.0",
     "@hono/zod-openapi": "^0.18.3",
     "@openauthjs/openauth": "^0.4.3",
-    "@prompt-saver/core": "*",
+    "@prompt-saver/core": "workspace:*",
     "hono": "^4.9.9",
     "remeda": "^2.18.0",
     "sst": "^3.9.2",

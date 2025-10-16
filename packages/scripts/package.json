@@ -4,7 +4,6 @@
   "scripts": {
     "document-templates:create:production": "sst shell bun src/document-templates-create.ts --stage production",
     "document-templates:create": "sst shell bun src/document-templates-create.ts",
-   
     "billing:prepare": "sst shell bun src/billing-prepare.ts",
     "typecheck": "tsc --noEmit",
     "workspace:create:production": "sst shell bun src/workspace-create.ts --stage production",
@@ -24,7 +23,7 @@
     "@openauthjs/openauth": "^0.4.3",
     "@paralleldrive/cuid2": "^2.2.2",
     "@types/prompt-sync": "^4.2.3",
-    "@prompt-saver/core": "*",
+    "@prompt-saver/core": "workspace:*",
     "drizzle-orm": "^0.38.3",
     "prompt-sync": "^4.2.0",
     "sst": "^3.9.2",
