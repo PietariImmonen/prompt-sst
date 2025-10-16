@@ -35,7 +35,7 @@ jobs:
       - name: Setup Python for node-gyp
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install sst
         run: "curl -fsSL https://ion.sst.dev/install | bash"
@@ -68,14 +68,6 @@ jobs:
           unset AWS_PROFILE
           sst install
           sst deploy --stage=production
-
-      # ✅ Rebuild native modules for Electron ABI
-      - name: Rebuild native modules for Electron
-        run: |
-          cd packages/desktop
-          # Rebuild native modules (robotjs may fail but that's okay)
-          npx electron-rebuild -f || echo "Some native modules failed to rebuild, but continuing..."
-        continue-on-error: true
 
       - name: Bump version
         id: version

@@ -5,17 +5,14 @@ import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
-// Try to load robotjs, fall back to AppleScript/platform-specific if not available
 let robot: any = null
-let pasteMethod: 'robotjs' | 'applescript' | 'clipboard-only' = 'clipboard-only'
+let pasteMethod: 'applescript' | 'clipboard-only' = 'clipboard-only'
 
 try {
-  robot = require('robotjs')
-  robot.setKeyboardDelay(0)
-  pasteMethod = 'robotjs'
-  console.log('✅ robotjs loaded successfully')
+  pasteMethod = 'applescript'
+  console.log('✅ AppleScript loaded successfully')
 } catch (error) {
-  console.warn('⚠️  robotjs not available, checking platform-specific alternatives...')
+  console.warn('⚠️  AppleScript not available, checking platform-specific alternatives...')
 
   if (process.platform === 'darwin') {
     pasteMethod = 'applescript'
@@ -419,20 +416,7 @@ export class TranscriptionService {
       await new Promise((resolve) => setTimeout(resolve, 50))
 
       // Try to paste using the best available method
-      if (pasteMethod === 'robotjs' && robot) {
-        try {
-          console.log('   Attempting paste with robotjs...')
-          if (process.platform === 'darwin') {
-            robot.keyTap('v', ['command'])
-            console.log('   ✅ Executed Cmd+V via robotjs')
-          } else {
-            robot.keyTap('v', ['control'])
-            console.log('   ✅ Executed Ctrl+V via robotjs')
-          }
-        } catch (robotError) {
-          console.error('   ❌ robotjs paste failed:', robotError)
-        }
-      } else if (pasteMethod === 'applescript' && process.platform === 'darwin') {
+      if (pasteMethod === 'applescript' && process.platform === 'darwin') {
         try {
           console.log('   Attempting paste with AppleScript...')
           await execAsync(
