@@ -16,6 +16,32 @@ export const releasesBucket = new sst.aws.Bucket("DesktopReleasesBucket", {
         },
       ],
     },
+    policy: (args) => {
+      // Allow GitHub Actions IAM role to publish releases
+      args.policy = $jsonStringify({
+        Version: "2012-10-17",
+        Statement: [
+          {
+            Sid: "CloudFrontReadAccess",
+            Effect: "Allow",
+            Principal: {
+              Service: "cloudfront.amazonaws.com",
+            },
+            Action: "s3:GetObject",
+            Resource: $interpolate`arn:aws:s3:::${args.bucket}/*`,
+          },
+          {
+            Sid: "GitHubActionsPublishAccess",
+            Effect: "Allow",
+            Principal: {
+              AWS: "arn:aws:iam::093827727335:role/prompt-saver-production-github",
+            },
+            Action: ["s3:PutObject", "s3:PutObjectAcl"],
+            Resource: $interpolate`arn:aws:s3:::${args.bucket}/*`,
+          },
+        ],
+      });
+    },
   },
 });
 
