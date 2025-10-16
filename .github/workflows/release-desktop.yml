@@ -126,7 +126,7 @@ jobs:
         run: |
           cd packages/desktop
           rm -rf dist out ~/.electron-builder
-          pnpm run build:mac
+          pnpm run build:mac --publish always
         env:
           NODE_ENV: production
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
