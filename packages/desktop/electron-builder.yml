@@ -56,8 +56,9 @@ linux:
   category: Utility
 appImage:
   artifactName: clyo-desktop-${version}-linux.${ext}
-npmRebuild: true
+npmRebuild: false
 includeSubNodeModules: true
+buildDependenciesFromSource: false
 publish:
   provider: github
   owner: PietariImmonen
