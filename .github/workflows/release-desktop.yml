@@ -41,21 +41,13 @@ jobs:
           role-to-assume: arn:aws:iam::093827727335:role/prompt-saver-production-github
           aws-region: eu-north-1
 
-      # - name: Cache Bun dependencies
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.bun/install/cache
-      #     key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
-
-      - name: Clean install
+      # Install monorepo deps with Bun (for SST, other packages)
+      - name: Install monorepo dependencies
         run: |
           rm -rf node_modules
           rm -rf ~/.bun/install/cache
           rm -rf packages/**/node_modules
           bun install --frozen-lockfile
-
-      - name: Install dependencies
-        run: bun install
 
       - name: Deploy SST
         run: |
@@ -63,11 +55,20 @@ jobs:
           sst install
           sst deploy --stage=production
 
+      # 🔧 Use npm inside Electron package for dependency consistency
+      - name: Install desktop dependencies with npm
+        run: |
+          cd packages/desktop
+          rm -rf node_modules
+          npm install --omit=dev
+          echo "Verifying critical runtime dependencies..."
+          node -e "['mqtt','mqtt-packet','bl'].forEach(m => {try{require.resolve(m);}catch{console.error('Missing module:',m);process.exit(1);}})"
+
+      # ✅ Rebuild native modules for Electron ABI
       - name: Rebuild native modules for Electron
         run: |
           cd packages/desktop
-          # Rebuild native modules like robotjs for Electron's Node.js version
-          bunx electron-rebuild -f -w robotjs || echo "robotjs rebuild failed (may not be critical)"
+          npx electron-rebuild -f -w robotjs || echo "robotjs rebuild failed (may not be critical)"
         continue-on-error: true
 
       - name: Bump version
@@ -102,36 +103,17 @@ jobs:
           VITE_AUTHORIZER=${{ secrets.VITE_AUTHORIZER }}
           EOF
 
-      # - name: Create temporary SST tsconfig for CI
-      #   run: |
-      #     mkdir -p .sst/platform
-      #     cat > .sst/platform/tsconfig.json << 'EOF'
-      #     {
-      #       "compilerOptions": {
-      #         "target": "ES2022",
-      #         "lib": ["ES2022"],
-      #         "module": "ESNext",
-      #         "moduleResolution": "Bundler",
-      #         "strict": true,
-      #         "skipLibCheck": true,
-      #         "esModuleInterop": true,
-      #         "resolveJsonModule": true,
-      #         "isolatedModules": true,
-      #         "jsx": "react-jsx"
-      #       }
-      #     }
-      #     EOF
-
       - name: Import Code Signing Certificate
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
 
+      # 🏗️ Build Electron app using npm-installed dependencies
       - name: Build Electron App
         run: |
           cd packages/desktop
-          bun build:mac
+          bun run build:mac
         env:
           NODE_ENV: production
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
@@ -143,23 +125,8 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
-      # - name: Package macOS App
-      #   run: |
-      #     cd packages/desktop
-      #     echo "Environment variables configured for notarization"
-      #     bunx electron-builder --mac dmg --publish never
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     APPLE_ID: ${{ secrets.APPLE_ID }}
-      #     APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-      #     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      #     NODE_ENV: production
-      #     VITE_API_URL: ${{ secrets.VITE_API_URL }}
-      #     VITE_AUTH_URL: ${{ secrets.VITE_AUTH_URL }}
-      #     VITE_STAGE: production
-      #     VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
-      #     VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_NAME: "Developer ID Application: Pietari Immonen (6D2UT4969T)"
 
       - name: Upload macOS DMG Artifact
         uses: actions/upload-artifact@v4
