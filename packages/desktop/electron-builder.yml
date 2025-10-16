@@ -13,15 +13,6 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
-  - node_modules/mqtt/**
-  - node_modules/mqtt-packet/**
-  - node_modules/robotjs/**
-  - node_modules/@soniox/**
-  - node_modules/bl/**
-  - node_modules/readable-stream/**
-  - node_modules/process-nextick-args/**
-  - node_modules/replicache/**
-  - node_modules/robotjs/**
 
 icon: build/icon.png
 win:

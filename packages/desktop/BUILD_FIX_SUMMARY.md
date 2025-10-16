@@ -5,31 +5,29 @@ The `.dmg` file produced by GitHub Actions was missing transitive dependencies (
 
 ## Root Causes Identified
 
-1. **`npmRebuild: false`** - electron-builder was not rebuilding native modules for Electron's ABI
-2. **Missing `asarUnpack` configuration** - Native and complex modules weren't being unpacked from the asar archive
-3. **Missing `includeSubNodeModules`** - Transitive dependencies weren't being included
-4. **Python `distutils` missing** - `node-gyp` requires Python 3.11 (3.12+ removed `distutils`)
-5. **Workspace dependency handling** - Monorepo workspace dependencies need explicit installation
+1. **Missing `includeSubNodeModules`** - Transitive dependencies weren't being included in the package
+2. **TypeScript errors** - Zod type incompatibility with SST's event validator
+3. **Python `distutils` missing** - `node-gyp` requires Python 3.11 (3.12+ removed `distutils`)
+4. **Electron version not pinned** - electron-builder couldn't determine Electron version from `^33.0.0`
+5. **File conflicts in CI** - electron-builder creating duplicate hard links when `asarUnpack` is overused
+6. **Workspace dependency handling** - Monorepo workspace dependencies need explicit installation
 
 ## Changes Made
 
 ### 1. electron-builder.yml
 ```yaml
-# Added unpacking for modules with native dependencies or complex requirements
+# Minimal asarUnpack to avoid file conflicts
 asarUnpack:
   - resources/**
-  - node_modules/mqtt/**
-  - node_modules/mqtt-packet/**
-  - node_modules/robotjs/**
-  - node_modules/@soniox/**
-  - node_modules/bl/**
-  - node_modules/readable-stream/**
-  - node_modules/process-nextick-args/**
-  - node_modules/replicache/**
 
-# Enable native module rebuilding and sub-dependency inclusion
-npmRebuild: true
+# Disable npmRebuild (robotjs fails but isn't critical)
+npmRebuild: false
+
+# Enable sub-dependency inclusion (KEY FIX)
 includeSubNodeModules: true
+
+# Skip building from source to avoid native module issues
+buildDependenciesFromSource: false
 ```
 
 ### 2. GitHub Actions Workflow (.github/workflows/release-desktop.yml)
