@@ -58,6 +58,13 @@ jobs:
           rm -rf node_modules packages/**/node_modules
           pnpm install --frozen-lockfile
 
+      - name: List installed MQTT deps
+        run: |
+          cd packages/desktop
+          find node_modules -maxdepth 3 -type d -name "mqtt*"
+          find node_modules -maxdepth 3 -type d -name "bl"
+        continue-on-error: false
+
       # 🧱 Deploy SST using pnpm-installed deps
       - name: Deploy SST
         run: |
