@@ -60,9 +60,12 @@ jobs:
         run: |
           cd packages/desktop
           rm -rf node_modules
+          # Replace workspace:* with relative path (so npm understands)
+          sed -i.bak 's|"workspace:\*"|"file:../core"|' package.json
           npm install --omit=dev
           echo "Verifying critical runtime dependencies..."
           node -e "['mqtt','mqtt-packet','bl'].forEach(m => {try{require.resolve(m);}catch{console.error('Missing module:',m);process.exit(1);}})"
+          rm package.json.bak
 
       # ✅ Rebuild native modules for Electron ABI
       - name: Rebuild native modules for Electron
