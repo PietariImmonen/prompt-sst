@@ -12,6 +12,18 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
   - '!**/node_modules/.pnpm'
+  - '!**/*.{md,MD}'
+  - '!**/*.map'
+  - '!**/test/**'
+  - '!**/tests/**'
+  - '!**/__tests__/**'
+  - '!**/*.spec.*'
+  - '!**/*.test.*'
+  - '!**/LICENSE'
+  - '!**/CHANGELOG*'
+  - '!**/.editorconfig'
+  - '!**/.github'
+  - '!**/docs/**'
 asarUnpack:
   - resources/**
 
@@ -39,6 +51,7 @@ mac:
 
 dmg:
   artifactName: clyo-desktop-${version}-mac.${ext}
+  compression: maximum
 linux:
   target:
     - AppImage
@@ -51,6 +64,8 @@ appImage:
 npmRebuild: false
 includeSubNodeModules: true
 buildDependenciesFromSource: false
+prune: true
+compression: maximum
 publish:
   provider: github
   owner: PietariImmonen

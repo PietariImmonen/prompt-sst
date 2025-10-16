@@ -110,6 +110,7 @@ jobs:
           VITE_STAGE=production
           VITE_REALTIME_ENDPOINT=${{ secrets.VITE_REALTIME_ENDPOINT }}
           VITE_AUTHORIZER=${{ secrets.VITE_AUTHORIZER }}
+          VITE_SONIOX_API_KEY=${{ secrets.VITE_SONIOX_API_KEY }}
           EOF
 
       - name: Import Code Signing Certificate
@@ -132,6 +133,7 @@ jobs:
           VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
           VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SONIOX_API_KEY: ${{ secrets.VITE_SONIOX_API_KEY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
