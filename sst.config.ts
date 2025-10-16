@@ -11,8 +11,9 @@ export default $config({
       providers: {
         aws: {
           region: "eu-north-1",
-          profile:
-            input?.stage === "production"
+          profile: process.env.GITHUB_ACTIONS
+            ? undefined
+            : input?.stage === "production"
               ? "prompt-saver-production"
               : "prompt-saver-dev",
         },
