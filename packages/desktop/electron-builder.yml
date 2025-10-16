@@ -11,22 +11,8 @@ files:
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
-  - '!**/node_modules/.pnpm'
-  - '!**/*.{md,MD}'
-  - '!**/*.map'
-  - '!**/test/**'
-  - '!**/tests/**'
-  - '!**/__tests__/**'
-  - '!**/*.spec.*'
-  - '!**/*.test.*'
-  - '!**/LICENSE'
-  - '!**/CHANGELOG*'
-  - '!**/.editorconfig'
-  - '!**/.github'
-  - '!**/docs/**'
 asarUnpack:
   - resources/**
-
 icon: build/icon.png
 win:
   executableName: clyo-desktop
@@ -48,10 +34,8 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize:
     teamId: 6D2UT4969T
-
 dmg:
   artifactName: clyo-desktop-${version}-mac.${ext}
-  compression: maximum
 linux:
   target:
     - AppImage
@@ -62,10 +46,6 @@ linux:
 appImage:
   artifactName: clyo-desktop-${version}-linux.${ext}
 npmRebuild: false
-includeSubNodeModules: true
-buildDependenciesFromSource: false
-prune: true
-compression: maximum
 publish:
   provider: github
   owner: PietariImmonen
