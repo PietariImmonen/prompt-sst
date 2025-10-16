@@ -17,10 +17,17 @@ export const releasesBucket = new sst.aws.Bucket("DesktopReleasesBucket", {
       ],
     },
     policy: (args) => {
-      // Allow GitHub Actions IAM role to publish releases
+      // Allow GitHub Actions IAM role to publish releases and public read access for auto-updates
       args.policy = $jsonStringify({
         Version: "2012-10-17",
         Statement: [
+          {
+            Sid: "PublicReadAccess",
+            Effect: "Allow",
+            Principal: "*",
+            Action: "s3:GetObject",
+            Resource: $interpolate`arn:aws:s3:::${args.bucket}/*`,
+          },
           {
             Sid: "CloudFrontReadAccess",
             Effect: "Allow",
