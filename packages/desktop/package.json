@@ -1,6 +1,6 @@
 {
   "name": "@prompt-saver/desktop",
-  "version": "0.1.34",
+  "version": "0.1.35",
   "description": "Electron desktop shell for Clyo",
   "main": "./out/main/index.js",
   "type": "module",
@@ -127,16 +127,16 @@
     ]
   },
   "build": {
-  "asarUnpack": [
-    "node_modules/mqtt/**",
-    "node_modules/mqtt-packet/**",
-    "node_modules/bl/**"
-  ],
-  "files": [
-    "dist/**",
-    "out/**",
-    "node_modules/**",
-    "!node_modules/.pnpm/**"
-  ]
-}
+    "asarUnpack": [
+      "node_modules/mqtt/**",
+      "node_modules/mqtt-packet/**",
+      "node_modules/bl/**"
+    ],
+    "files": [
+      "dist/**",
+      "out/**",
+      "node_modules/**",
+      "!node_modules/.pnpm/**"
+    ]
+  }
 }
