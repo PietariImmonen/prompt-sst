@@ -102,25 +102,25 @@ jobs:
           VITE_AUTHORIZER=${{ secrets.VITE_AUTHORIZER }}
           EOF
 
-      - name: Create temporary SST tsconfig for CI
-        run: |
-          mkdir -p .sst/platform
-          cat > .sst/platform/tsconfig.json << 'EOF'
-          {
-            "compilerOptions": {
-              "target": "ES2022",
-              "lib": ["ES2022"],
-              "module": "ESNext",
-              "moduleResolution": "Bundler",
-              "strict": true,
-              "skipLibCheck": true,
-              "esModuleInterop": true,
-              "resolveJsonModule": true,
-              "isolatedModules": true,
-              "jsx": "react-jsx"
-            }
-          }
-          EOF
+      # - name: Create temporary SST tsconfig for CI
+      #   run: |
+      #     mkdir -p .sst/platform
+      #     cat > .sst/platform/tsconfig.json << 'EOF'
+      #     {
+      #       "compilerOptions": {
+      #         "target": "ES2022",
+      #         "lib": ["ES2022"],
+      #         "module": "ESNext",
+      #         "moduleResolution": "Bundler",
+      #         "strict": true,
+      #         "skipLibCheck": true,
+      #         "esModuleInterop": true,
+      #         "resolveJsonModule": true,
+      #         "isolatedModules": true,
+      #         "jsx": "react-jsx"
+      #       }
+      #     }
+      #     EOF
 
       - name: Import Code Signing Certificate
         uses: apple-actions/import-codesign-certs@v3
@@ -131,7 +131,7 @@ jobs:
       - name: Build Electron App
         run: |
           cd packages/desktop
-          bunx electron-vite build
+          bun build:mac
         env:
           NODE_ENV: production
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
@@ -139,23 +139,27 @@ jobs:
           VITE_STAGE: production
           VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
           VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
-
-      - name: Package macOS App
-        run: |
-          cd packages/desktop
-          echo "Environment variables configured for notarization"
-          bunx electron-builder --mac dmg --publish never
-        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          NODE_ENV: production
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_AUTH_URL: ${{ secrets.VITE_AUTH_URL }}
-          VITE_STAGE: production
-          VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
-          VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
+
+      # - name: Package macOS App
+      #   run: |
+      #     cd packages/desktop
+      #     echo "Environment variables configured for notarization"
+      #     bunx electron-builder --mac dmg --publish never
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     APPLE_ID: ${{ secrets.APPLE_ID }}
+      #     APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      #     APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      #     NODE_ENV: production
+      #     VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      #     VITE_AUTH_URL: ${{ secrets.VITE_AUTH_URL }}
+      #     VITE_STAGE: production
+      #     VITE_REALTIME_ENDPOINT: ${{ secrets.VITE_REALTIME_ENDPOINT }}
+      #     VITE_AUTHORIZER: ${{ secrets.VITE_AUTHORIZER }}
 
       - name: Upload macOS DMG Artifact
         uses: actions/upload-artifact@v4
