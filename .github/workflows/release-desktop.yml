@@ -114,7 +114,6 @@ jobs:
           p12-file-base64: ${{ secrets.MACOS_CERTIFICATE }}
           p12-password: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
 
-      # 🏗️ Build Electron App (Bun used as runtime, deps installed via pnpm)
       - name: Build Electron App
         run: |
           cd packages/desktop

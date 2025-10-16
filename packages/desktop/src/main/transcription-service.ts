@@ -144,6 +144,13 @@ export class TranscriptionService {
   private toggleTranscription() {
     console.log('🎛️  Toggle transcription, current state:', this.isActive)
 
+    // Block if user is not logged in
+    if (!this.authToken) {
+      console.log('⚠️  Transcription blocked: User not logged in')
+      // Optionally show a notification to the user
+      return
+    }
+
     if (this.isActive) {
       this.stopTranscription()
     } else {
