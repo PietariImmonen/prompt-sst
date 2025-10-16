@@ -58,11 +58,19 @@ jobs:
           rm -rf node_modules packages/**/node_modules
           pnpm install --frozen-lockfile
 
-      - name: List installed MQTT deps
+      - name: Debug MQTT dependencies
         run: |
-          cd packages/desktop
-          find node_modules -maxdepth 3 -type d -name "mqtt*"
-          find node_modules -maxdepth 3 -type d -name "bl"
+          echo "=== Checking packages/desktop/node_modules ==="
+          ls -la packages/desktop/node_modules/ | head -20 || echo "No node_modules in desktop"
+          echo ""
+          echo "=== Searching for mqtt in desktop ==="
+          find packages/desktop/node_modules -maxdepth 2 -name "mqtt*" -o -name "bl" || echo "Nothing found"
+          echo ""
+          echo "=== Checking pnpm virtual store ==="
+          find node_modules/.pnpm -maxdepth 2 -name "*mqtt*" 2>/dev/null | head -10 || echo "No .pnpm store"
+          echo ""
+          echo "=== Checking if mqtt is in package.json ==="
+          grep -A2 "mqtt" packages/desktop/package.json || echo "mqtt not in package.json"
         continue-on-error: false
 
       # 🧱 Deploy SST using pnpm-installed deps
