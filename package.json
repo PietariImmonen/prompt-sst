@@ -27,6 +27,8 @@
     "eslint": "^9.23.0",
     "lucide-react": "^0.545.0",
     "openai": "^6.2.0",
+    "prosemirror-model": "^1.25.3",
+    "replicache": "^15.3.0",
     "sst": "^3.9.2",
     "typescript-eslint": "^8.27.0"
   },
@@ -41,5 +43,9 @@
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "typescript": "^5.8.2"
-  }
+  },
+  "resolutions": {
+  "drizzle-orm": "0.38.4"
+}
+
 }
