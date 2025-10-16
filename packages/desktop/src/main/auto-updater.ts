@@ -9,6 +9,20 @@ const { autoUpdater } = electronUpdater
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
 
+// Configure S3/CloudFront feed URL if available (production environment)
+// In development or when CDN_URL is not set, it will fall back to GitHub releases
+const cdnUrl = process.env.VITE_RELEASES_CDN_URL
+if (cdnUrl && app.isPackaged) {
+  autoUpdater.setFeedURL({
+    provider: 'generic',
+    url: cdnUrl,
+    channel: 'latest'
+  })
+  console.log('🌐 Using CDN for updates:', cdnUrl)
+} else if (!app.isPackaged) {
+  console.log('🛠️  Development mode: Updates will use GitHub releases configuration')
+}
+
 export class AutoUpdaterService {
   private mainWindow: BrowserWindow | null = null
   private updateCheckInterval: NodeJS.Timeout | null = null

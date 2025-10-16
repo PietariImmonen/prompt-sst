@@ -36,6 +36,14 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "DesktopReleasesBucket": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "DesktopReleasesRouter": {
+      "type": "sst.aws.Router"
+      "url": string
+    }
     "FileUploadBucket": {
       "name": string
       "type": "sst.aws.Bucket"
