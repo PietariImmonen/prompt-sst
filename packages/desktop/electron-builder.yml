@@ -1,9 +1,11 @@
 appId: io.sstreplicache.clyo
 productName: Clyo Desktop
 artifactName: clyo-desktop-${version}-${os}-${arch}.${ext}
+
 directories:
   buildResources: build
   output: dist
+
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -11,16 +13,21 @@ files:
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+
 asarUnpack:
   - resources/**
+
 icon: build/icon.png
+
 win:
   executableName: clyo-desktop
+
 nsis:
   artifactName: clyo-desktop-${version}-windows.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+
 mac:
   category: public.app-category.productivity
   hardenedRuntime: true
@@ -34,8 +41,10 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize:
     teamId: 6D2UT4969T
+
 dmg:
   artifactName: clyo-desktop-${version}-mac.${ext}
+
 linux:
   target:
     - AppImage
@@ -43,19 +52,17 @@ linux:
     - deb
   maintainer: electronjs.org
   category: Utility
+
 appImage:
   artifactName: clyo-desktop-${version}-linux.${ext}
+
 npmRebuild: false
+
 publish:
-  # GitHub releases (for fallback and visibility)
-  - provider: github
-    owner: PietariImmonen
-    repo: prompt-sst
-    releaseType: release
-  # S3 bucket (served via CloudFront)
-  - provider: s3
-    bucket: prompt-saver-production-desktopreleasesbucketbucket-wkworebe
-    region: eu-north-1
-    acl: private
+  provider: s3
+  bucket: prompt-saver-production-desktopreleasesbucketbucket-wkworebe
+  region: eu-north-1
+  acl: private
+
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

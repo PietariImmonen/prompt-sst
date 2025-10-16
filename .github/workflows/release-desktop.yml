@@ -76,10 +76,6 @@ jobs:
           sst install
           sst deploy --stage=production
 
-          # Hard-coded SST outputs for release bucket and CDN
-          echo "DESKTOP_RELEASES_BUCKET=prompt-saver-production-desktopreleasesbucketbucket-wkworebe" >> $GITHUB_ENV
-          echo "DESKTOP_RELEASES_CDN_URL=https://d1ofxq7pnbozg8.cloudfront.net" >> $GITHUB_ENV
-
       - name: Bump version
         id: version
         run: |
@@ -111,7 +107,7 @@ jobs:
           VITE_REALTIME_ENDPOINT=${{ secrets.VITE_REALTIME_ENDPOINT }}
           VITE_AUTHORIZER=${{ secrets.VITE_AUTHORIZER }}
           VITE_SONIOX_API_KEY=${{ secrets.VITE_SONIOX_API_KEY }}
-          VITE_RELEASES_CDN_URL=https://d1ofxq7pnbozg8.cloudfront.net
+          VITE_RELEASES_CDN_URL=${{ secrets.VITE_RELEASES_CDN_URL }}
           EOF
 
       - name: Import Code Signing Certificate
@@ -137,8 +133,8 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          DESKTOP_RELEASES_BUCKET: ${{ env.DESKTOP_RELEASES_BUCKET }}
-          DESKTOP_RELEASES_CDN_URL: ${{ env.DESKTOP_RELEASES_CDN_URL }}
+          VITE_RELEASES_BUCKET: ${{ secrets.VITE_RELEASES_BUCKET }}
+          VITE_RELEASES_CDN_URL: ${{ secrets.VITE_RELEASES_CDN_URL }}
 
       - name: Verify DMG Contents
         run: |
