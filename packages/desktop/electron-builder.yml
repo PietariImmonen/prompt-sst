@@ -13,6 +13,16 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+  - node_modules/mqtt
+  - node_modules/mqtt-packet
+  - node_modules/bl
+  - node_modules/readable-stream
+  - node_modules/buffer
+  - node_modules/events
+  - node_modules/process-nextick-args
+  - node_modules/string_decoder
+  - node_modules/util-deprecate
+  - node_modules/inherits
 
 icon: build/icon.png
 win:
