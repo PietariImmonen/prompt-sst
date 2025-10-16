@@ -162,3 +162,33 @@ jobs:
           name: macos-release-dmg
           path: packages/desktop/dist/*.dmg
           if-no-files-found: error
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd packages/desktop
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG_NAME="v${VERSION}"
+
+          # Check if release already exists
+          if gh release view "$TAG_NAME" --repo PietariImmonen/prompt-sst &>/dev/null; then
+            echo "Release $TAG_NAME already exists, deleting it..."
+            gh release delete "$TAG_NAME" --repo PietariImmonen/prompt-sst --yes
+          fi
+
+          # Check if tag exists and delete it
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG_NAME"; then
+            echo "Tag $TAG_NAME exists, deleting it..."
+            git push origin --delete "$TAG_NAME" || true
+          fi
+
+          # Create new release with DMG and metadata files
+          echo "Creating release $TAG_NAME..."
+          gh release create "$TAG_NAME" \
+            --repo PietariImmonen/prompt-sst \
+            --title "Clyo Desktop v${VERSION}" \
+            --notes "Auto-generated release for Clyo Desktop v${VERSION}" \
+            dist/*.dmg \
+            dist/*.yml \
+            dist/*.blockmap
