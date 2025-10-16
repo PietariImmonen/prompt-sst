@@ -59,11 +59,6 @@ appImage:
 npmRebuild: false
 
 publish:
-  - provider: github
-    owner: PietariImmonen
-    repo: prompt-sst
-    releaseType: release
-
   - provider: s3
     bucket: prompt-saver-production-desktopreleasesbucketbucket-wkworebe
     region: eu-north-1
