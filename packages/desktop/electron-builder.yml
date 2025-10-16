@@ -21,6 +21,9 @@ asarUnpack:
   - node_modules/replicache/**
   - node_modules/@soniox/**
   - node_modules/ws/**
+  - node_modules/buffer/**
+  - node_modules/buffer-*/**
+  - node_modules/**/mqtt*/**
 icon: build/icon.png
 win:
   executableName: clyo-desktop
