@@ -63,10 +63,11 @@ publish:
     owner: PietariImmonen
     repo: prompt-sst
     releaseType: release
+    publish: always
   - provider: s3
     bucket: prompt-saver-production-desktopreleasesbucketbucket-wkworebe
     region: eu-north-1
     acl: private
-
+    publish: always
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
