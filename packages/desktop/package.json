@@ -69,6 +69,7 @@
     "@tiptap/extension-placeholder": "^2.5.8",
     "@tiptap/react": "^2.5.8",
     "@tiptap/starter-kit": "^2.5.8",
+    "bl": "^6.1.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -125,5 +126,38 @@
       "electron",
       "esbuild"
     ]
+  },
+  "build": {
+    "appId": "com.clyo.desktop",
+    "productName": "Clyo Desktop",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/mqtt",
+      "node_modules/mqtt-packet",
+      "node_modules/bl",
+      "node_modules/readable-stream",
+      "node_modules/process-nextick-args",
+      "node_modules/robotjs",
+      "node_modules/replicache"
+    ],
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
+      "gatekeeperAssess": false,
+      "identity": null
+    },
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "PietariImmonen",
+      "repo": "prompt-sst",
+      "releaseType": "draft"
+    }
   }
 }
