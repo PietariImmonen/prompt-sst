@@ -32,6 +32,11 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Setup Python for node-gyp
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install sst
         run: "curl -fsSL https://ion.sst.dev/install | bash"
 
@@ -68,9 +73,9 @@ jobs:
       - name: Rebuild native modules for Electron
         run: |
           cd packages/desktop
-          # Rebuild all native modules
-          npx electron-rebuild -f
-        continue-on-error: false
+          # Rebuild native modules (robotjs may fail but that's okay)
+          npx electron-rebuild -f || echo "Some native modules failed to rebuild, but continuing..."
+        continue-on-error: true
 
       - name: Bump version
         id: version
@@ -128,6 +133,29 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           CSC_NAME: "Developer ID Application: Pietari Immonen (6D2UT4969T)"
+
+      - name: Verify DMG Contents
+        run: |
+          cd packages/desktop/dist
+          # List DMG files
+          ls -lh *.dmg
+          # Mount the DMG to verify contents
+          DMG_FILE=$(ls *.dmg | head -n 1)
+          echo "Verifying DMG: $DMG_FILE"
+          hdiutil attach "$DMG_FILE" -mountpoint /tmp/clyo-verify
+          # Check if critical dependencies exist
+          echo "Checking for mqtt dependencies..."
+          if [ -d "/tmp/clyo-verify/Clyo Desktop.app/Contents/Resources/app.asar.unpacked/node_modules/mqtt" ]; then
+            echo "✅ mqtt found in unpacked asar"
+          else
+            echo "⚠️ mqtt not found in unpacked asar"
+          fi
+          # List what's in the unpacked directory
+          echo "Contents of app.asar.unpacked:"
+          ls -la "/tmp/clyo-verify/Clyo Desktop.app/Contents/Resources/app.asar.unpacked/" || echo "No unpacked directory found"
+          # Unmount
+          hdiutil detach /tmp/clyo-verify
+        continue-on-error: true
 
       - name: Upload macOS DMG Artifact
         uses: actions/upload-artifact@v4

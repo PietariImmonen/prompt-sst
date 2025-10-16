@@ -22,8 +22,7 @@ asarUnpack:
   - node_modules/process-nextick-args/**
   - node_modules/replicache/**
   - node_modules/robotjs/**
-  - node_modules/replicache/**
-  - node_modules/replicache/**
+
 icon: build/icon.png
 win:
   executableName: clyo-desktop
