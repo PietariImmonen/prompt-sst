@@ -10,11 +10,13 @@ const TranscriptionOverlayPage = () => {
   const [overlayState, setOverlayState] = useState<OverlayState>('transcribing')
   const [improvedText, setImprovedText] = useState('')
   const [isImproving, setIsImproving] = useState(false)
+  const [showingOriginal, setShowingOriginal] = useState(false)
 
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasFlushedRef = useRef(false)
   const latestFinalTextRef = useRef('')
   const latestPreviewRef = useRef('')
+  const textDisplayRef = useRef<HTMLDivElement>(null)
 
   const clearFlushTimer = useCallback(() => {
     if (flushTimerRef.current) {
@@ -42,13 +44,6 @@ const TranscriptionOverlayPage = () => {
     },
     [clearFlushTimer]
   )
-
-  const handleInsertImproved = useCallback(() => {
-    if (improvedText.length > 0) {
-      console.log('📤 Inserting improved text:', improvedText)
-      window.electron.ipcRenderer.send('transcription:insert-text', improvedText)
-    }
-  }, [improvedText])
 
   const flushCombinedTranscript = useCallback(() => {
     if (hasFlushedRef.current) {
@@ -116,12 +111,26 @@ const TranscriptionOverlayPage = () => {
       }
     })
 
+  // Get preview text from non-final tokens (declare early to avoid hook order issues)
+  const previewText = nonFinalTokens.map((token) => token.text).join('')
+
   useEffect(() => {
     latestFinalTextRef.current = finalText
     if (finalText.length > 0) {
       console.log(`📝 Current final text length: ${finalText.length}`)
     }
   }, [finalText])
+
+  // Auto-scroll to bottom when text updates during transcription
+  useEffect(() => {
+    if (textDisplayRef.current && overlayState === 'transcribing') {
+      textDisplayRef.current.scrollTop = textDisplayRef.current.scrollHeight
+    }
+  }, [finalText, previewText, overlayState])
+
+  useEffect(() => {
+    latestPreviewRef.current = previewText
+  }, [previewText])
 
   useEffect(() => {
     return () => {
@@ -184,6 +193,25 @@ const TranscriptionOverlayPage = () => {
       }
     }
   }, [overlayState, stopTranscription])
+
+  const handleToggleVersion = useCallback(() => {
+    setShowingOriginal(!showingOriginal)
+    console.log(`🔄 Toggling to ${!showingOriginal ? 'original' : 'improved'} version`)
+  }, [showingOriginal])
+
+  const handleInsertCurrentVersion = useCallback(() => {
+    if (overlayState === 'improved') {
+      const textToInsert = showingOriginal
+        ? `${latestFinalTextRef.current}${latestPreviewRef.current}`.trim()
+        : improvedText
+
+      if (textToInsert.length > 0) {
+        console.log(`📤 Inserting ${showingOriginal ? 'original' : 'improved'} text:`, textToInsert)
+        window.electron.ipcRenderer.send('transcription:insert-text', textToInsert)
+      }
+    }
+  }, [overlayState, showingOriginal, improvedText])
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -191,7 +219,7 @@ const TranscriptionOverlayPage = () => {
       if (e.key === 'Enter' && overlayState !== 'improving') {
         e.preventDefault()
         if (overlayState === 'improved') {
-          handleInsertImproved()
+          handleInsertCurrentVersion()
         } else {
           handleInsert()
         }
@@ -201,11 +229,21 @@ const TranscriptionOverlayPage = () => {
         e.preventDefault()
         handleInsert()
       }
+      // Cmd/Ctrl + B to toggle between original and improved (only in improved state)
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        e.key === 'b' &&
+        overlayState === 'improved' &&
+        improvedText.length > 0
+      ) {
+        e.preventDefault()
+        handleToggleVersion()
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [overlayState, handleInsert, handleInsertImproved])
+  }, [overlayState, handleInsert, handleInsertCurrentVersion, handleToggleVersion, improvedText])
 
   // Listen for start/stop commands from main process
   useEffect(() => {
@@ -215,6 +253,7 @@ const TranscriptionOverlayPage = () => {
       setOverlayState('transcribing')
       setImprovedText('')
       setIsImproving(false)
+      setShowingOriginal(false)
       startTranscription()
     }
 
@@ -279,17 +318,8 @@ const TranscriptionOverlayPage = () => {
 
   const isRecording = isActiveState(state)
 
-  // Get preview text from non-final tokens
-  const previewText = nonFinalTokens.map((token) => token.text).join('')
-
-  useEffect(() => {
-    latestPreviewRef.current = previewText
-  }, [previewText])
-
-  // Get last 5 words for compact display
+  // Show full text (no word limitation)
   const allText = `${finalText}${previewText}`
-  const words = allText.trim().split(/\s+/).slice(-5)
-  const displayText = words.join(' ')
 
   const getStatusIcon = () => {
     switch (state) {
@@ -358,12 +388,15 @@ const TranscriptionOverlayPage = () => {
           </div>
         )}
 
-        {/* Transcribing state: Preview text with buttons */}
+        {/* Transcribing state: Full text with scrolling */}
         {overlayState === 'transcribing' && (
           <>
-            <div className="mb-2 min-h-[60px] rounded bg-white/5 px-2 py-1.5">
-              {displayText ? (
-                <p className="text-sm text-white/80">{displayText}</p>
+            <div
+              ref={textDisplayRef}
+              className="mb-2 max-h-[120px] min-h-[120px] overflow-y-auto rounded bg-white/5 px-2 py-1.5 scrollbar-thin scrollbar-track-white/5 scrollbar-thumb-white/20"
+            >
+              {allText ? (
+                <p className="whitespace-pre-wrap break-words text-sm text-white/80">{allText}</p>
               ) : isRecording ? (
                 <p className="text-xs italic text-white/40">
                   🎤 Listening... Speak clearly and loudly into your mic
@@ -404,8 +437,8 @@ const TranscriptionOverlayPage = () => {
         {/* Finalized state: Show Improve and Insert buttons */}
         {overlayState === 'finalized' && (
           <>
-            <div className="mb-2 min-h-[60px] rounded bg-white/5 px-2 py-1.5">
-              <p className="text-sm text-white/80">{allText}</p>
+            <div className="mb-2 max-h-[120px] min-h-[120px] overflow-y-auto rounded bg-white/5 px-2 py-1.5 scrollbar-thin scrollbar-track-white/5 scrollbar-thumb-white/20">
+              <p className="whitespace-pre-wrap break-words text-sm text-white/80">{allText}</p>
             </div>
             <div className="flex gap-2">
               <Button
@@ -444,20 +477,33 @@ const TranscriptionOverlayPage = () => {
           </>
         )}
 
-        {/* Improved state: Show improved text with insert option */}
+        {/* Improved state: Show improved text with toggle and insert options */}
         {overlayState === 'improved' && (
           <>
-            <div className="mb-2 min-h-[60px] rounded bg-purple-900/20 px-2 py-1.5">
-              <p className="text-sm text-white/80">{improvedText}</p>
-            </div>
-            <Button
-              onClick={handleInsertImproved}
-              className="w-full bg-purple-600 hover:bg-purple-700"
-              size="sm"
+            <div
+              className={`mb-2 max-h-[120px] min-h-[120px] overflow-y-auto rounded px-2 py-1.5 scrollbar-thin scrollbar-track-white/5 scrollbar-thumb-white/20 ${
+                showingOriginal ? 'bg-white/5' : 'bg-purple-900/20'
+              }`}
             >
-              Insert
-            </Button>
-            <div className="mt-1 text-center text-[10px] text-white/30">Press Enter to insert</div>
+              <p className="whitespace-pre-wrap break-words text-sm text-white/80">
+                {showingOriginal ? allText : improvedText}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleToggleVersion} variant="outline" className="flex-1" size="sm">
+                {showingOriginal ? '✨ Show Improved' : '↩️ Show Original'}
+              </Button>
+              <Button
+                onClick={handleInsertCurrentVersion}
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+                size="sm"
+              >
+                Insert {showingOriginal ? 'Original' : 'Improved'}
+              </Button>
+            </div>
+            <div className="mt-1 text-center text-[10px] text-white/30">
+              Press Enter to insert • {process.platform === 'darwin' ? 'Cmd' : 'Ctrl'}+B to toggle
+            </div>
           </>
         )}
       </div>

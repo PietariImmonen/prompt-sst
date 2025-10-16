@@ -47,9 +47,15 @@ appImage:
   artifactName: clyo-desktop-${version}-linux.${ext}
 npmRebuild: false
 publish:
-  provider: github
-  owner: PietariImmonen
-  repo: prompt-sst
-  releaseType: release
+  # GitHub releases (for fallback and visibility)
+  - provider: github
+    owner: PietariImmonen
+    repo: prompt-sst
+    releaseType: release
+  # S3 bucket (served via CloudFront)
+  - provider: s3
+    bucket: prompt-saver-production-desktopreleasesbucketbucket-wkworebe
+    region: eu-north-1
+    acl: private
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

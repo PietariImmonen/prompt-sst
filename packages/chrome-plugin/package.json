@@ -8,7 +8,7 @@
     "build": "plasmo build --env=production",
     "package": "plasmo package",
     "typecheck": "tsc --noEmit",
-    "generate-icons": "bun scripts/generate-icons.mjs"
+    "generate-icons": "pnpm dlx node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@openauthjs/openauth": "^0.4.3",

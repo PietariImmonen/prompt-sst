@@ -144,6 +144,13 @@ export class TranscriptionService {
   private toggleTranscription() {
     console.log('🎛️  Toggle transcription, current state:', this.isActive)
 
+    // Block if user is not logged in
+    if (!this.authToken) {
+      console.log('⚠️  Transcription blocked: User not logged in')
+      // Optionally show a notification to the user
+      return
+    }
+
     if (this.isActive) {
       this.stopTranscription()
     } else {
@@ -227,10 +234,10 @@ export class TranscriptionService {
 
     // Create overlay window
     this.overlayWindow = new BrowserWindow({
-      width: 320,
-      height: 160,
-      x: Math.min(cursorPoint.x + 20, display.bounds.x + display.bounds.width - 360),
-      y: Math.min(cursorPoint.y + 20, display.bounds.y + display.bounds.height - 200),
+      width: 480,
+      height: 240,
+      x: Math.min(cursorPoint.x + 20, display.bounds.x + display.bounds.width - 520),
+      y: Math.min(cursorPoint.y + 20, display.bounds.y + display.bounds.height - 280),
       frame: false,
       transparent: true,
       alwaysOnTop: true,

@@ -2,21 +2,21 @@
   "name": "@prompt-saver/scripts",
   "version": "0.0.0",
   "scripts": {
-    "document-templates:create:production": "sst shell bun src/document-templates-create.ts --stage production",
-    "document-templates:create": "sst shell bun src/document-templates-create.ts",
-    "billing:prepare": "sst shell bun src/billing-prepare.ts",
+    "document-templates:create:production": "sst shell pnpm exec tsx src/document-templates-create.ts --stage production",
+    "document-templates:create": "sst shell pnpm exec tsx src/document-templates-create.ts",
+    "billing:prepare": "sst shell pnpm exec tsx src/billing-prepare.ts",
     "typecheck": "tsc --noEmit",
-    "workspace:create:production": "sst shell bun src/workspace-create.ts --stage production",
-    "workspace:create": "sst shell bun src/workspace-create.ts",
-    "document-template:create:specific": "sst shell bun src/create-specific-template.ts",
-    "document-template:create:specific:production": "sst shell bun src/create-specific-template.ts --stage production",
-    "user-settings:create": "sst shell bun src/user-settings-create.ts",
-    "user-settings:clean": "sst shell bun src/user-settings-clean.ts",
-    "clean-resources": "sst shell bun src/clean-resources.ts",
-    "account:create": "sst shell bun src/account-create.ts",
-    "account:insert": "sst shell bun src/insert-account.ts",
-    "usage:update": "sst shell bun src/usage-update.ts",
-    "users:create": "sst shell bun src/users-create.ts"
+    "workspace:create:production": "sst shell pnpm exec tsx src/workspace-create.ts --stage production",
+    "workspace:create": "sst shell pnpm exec tsx src/workspace-create.ts",
+    "document-template:create:specific": "sst shell pnpm exec tsx src/create-specific-template.ts",
+    "document-template:create:specific:production": "sst shell pnpm exec tsx src/create-specific-template.ts --stage production",
+    "user-settings:create": "sst shell pnpm exec tsx src/user-settings-create.ts",
+    "user-settings:clean": "sst shell pnpm exec tsx src/user-settings-clean.ts",
+    "clean-resources": "sst shell pnpm exec tsx src/clean-resources.ts",
+    "account:create": "sst shell pnpm exec tsx src/account-create.ts",
+    "account:insert": "sst shell pnpm exec tsx src/insert-account.ts",
+    "usage:update": "sst shell pnpm exec tsx src/usage-update.ts",
+    "users:create": "sst shell pnpm exec tsx src/users-create.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.758.0",
@@ -29,5 +29,7 @@
     "sst": "^3.9.2",
     "zod": "^3.24.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
 }
