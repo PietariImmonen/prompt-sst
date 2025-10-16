@@ -14,23 +14,23 @@
     "email": "pietari@example.com"
   },
   "scripts": {
-    "format": "bunx prettier --write .",
-    "lint": "bunx eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx",
-    "typecheck:node": "bunx tsc --noEmit -p tsconfig.node.json",
-    "typecheck:web": "bunx tsc --noEmit -p tsconfig.web.json",
-    "typecheck": "bun run typecheck:node && bun run typecheck:web",
-    "typecheck:sst": "cd ../.. && sst bind -- bun run --filter @prompt-saver/desktop typecheck",
+    "format": "prettier --write .",
+    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "pnpm run typecheck:node && pnpm run typecheck:web",
+    "typecheck:sst": "cd ../.. && sst bind -- pnpm --filter @prompt-saver/desktop typecheck",
     "env:generate": "node ../../scripts/generate-desktop-env.mjs",
     "setup:dev-permissions": "bash ./scripts/setup-dev-permissions.sh",
-    "start": "bunx electron-vite preview",
+    "start": "pnpm dlx electron-vite preview",
     "dev": "electron-vite dev",
-    "build": "bun run typecheck && bunx electron-vite build",
-    "rebuild": "bunx electron-rebuild",
-    "build:unpack": "bun run build && bunx electron-builder --dir",
-    "build:win": "bun run build && bunx electron-builder --win",
-    "build:mac": "rm -rf dist && bun --bun run build && bunx electron-builder --mac",
+    "build": "pnpm run typecheck && pnpm dlx electron-vite build",
+    "rebuild": "pnpm dlx electron-rebuild",
+    "build:unpack": "pnpm run build && pnpm dlx electron-builder --dir",
+    "build:win": "pnpm run build && pnpm dlx electron-builder --win",
+    "build:mac": "rm -rf dist && pnpm run build && pnpm dlx electron-builder --mac",
     "build:mac:notarized": "./scripts/build-mac-notarized.sh",
-    "build:linux": "bun run build && bunx electron-builder --linux"
+    "build:linux": "pnpm run build && pnpm dlx electron-builder --linux"
   },
   "dependencies": {
     "@electron/notarize": "^3.1.0",
@@ -119,11 +119,5 @@
     "tailwindcss": "^4.0.15",
     "typescript": "^5.5.2",
     "vite": "^5.3.1"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "electron",
-      "esbuild"
-    ]
   }
 }

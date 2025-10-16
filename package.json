@@ -14,12 +14,12 @@
     "sso": "aws sso login --sso-session=prompt-saver",
     "typecheck": "tsc --noEmit",
     "desktop:env": "node scripts/generate-desktop-env.mjs",
-    "desktop:dev": "sst shell -- node scripts/extract-sst-env.mjs && bun run --filter @prompt-saver/desktop dev",
-    "desktop:dev:fallback": "bun run desktop:env && bun run --filter @prompt-saver/desktop dev",
-    "desktop:typecheck": "sst shell -- bun run --filter @prompt-saver/desktop typecheck",
-    "desktop:build": "bun run desktop:env && bun run --filter @prompt-saver/desktop build",
-    "chrome:dev": "bun run --filter @prompt-saver/chrome-plugin dev",
-    "chrome:build": "bun run --filter @prompt-saver/chrome-plugin build"
+    "desktop:dev": "sst shell -- node scripts/extract-sst-env.mjs && pnpm --filter @prompt-saver/desktop dev",
+    "desktop:dev:fallback": "pnpm run desktop:env && pnpm --filter @prompt-saver/desktop dev",
+    "desktop:typecheck": "sst shell -- pnpm --filter @prompt-saver/desktop typecheck",
+    "desktop:build": "pnpm run desktop:env && pnpm --filter @prompt-saver/desktop build",
+    "chrome:dev": "pnpm --filter @prompt-saver/chrome-plugin dev",
+    "chrome:build": "pnpm --filter @prompt-saver/chrome-plugin build"
   },
   "dependencies": {
     "@eslint/js": "^9.23.0",
@@ -45,7 +45,12 @@
     "typescript": "^5.8.2"
   },
   "resolutions": {
-  "drizzle-orm": "0.38.4"
-}
-
+    "drizzle-orm": "0.38.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild"
+    ]
+  }
 }

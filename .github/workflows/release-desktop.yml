@@ -27,11 +27,6 @@ jobs:
           persist-credentials: true
           node-version: "22.14.0"
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
@@ -124,7 +119,7 @@ jobs:
         run: |
           cd packages/desktop
           rm -rf dist out ~/.electron-builder
-          bun run build:mac
+          pnpm run build:mac
         env:
           NODE_ENV: production
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
