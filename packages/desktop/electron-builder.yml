@@ -11,11 +11,9 @@ files:
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!**/node_modules/.pnpm'
 asarUnpack:
   - resources/**
-  - node_modules/mqtt
-  - node_modules/mqtt-packet
-  - node_modules/bl
 
 icon: build/icon.png
 win:
