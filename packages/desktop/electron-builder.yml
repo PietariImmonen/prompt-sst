@@ -13,7 +13,6 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
-  - '**/*.node'
 
 icon: build/icon.png
 win:

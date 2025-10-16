@@ -16,9 +16,10 @@ The `.dmg` file produced by GitHub Actions was missing transitive dependencies (
 
 ### 1. electron-builder.yml
 ```yaml
-# Minimal asarUnpack to avoid file conflicts
+# Unpack native modules to avoid conflicts with includeSubNodeModules
 asarUnpack:
   - resources/**
+  - '**/*.node'  # KEY: Prevents conflicts by unpacking all native modules
 
 # Disable npmRebuild (robotjs fails but isn't critical)
 npmRebuild: false
@@ -70,11 +71,14 @@ buildDependenciesFromSource: false
 
 ## Why This Works
 
-1. **`npmRebuild: true`** - Ensures native modules are compiled for Electron's Node.js version
-2. **`includeSubNodeModules: true`** - Recursively includes all transitive dependencies
-3. **`asarUnpack`** - Extracts modules that need file system access or have native bindings
-4. **Python 3.11** - Provides `distutils` required by `node-gyp` for native module compilation
-5. **Explicit workspace installs** - Ensures all workspace packages have their dependencies installed
+1. **`includeSubNodeModules: true`** (PRIMARY FIX) - Recursively includes all transitive dependencies, solving the mqtt sub-dependency issue
+2. **`asarUnpack: ['**/*.node']`** (CRITICAL) - Unpacks all native `.node` files to prevent file conflict errors when combined with `includeSubNodeModules`. Without this, electron-builder tries to both pack AND unpack the same files, causing EEXIST errors.
+3. **`npmRebuild: false`** - Skips problematic native module rebuilds (robotjs fails but isn't critical)
+4. **Pinned Electron version** - electron-builder can determine the correct version
+5. **Python 3.11** - Provides `distutils` for node-gyp (though rebuild is now optional)
+6. **Clean dist/** - Prevents file conflicts from previous builds in CI
+7. **Explicit workspace installs** - Ensures all workspace packages have their dependencies
+8. **TypeScript fix** - Zod type assertion fixes SST event validator compatibility
 
 ## Testing Locally
 
