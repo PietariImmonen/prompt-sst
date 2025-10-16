@@ -33,14 +33,7 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        external: [
-          /^sst(\/.*)?$/,
-          /^postgres(\/.*)?$/,
-          'mqtt',
-          'mqtt-packet',
-          'ws',
-          'replicache'
-        ]
+        external: [/^sst(\/.*)?$/, /^postgres(\/.*)?$/]
       }
     },
     define: {

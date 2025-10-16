@@ -24,11 +24,21 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
+          node-version: "22.14.0"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
+
+      - name: Install sst
+        run: "curl -fsSL https://ion.sst.dev/install | bash"
+
+      - name: Configure Production AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::093827727335:role/prompt-saver-production-github
+          aws-region: eu-north-1
 
       # - name: Cache Bun dependencies
       #   uses: actions/cache@v4
@@ -39,15 +49,10 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build workspace dependencies
+      - name: Deploy SST
         run: |
-          # Build core package first (required by desktop)
-          cd packages/core
-          bun run build || echo "Core package has no build step"
-
-          # Build functions package if needed
-          cd ../functions
-          bun run build || echo "Functions package has no build step"
+          sst install
+          sst deploy --stage=production
 
       - name: Rebuild native modules for Electron
         run: |

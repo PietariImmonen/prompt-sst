@@ -13,17 +13,6 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
-  - node_modules/@noble/**
-  - node_modules/@paralleldrive/**
-  - node_modules/robotjs/**
-  - node_modules/mqtt/**
-  - node_modules/mqtt-packet/**
-  - node_modules/replicache/**
-  - node_modules/@soniox/**
-  - node_modules/ws/**
-  - node_modules/buffer/**
-  - node_modules/buffer-*/**
-  - node_modules/**/mqtt*/**
 icon: build/icon.png
 win:
   executableName: clyo-desktop
@@ -43,8 +32,9 @@ mac:
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  notarize:
-    teamId: 6D2UT4969T
+  # notarize:
+  #   teamId: 6D2UT4969T
+
 dmg:
   artifactName: clyo-desktop-${version}-mac.${ext}
 linux:
@@ -61,6 +51,5 @@ publish:
   provider: github
   owner: PietariImmonen
   repo: prompt-sst
-  releaseType: release
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
