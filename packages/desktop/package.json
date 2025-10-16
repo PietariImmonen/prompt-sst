@@ -125,17 +125,5 @@
       "electron",
       "esbuild"
     ]
-  },
-  "build": {
-    "asarUnpack": [
-      "node_modules/mqtt/**",
-      "node_modules/mqtt-packet/**"
-    ],
-    "files": [
-      "dist/**",
-      "out/**",
-      "node_modules/**",
-      "!node_modules/.pnpm/**"
-    ]
   }
 }

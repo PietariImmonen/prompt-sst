@@ -13,6 +13,9 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+  - node_modules/mqtt
+  - node_modules/mqtt-packet
+  - node_modules/bl
 
 icon: build/icon.png
 win:
