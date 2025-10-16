@@ -62,7 +62,7 @@ publish:
   - provider: s3
     bucket: prompt-saver-production-desktopreleasesbucketbucket-wkworebe
     region: eu-north-1
-    acl: public-read
+    acl: private
 
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
