@@ -47,10 +47,16 @@ jobs:
           role-to-assume: arn:aws:iam::093827727335:role/prompt-saver-production-github
           aws-region: eu-north-1
 
+      # 🧹 Clear pnpm cache
+      - name: Clear pnpm cache
+        run: |
+          pnpm store prune
+          rm -rf ~/.pnpm-store
+          rm -rf node_modules packages/**/node_modules
+
       # 🧩 Install monorepo dependencies with pnpm
       - name: Install monorepo dependencies (pnpm)
         run: |
-          rm -rf node_modules packages/**/node_modules
           pnpm install --frozen-lockfile
 
       - name: Debug MQTT dependencies

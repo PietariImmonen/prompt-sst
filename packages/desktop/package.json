@@ -26,11 +26,11 @@
     "dev": "electron-vite dev",
     "build": "pnpm run typecheck && electron-vite build",
     "rebuild": "pnpm dlx electron-rebuild",
-    "build:unpack": "pnpm run build && pnpm dlx electron-builder --dir",
-    "build:win": "pnpm run build && pnpm dlx electron-builder --win",
-    "build:mac": "rm -rf dist && pnpm run build && pnpm dlx electron-builder --mac",
+    "build:unpack": "pnpm run build && electron-builder --dir",
+    "build:win": "pnpm run build && electron-builder --win",
+    "build:mac": "rm -rf dist && pnpm run build && electron-builder --mac",
     "build:mac:notarized": "./scripts/build-mac-notarized.sh",
-    "build:linux": "pnpm run build && pnpm dlx electron-builder --linux"
+    "build:linux": "pnpm run build && electron-builder --linux"
   },
   "dependencies": {
     "@electron/notarize": "^3.1.0",
