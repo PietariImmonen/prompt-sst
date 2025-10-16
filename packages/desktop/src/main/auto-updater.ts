@@ -11,7 +11,7 @@ autoUpdater.autoInstallOnAppQuit = true
 
 // Configure S3/CloudFront feed URL if available (production environment)
 // In development or when CDN_URL is not set, it will fall back to GitHub releases
-const cdnUrl = process.env.VITE_RELEASES_CDN_URL
+const cdnUrl = 'https://d1ofxq7pnbozg8.cloudfront.net'
 if (cdnUrl && app.isPackaged) {
   autoUpdater.setFeedURL({
     provider: 'generic',
