@@ -49,30 +49,28 @@ jobs:
           rm -rf packages/**/node_modules
           bun install --frozen-lockfile
 
+      # Ensure all transitive dependencies are installed
+      - name: Install desktop dependencies
+        run: |
+          cd packages/desktop
+          bun install --frozen-lockfile
+          # Also install dependencies for workspace packages
+          cd ../core
+          bun install --frozen-lockfile
+
       - name: Deploy SST
         run: |
           unset AWS_PROFILE
           sst install
           sst deploy --stage=production
 
-      # 🔧 Use npm inside Electron package for dependency consistency
-      - name: Install desktop dependencies with npm
-        run: |
-          cd packages/desktop
-          rm -rf node_modules
-          # Replace workspace:* with relative path (so npm understands)
-          sed -i.bak 's|"workspace:\*"|"file:../core"|' package.json
-          npm install --omit=dev
-          echo "Verifying critical runtime dependencies..."
-          node -e "['mqtt','mqtt-packet','bl'].forEach(m => {try{require.resolve(m);}catch{console.error('Missing module:',m);process.exit(1);}})"
-          rm package.json.bak
-
       # ✅ Rebuild native modules for Electron ABI
       - name: Rebuild native modules for Electron
         run: |
           cd packages/desktop
-          npx electron-rebuild -f -w robotjs || echo "robotjs rebuild failed (may not be critical)"
-        continue-on-error: true
+          # Rebuild all native modules
+          npx electron-rebuild -f
+        continue-on-error: false
 
       - name: Bump version
         id: version
