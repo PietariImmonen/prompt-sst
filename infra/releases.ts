@@ -62,6 +62,10 @@ const releasesRouter = new sst.aws.Router("DesktopReleasesRouter", {
       minTtl: 0,
     },
   },
+  invalidation: {
+    paths: ["/latest-mac.yml"],
+    wait: true,
+  },
 });
 
 // Export the environment variables for CI/CD and desktop config
