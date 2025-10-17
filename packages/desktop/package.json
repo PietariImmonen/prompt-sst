@@ -1,6 +1,6 @@
 {
   "name": "@prompt-saver/desktop",
-  "version": "0.1.55",
+  "version": "0.1.56",
   "description": "Electron desktop shell for Clyo",
   "main": "./out/main/index.js",
   "type": "module",
