@@ -71,7 +71,7 @@ export function AuthProvider(props: AuthProviderProps) {
 
           const prom = api.account.me
             .$get({}, { headers: { authorization: `Bearer ${token}` } })
-            .then(async (response) => {
+            .then(async (response: any) => {
               if (response.ok) {
                 const info = await response.json()
                 console.log('AuthProvider - Successfully fetched account info:', info.result.id)
@@ -121,7 +121,7 @@ export function AuthProvider(props: AuthProviderProps) {
                 setAccessToken(null)
               }
             })
-            .catch((error) => {
+            .catch((error: any) => {
               console.warn('AuthProvider - Failed to refresh auth token:', error)
               // Only remove token on network errors after retries
               if (retryCount >= MAX_RETRIES && authStore.get()?.accounts[token]) {

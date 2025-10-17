@@ -337,6 +337,9 @@ ipcMain.handle('updater:download-update', async () => {
 
 ipcMain.handle('updater:quit-and-install', () => {
   if (autoUpdaterService) {
+    // Set isQuitting flag so the app actually quits instead of hiding to tray
+    isQuitting = true
+    console.log('🔄 Update installation requested, setting isQuitting=true')
     autoUpdaterService.quitAndInstall()
   }
 })

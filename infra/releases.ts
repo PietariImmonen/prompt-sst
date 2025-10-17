@@ -52,6 +52,16 @@ const releasesRouter = new sst.aws.Router("DesktopReleasesRouter", {
       bucket: releasesBucket,
     },
   },
+  transform: {
+    cachePolicy: {
+      // No caching - always fetch fresh from S3
+      // Critical for electron-updater to detect new releases immediately
+      // S3 GET requests are inexpensive, and update checks are infrequent
+      defaultTtl: 0,
+      maxTtl: 0,
+      minTtl: 0,
+    },
+  },
 });
 
 // Export the environment variables for CI/CD and desktop config

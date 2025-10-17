@@ -7,7 +7,7 @@ const { autoUpdater } = electronUpdater
 
 // Configure updater
 autoUpdater.autoDownload = false
-autoUpdater.autoInstallOnAppQuit = true
+autoUpdater.autoInstallOnAppQuit = false // Must be false to allow quitAndInstall() to work immediately
 
 // Configure S3/CloudFront feed URL if available (production environment)
 // In development or when CDN_URL is not set, it will fall back to GitHub releases
@@ -142,7 +142,15 @@ export class AutoUpdaterService {
   quitAndInstall(): void {
     try {
       this.sendStatusToWindow('installing-update')
-      autoUpdater.quitAndInstall()
+
+      // Force quit without waiting for async cleanup
+      // This is necessary because quitAndInstall needs immediate app termination
+      setImmediate(() => {
+        // isSilent=false: show UI dialogs during installation
+        // isForceRunAfter=true: run the app after installation
+        autoUpdater.quitAndInstall(false, true)
+      })
+
       logger.info('updater', 'Installing update and restarting app')
       console.log('🔄 Installing update and restarting app...')
     } catch (error) {

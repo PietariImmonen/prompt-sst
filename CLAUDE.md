@@ -6,31 +6,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Development
 
-- `bun run dev` - Start SST development environment with live reloads and infrastructure
-- `bun run build` - Build for production
-- `bun run typecheck` - Run TypeScript validation across all workspaces
-- `bun run deploy:dev` / `bun run deploy:production` - Deploy to AWS environments
+- `pnpm dev` - Start SST development environment with live reloads and infrastructure
+- `pnpm build` - Build for production
+- `pnpm typecheck` - Run TypeScript validation across all workspaces
+- `pnpm deploy:dev` / `pnpm deploy:production` - Deploy to AWS environments
 
 ### Package-Specific Commands
 
-- `bun run --filter app dev` - Start Vite development server for web app
-- `bun run --filter app build` - Build web app for production
-- `bun run --filter app lint` - Run ESLint on web app
-- `bun run --filter @prompt-saver/desktop dev` - Start Electron desktop app
-- `bun run --filter @prompt-saver/core test` - Run core domain tests
-- `bun run --filter @prompt-saver/core db:migrate` - Apply database migrations via `sst shell`
+- `pnpm --filter app dev` - Start Vite development server for web app
+- `pnpm --filter app build` - Build web app for production
+- `pnpm --filter app lint` - Run ESLint on web app
+- `pnpm --filter @prompt-saver/desktop dev` - Start Electron desktop app
+- `pnpm --filter @prompt-saver/core test` - Run core domain tests
+- `pnpm --filter @prompt-saver/core db:migrate` - Apply database migrations via `sst shell`
 
 ### Database Operations (via sst shell)
 
-- `bun run --filter @prompt-saver/core db:generate` - Generate migrations
-- `bun run --filter @prompt-saver/core db:push` - Push schema changes
-- `bun run --filter @prompt-saver/core db:studio` - Open Drizzle Studio
+- `pnpm --filter @prompt-saver/core db:generate` - Generate migrations
+- `pnpm --filter @prompt-saver/core db:push` - Push schema changes
+- `pnpm --filter @prompt-saver/core db:studio` - Open Drizzle Studio
 
 ## Architecture Overview
 
 ### Monorepo Structure
 
-This is a Bun workspace monorepo with SST (Serverless Stack) infrastructure management:
+This is a pnpm workspace monorepo with SST (Serverless Stack) infrastructure management:
 
 - **Root**: SST configuration and shared scripts
 - **`infra/`**: AWS resource definitions loaded by `sst.config.ts`
@@ -38,7 +38,7 @@ This is a Bun workspace monorepo with SST (Serverless Stack) infrastructure mana
 - **`packages/core/`**: Shared domain logic, Drizzle schema, and utilities
 - **`packages/functions/`**: Hono-based Lambda handlers for API endpoints
 - **`packages/desktop/`**: Electron desktop application sharing core domain models
-- **`packages/scripts/`**: Bun-powered maintenance and utility scripts
+- **`packages/scripts/`**: Maintenance and utility scripts
 
 ### Key Technologies
 
@@ -67,16 +67,16 @@ This is a Bun workspace monorepo with SST (Serverless Stack) infrastructure mana
 
 ### Getting Started
 
-1. Set up AWS SSO: `bun run sso`
-2. Start development: `bun run dev`
+1. Set up AWS SSO: `pnpm sso`
+2. Start development: `pnpm dev`
 3. Access local web app via Vite proxy
 4. Desktop app connects to same SST endpoints
 
 ### Testing
 
-- Core domain: `bun test --cwd packages/core`
-- Web app linting: `bun run --filter app lint`
-- Type checking: `bun run typecheck` (or package-specific variants)
+- Core domain: `pnpm test --filter @prompt-saver/core`
+- Web app linting: `pnpm --filter app lint`
+- Type checking: `pnpm typecheck` (or package-specific variants)
 
 ### Code Style
 
@@ -88,7 +88,7 @@ This is a Bun workspace monorepo with SST (Serverless Stack) infrastructure mana
 
 ### Environment Configuration
 
-- Desktop app requires environment generation via `bun run desktop:env`
+- Desktop app requires environment generation via `pnpm desktop:env`
 - SST provides automatic environment binding via `sst shell`
 - Use `sst bind` for IDE type safety with SST resources
 
