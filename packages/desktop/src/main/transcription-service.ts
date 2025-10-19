@@ -36,15 +36,16 @@ try {
 export class TranscriptionService {
   private overlayWindow: BrowserWindow | null = null
   private isActive = false
-  private shortcut = process.platform === 'darwin' ? 'Command+Shift+F' : 'Control+Shift+F'
+  private shortcut: string
   private enabled = false
   private previousFocusedWindow: BrowserWindow | null = null
   private apiEndpoint: string | null = null
   private authToken: string | null = null
   private workspaceId: string | null = null
 
-  constructor() {
-    console.log('🎙️ Initializing TranscriptionService')
+  constructor(initialShortcut?: string) {
+    this.shortcut = initialShortcut || (process.platform === 'darwin' ? 'Command+Shift+F' : 'Control+Shift+F')
+    console.log('🎙️ Initializing TranscriptionService with shortcut:', this.shortcut)
     this.setupIpcHandlers()
   }
 
@@ -489,6 +490,42 @@ export class TranscriptionService {
     this.authToken = authData.token
     this.apiEndpoint = authData.apiEndpoint
     this.workspaceId = authData.workspaceId
+  }
+
+  /**
+   * Update the keyboard shortcut for transcription
+   * Returns true if successful, false if failed
+   */
+  updateShortcut(newShortcut: string): boolean {
+    try {
+      // Unregister the old shortcut if enabled
+      if (this.enabled) {
+        globalShortcut.unregister(this.shortcut)
+        console.log(`🎙️ Unregistered old transcription shortcut: ${this.shortcut}`)
+      }
+
+      // Update the shortcut value
+      this.shortcut = newShortcut
+
+      // Register the new shortcut if we were previously enabled
+      if (this.enabled) {
+        const registered = globalShortcut.register(this.shortcut, () => {
+          this.toggleTranscription()
+        })
+
+        if (!registered) {
+          console.error(`❌ Failed to register new transcription shortcut: ${this.shortcut}`)
+          return false
+        }
+
+        console.log(`✅ Registered new transcription shortcut: ${this.shortcut}`)
+      }
+
+      return true
+    } catch (error) {
+      console.error('❌ Error updating transcription shortcut:', error)
+      return false
+    }
   }
 
   /**

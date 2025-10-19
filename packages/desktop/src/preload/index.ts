@@ -155,6 +155,23 @@ interface UpdaterAPI {
   getVersion: () => Promise<string>
 }
 
+type ShortcutUpdatePayload = {
+  capture: string
+  palette: string
+  transcribe: string
+}
+
+type ShortcutUpdateResult = {
+  success: boolean
+  message?: string
+  requiresRestart?: boolean
+}
+
+interface ShortcutsAPI {
+  update: (shortcuts: ShortcutUpdatePayload) => Promise<void>
+  onUpdateResult: (callback: (result: ShortcutUpdateResult) => void) => () => void
+}
+
 const transcription: TranscriptionAPI = {
   getStatus() {
     return ipcRenderer.invoke('transcription:get-status')
@@ -190,12 +207,30 @@ const desktopUpdater: UpdaterAPI = {
   }
 }
 
+const shortcuts: ShortcutsAPI = {
+  update(shortcuts) {
+    return ipcRenderer.invoke('shortcuts:update', shortcuts)
+  },
+  onUpdateResult(callback) {
+    const listener = (_event: Electron.IpcRendererEvent, result: ShortcutUpdateResult) => {
+      callback(result)
+    }
+
+    ipcRenderer.on('shortcuts:update-result', listener)
+
+    return () => {
+      ipcRenderer.removeListener('shortcuts:update-result', listener)
+    }
+  }
+}
+
 declare global {
   interface Window {
     electron: typeof electronAPI
     promptCapture: PromptCaptureAPI
     desktopAuth: DesktopAuthAPI
     transcription: TranscriptionAPI
+    shortcuts: ShortcutsAPI
   }
 }
 
@@ -206,6 +241,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('desktopAuth', desktopAuth)
     contextBridge.exposeInMainWorld('transcription', transcription)
     contextBridge.exposeInMainWorld('desktopUpdater', desktopUpdater)
+    contextBridge.exposeInMainWorld('shortcuts', shortcuts)
   } catch (error) {
     console.error('Failed to expose preload API', error)
   }
@@ -220,4 +256,6 @@ if (process.contextIsolated) {
   window.transcription = transcription
   // @ts-expect-error fallback when context isolation disabled
   window.desktopUpdater = desktopUpdater
+  // @ts-expect-error fallback when context isolation disabled
+  window.shortcuts = shortcuts
 }

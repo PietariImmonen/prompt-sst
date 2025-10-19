@@ -10,18 +10,20 @@ interface SimplePaletteOptions {
   onShow?: () => void
   onHide?: () => void
   getPrompts: () => any[]
+  initialShortcut?: string
 }
 
 export class SimplePaletteService {
   private window: BrowserWindow | null = null
   private shortcutRegistered = false
-  private shortcut = process.platform === 'darwin' ? 'Command+Shift+O' : 'Control+Shift+O'
+  private shortcut: string
   private options: SimplePaletteOptions
   private hideHandler: (event: any) => void
   private selectHandler: (event: any, promptText: string) => void
 
   constructor(options: SimplePaletteOptions) {
     this.options = options
+    this.shortcut = options.initialShortcut || (process.platform === 'darwin' ? 'Command+Shift+O' : 'Control+Shift+O')
 
     // Create bound handlers so we can remove them later
     this.hideHandler = () => this.hide()
@@ -279,6 +281,48 @@ export class SimplePaletteService {
     if (this.shortcutRegistered) {
       globalShortcut.unregister(this.shortcut)
       this.shortcutRegistered = false
+    }
+  }
+
+  /**
+   * Update the keyboard shortcut for the palette
+   * Returns true if successful, false if failed
+   */
+  updateShortcut(newShortcut: string): boolean {
+    try {
+      // Unregister the old shortcut if registered
+      if (this.shortcutRegistered) {
+        globalShortcut.unregister(this.shortcut)
+        console.log(`📱 Unregistered old palette shortcut: ${this.shortcut}`)
+      }
+
+      // Update the shortcut value
+      this.shortcut = newShortcut
+
+      // Register the new shortcut if we were previously registered
+      if (this.shortcutRegistered) {
+        const success = globalShortcut.register(this.shortcut, () => {
+          this.broadcastShortcut('palette')
+          if (this.window && !this.window.isDestroyed() && this.window.isVisible()) {
+            this.hide()
+          } else {
+            this.show()
+          }
+        })
+
+        if (!success) {
+          console.error(`❌ Failed to register new palette shortcut: ${this.shortcut}`)
+          this.shortcutRegistered = false
+          return false
+        }
+
+        console.log(`✅ Registered new palette shortcut: ${this.shortcut}`)
+      }
+
+      return true
+    } catch (error) {
+      console.error('❌ Error updating palette shortcut:', error)
+      return false
     }
   }
 

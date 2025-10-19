@@ -18,6 +18,9 @@ export const userSettings = pgTable(
     shortcutPalette: varchar("shortcut_palette", { length: 255 })
       .notNull()
       .default("CmdOrCtrl+Shift+O"),
+    shortcutTranscribe: varchar("shortcut_transcribe", { length: 255 })
+      .notNull()
+      .default("CmdOrCtrl+Shift+F"),
     enableAutoCapture: boolean("enable_auto_capture").notNull().default(true),
   },
   (table) => [primaryKey({ columns: [table.workspaceID, table.id] })],

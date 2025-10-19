@@ -13,6 +13,7 @@ export const UserSettingsSchema = createSelectSchema(userSettings, {
   inAppOnboardingCompleted: (schema) => schema,
   shortcutCapture: (schema) => schema,
   shortcutPalette: (schema) => schema,
+  shortcutTranscribe: (schema) => schema,
   enableAutoCapture: (schema) => schema,
 });
 
