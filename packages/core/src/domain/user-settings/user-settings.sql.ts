@@ -1,4 +1,11 @@
-import { boolean, pgTable, primaryKey, varchar } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 import { cuid, timestamps, workspaceID } from "../../util/sql";
 
@@ -22,6 +29,12 @@ export const userSettings = pgTable(
       .notNull()
       .default("CmdOrCtrl+Shift+F"),
     enableAutoCapture: boolean("enable_auto_capture").notNull().default(true),
+    languageHints: jsonb("language_hints")
+      .notNull()
+      .$type<string[]>()
+      .default(["en"]),
+    aiContext: text("ai_context"),
+    userRole: varchar("user_role", { length: 255 }),
   },
   (table) => [primaryKey({ columns: [table.workspaceID, table.id] })],
 );

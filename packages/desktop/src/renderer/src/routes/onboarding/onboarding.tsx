@@ -52,6 +52,20 @@ export function OnboardingPage() {
     const promptData = getExamplePromptForRole(role)
     setExamplePrompt(promptData)
 
+    // Save user role to user settings immediately
+    if (rep && userSettings) {
+      try {
+        await rep.mutate.user_settings_update({
+          ...userSettings,
+          userRole: role,
+          enableAutoCapture: autoCaptureEnabled
+        })
+      } catch (error) {
+        console.error('Failed to save user role:', error)
+        // Continue with onboarding even if this fails
+      }
+    }
+
     // Proceed to next step immediately
     setCurrentStep(2)
 

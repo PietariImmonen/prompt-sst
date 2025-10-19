@@ -42,6 +42,7 @@ export class TranscriptionService {
   private apiEndpoint: string | null = null
   private authToken: string | null = null
   private workspaceId: string | null = null
+  private languageHints: string[] = ['en']
 
   constructor(initialShortcut?: string) {
     this.shortcut = initialShortcut || (process.platform === 'darwin' ? 'Command+Shift+F' : 'Control+Shift+F')
@@ -140,6 +141,14 @@ export class TranscriptionService {
         text: '' // SDK manages text in renderer
       }
     })
+
+    // Handle language hints updates from renderer
+    ipcMain.on('transcription:update-language-hints', (_event, languageHints: string[]) => {
+      if (Array.isArray(languageHints) && languageHints.length > 0) {
+        this.languageHints = languageHints
+        console.log('🌐 Updated language hints:', this.languageHints)
+      }
+    })
   }
 
   private toggleTranscription() {
@@ -224,8 +233,10 @@ export class TranscriptionService {
         }, 20)
       }
 
-      // Send start signal to begin transcription
-      this.overlayWindow.webContents.send('transcription:start')
+      // Send start signal with language hints to begin transcription
+      this.overlayWindow.webContents.send('transcription:start', {
+        languageHints: this.languageHints
+      })
       return
     }
 
@@ -317,10 +328,12 @@ export class TranscriptionService {
       }
     })
 
-    // Wait for page to load, then send start signal
+    // Wait for page to load, then send start signal with language hints
     this.overlayWindow.webContents.once('did-finish-load', () => {
-      console.log('✅ Overlay loaded, sending start signal')
-      this.overlayWindow?.webContents.send('transcription:start')
+      console.log('✅ Overlay loaded, sending start signal with language hints:', this.languageHints)
+      this.overlayWindow?.webContents.send('transcription:start', {
+        languageHints: this.languageHints
+      })
     })
 
     // Handle window close
