@@ -1,22 +1,39 @@
 import { createCaptureService, updateSettings } from './capture-service.js'
 import { SimplePaletteService } from './simple-palette-service.js'
 
-export function createIntegratedCaptureService(getWindow: any, backgroundDataService: any, trayService?: any) {
-  // Disable the palette functionality in the original capture service by setting an unused shortcut
+interface ShortcutSettings {
+  capture: string
+  palette: string
+  transcribe: string
+}
+
+export function createIntegratedCaptureService(
+  getWindow: any,
+  backgroundDataService: any,
+  trayService?: any,
+  shortcuts?: ShortcutSettings
+) {
+  // Use provided shortcuts or defaults
+  const captureShortcut = shortcuts?.capture || (process.platform === 'darwin' ? 'Command+Shift+P' : 'Control+Shift+P')
+  const paletteShortcut = shortcuts?.palette || (process.platform === 'darwin' ? 'Command+Shift+O' : 'Control+Shift+O')
+
+  // Configure capture service with custom shortcut
   updateSettings({
-    shortcutPalette: process.platform === 'darwin' ? 'Command+Shift+F12' : 'Control+Shift+F12', // Use an unused key to effectively disable
-    enableAutoCapture: true // Keep capture functionality
+    shortcutCapture: captureShortcut,
+    shortcutPalette: process.platform === 'darwin' ? 'Command+Shift+F12' : 'Control+Shift+F12', // Disabled
+    enableAutoCapture: true
   })
 
-  console.log('🔧 Disabled original palette shortcut (set to F12) to prevent conflicts')
+  console.log('🔧 Initialized capture service with shortcut:', captureShortcut)
 
   // Create the original capture service for prompt capturing functionality ONLY
   const captureService = createCaptureService(getWindow, backgroundDataService, trayService, {
     registerOverlaySelectionHandler: false
   })
 
-  // Create the simplified palette service with better prompt loading
+  // Create the simplified palette service with custom shortcut
   const paletteService = new SimplePaletteService({
+    initialShortcut: paletteShortcut,
     onShow: () => {
       console.log('✅ Simplified palette shown')
     },

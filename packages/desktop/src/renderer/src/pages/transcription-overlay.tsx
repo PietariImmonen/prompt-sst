@@ -18,6 +18,9 @@ const TranscriptionOverlayPage = () => {
   const latestPreviewRef = useRef('')
   const textDisplayRef = useRef<HTMLDivElement>(null)
 
+  // Language hints will be received from main process via IPC
+  const [languageHints, setLanguageHints] = useState<string[]>(['en'])
+
   const clearFlushTimer = useCallback(() => {
     if (flushTimerRef.current) {
       clearTimeout(flushTimerRef.current)
@@ -96,6 +99,7 @@ const TranscriptionOverlayPage = () => {
   const { state, finalText, nonFinalTokens, startTranscription, stopTranscription, error } =
     useTranscribe({
       apiKey,
+      languageHints: languageHints,
       onStarted: () => {
         console.log('✅ Overlay: Transcription started')
       },
@@ -245,10 +249,17 @@ const TranscriptionOverlayPage = () => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [overlayState, handleInsert, handleInsertCurrentVersion, handleToggleVersion, improvedText])
 
-  // Listen for start/stop commands from main process
+  // Listen for start/stop commands and language hints from main process
   useEffect(() => {
-    const handleStart = () => {
+    const handleStart = (_event: any, payload?: { languageHints?: string[] }) => {
       console.log('🎛️  Overlay received start command')
+
+      // Update language hints if provided
+      if (payload?.languageHints && Array.isArray(payload.languageHints)) {
+        setLanguageHints(payload.languageHints)
+        console.log('🌐 Received language hints:', payload.languageHints)
+      }
+
       resetSession()
       setOverlayState('transcribing')
       setImprovedText('')

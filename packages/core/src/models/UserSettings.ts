@@ -13,7 +13,11 @@ export const UserSettingsSchema = createSelectSchema(userSettings, {
   inAppOnboardingCompleted: (schema) => schema,
   shortcutCapture: (schema) => schema,
   shortcutPalette: (schema) => schema,
+  shortcutTranscribe: (schema) => schema,
   enableAutoCapture: (schema) => schema,
+  languageHints: () => z.array(z.string()),
+  aiContext: (schema) => schema,
+  userRole: (schema) => schema,
 });
 
 export type UserSettings = z.infer<typeof UserSettingsSchema>;

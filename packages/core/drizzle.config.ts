@@ -5,7 +5,6 @@ import { Resource } from "sst";
 const databaseUrl = Resource.Database.url;
 
 console.log("🔗 NEON DATABASE URL:", databaseUrl);
-console.log("🌿 DATABASE BRANCH:", Resource.Database.branch);
 
 export default {
   out: "./migrations/",

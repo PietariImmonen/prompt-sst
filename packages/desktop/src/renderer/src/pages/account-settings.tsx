@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import { useAuth } from '@/hooks/use-auth'
 import { useDesktopUpdater } from '@/hooks/use-desktop-updater'
+import { ShortcutSettings } from '@/components/settings/shortcut-settings'
+import { TranscriptionSettings } from '@/components/settings/transcription-settings'
 
 const AccountSettingsPage = () => {
   const auth = useAuth()
@@ -151,6 +153,10 @@ const AccountSettingsPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          <ShortcutSettings />
+
+          <TranscriptionSettings />
 
           <Card className="bg-card/80 backdrop-blur border-border/60">
             <CardHeader>

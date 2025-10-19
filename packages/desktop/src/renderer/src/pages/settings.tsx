@@ -19,11 +19,13 @@ import { useReplicache, useSubscribe } from '@/hooks/use-replicache'
 import { UserSettingsStore } from '@/data/user-settings'
 import { UserSettings } from '@prompt-saver/core/models/UserSettings'
 import { useDesktopUpdater } from '@/hooks/use-desktop-updater'
+import { useShortcutSync } from '@/hooks/use-shortcut-sync'
 
 const SettingsPage = () => {
   const rep = useReplicache()
   const [isSaving, _setIsSaving] = useState(false)
   const [isLoading, _setIsLoading] = useState(true)
+  const { lastUpdateResult } = useShortcutSync()
   const {
     appVersion,
     updaterEvent,
@@ -124,6 +126,33 @@ const SettingsPage = () => {
                   Shortcut to open the prompt insertion palette
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="shortcut-transcribe">Transcription Shortcut</Label>
+                <Input
+                  id="shortcut-transcribe"
+                  value={userSettings.shortcutTranscribe}
+                  onChange={(e) =>
+                    updateSettings({ ...userSettings, shortcutTranscribe: e.target.value || '' })
+                  }
+                  placeholder="CmdOrCtrl+Shift+F"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Shortcut to start/stop voice transcription
+                </p>
+              </div>
+
+              {lastUpdateResult && lastUpdateResult.requiresRestart && (
+                <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-3 text-sm text-yellow-800 dark:text-yellow-200">
+                  ⚠️ {lastUpdateResult.message || 'Some shortcuts require an app restart to take effect.'}
+                </div>
+              )}
+
+              {lastUpdateResult && !lastUpdateResult.requiresRestart && lastUpdateResult.success && (
+                <div className="rounded-md bg-green-50 dark:bg-green-900/20 p-3 text-sm text-green-800 dark:text-green-200">
+                  ✅ {lastUpdateResult.message || 'Shortcuts updated successfully!'}
+                </div>
+              )}
             </CardContent>
           </Card>
 

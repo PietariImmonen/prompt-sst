@@ -52,5 +52,12 @@ export const DEBOUNCE_DELAYS = {
 
 export const LOCAL_STORAGE_KEYS = {
   AUTH_STORE: 'auth-store',
-  APP_STORE: 'app-store'
+  APP_STORE: 'app-store',
+  SHORTCUTS: 'app-shortcuts'
+} as const
+
+export const DEFAULT_SHORTCUTS = {
+  capture: 'CmdOrCtrl+Shift+P',
+  palette: 'CmdOrCtrl+Shift+O',
+  transcribe: 'CmdOrCtrl+Shift+F'
 } as const

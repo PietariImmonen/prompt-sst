@@ -325,13 +325,17 @@ export class BackgroundDataService {
 
       // Add the new prompt to local cache immediately for better UX
       if ((result as any).prompt) {
-        this.prompts.unshift((result as any).prompt)
+        const newPrompt = (result as any).prompt
+        // Check if prompt already exists to prevent duplicates
+        const existingIndex = this.prompts.findIndex(p => p.id === newPrompt.id)
+        if (existingIndex === -1) {
+          this.prompts.unshift(newPrompt)
+        }
       }
 
-      // Trigger a sync to get latest state
-      setTimeout(() => {
-        this.syncPrompts().catch(console.warn)
-      }, 1000)
+      // Don't trigger immediate sync - rely on MQTT poke notification instead
+      // This prevents race conditions where the same prompt is fetched twice
+      // The poke notification will trigger syncPrompts() automatically
 
       return {
         success: true,
@@ -423,7 +427,7 @@ export class BackgroundDataService {
         console.error('MQTT connection error:', error)
       })
 
-      this.mqttClient.on('message', (fullTopic, payload) => {
+      this.mqttClient.on('message', (fullTopic, _payload) => {
         try {
           const splits = fullTopic.split('/')
           const topic = splits[4]

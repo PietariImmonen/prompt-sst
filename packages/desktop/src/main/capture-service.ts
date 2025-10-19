@@ -299,13 +299,17 @@ export function createCaptureService(
     overlayVisible = true
 
     if (paletteWindow && !paletteWindow.isDestroyed()) {
-      paletteWindow.show()
-      paletteWindow.webContents.send('overlay:show')
-
-      // On Windows/Linux, we might need to focus to receive keyboard events
-      if (process.platform !== 'darwin') {
+      // macOS: Explicitly show dock icon before showing overlay to prevent it from disappearing
+      if (process.platform === 'darwin') {
+        app.dock.show().catch(() => {
+          // Ignore errors if dock is already visible
+        })
+        paletteWindow.showInactive()
+      } else {
+        paletteWindow.show()
         paletteWindow.focus()
       }
+      paletteWindow.webContents.send('overlay:show')
     }
   }
 

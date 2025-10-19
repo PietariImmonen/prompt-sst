@@ -296,6 +296,39 @@ ipcMain.handle('auth:cancel', async (_event, payload: { id: string }) => {
   cancelAuthRequest(payload.id)
 })
 
+// Shortcut update handler
+ipcMain.handle('shortcuts:update', async (_event, shortcuts: { capture: string; palette: string; transcribe: string }) => {
+  console.log('📡 Received shortcut update request:', shortcuts)
+
+  // Save to file system first
+  const { saveShortcuts } = await import('./shortcut-storage.js')
+  const saved = saveShortcuts(shortcuts)
+
+  if (!saved) {
+    console.error('❌ Failed to save shortcuts to file system')
+  }
+
+  // Import the shortcut manager dynamically
+  const { updateAllShortcuts } = await import('./shortcut-manager.js')
+
+  const result = await updateAllShortcuts(shortcuts, {
+    captureService,
+    transcriptionService
+  })
+
+  // Send result back to renderer
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window || window.isDestroyed()) continue
+    try {
+      window.webContents.send('shortcuts:update-result', result)
+    } catch (error) {
+      console.warn('Failed to send shortcut update result to window:', error)
+    }
+  }
+
+  return result
+})
+
 // Request microphone access permission (macOS)
 ipcMain.handle('request-microphone-access', async () => {
   if (process.platform === 'darwin') {
@@ -525,11 +558,23 @@ app.whenReady().then(async () => {
 
     app.setAppUserModelId('com.electron')
 
+    // macOS: Ensure dock icon stays visible even when overlay windows are shown
+    // This prevents the dock icon from disappearing when panel-type windows are active
+    if (process.platform === 'darwin') {
+      app.dock.show()
+    }
+
     app.on('browser-window-created', (_, window) => {
       rendererReadyForAuthCallbacks = false
     })
 
     ipcMain.on('ping', () => console.log('pong'))
+
+    // Load saved shortcuts before initializing services
+    console.log('📂 Loading saved shortcuts...')
+    const { loadShortcuts } = await import('./shortcut-storage.js')
+    const savedShortcuts = loadShortcuts()
+    console.log('✅ Shortcuts loaded:', savedShortcuts)
 
     // Initialize background services
     await logServiceStart('BackgroundDataService')
@@ -553,12 +598,13 @@ app.whenReady().then(async () => {
     trayService.setupDockIntegration()
     await logServiceReady('TrayService')
 
-    // Initialize integrated capture service with tray service reference
+    // Initialize integrated capture service with saved shortcuts
     await logServiceStart('CaptureService')
     captureService = createIntegratedCaptureService(
       () => mainWindow,
       backgroundDataService,
-      trayService
+      trayService,
+      savedShortcuts
     )
 
     // Enable the simplified palette
@@ -567,9 +613,9 @@ app.whenReady().then(async () => {
 
     await logServiceReady('CaptureService')
 
-    // Initialize transcription service
+    // Initialize transcription service with saved shortcut
     await logServiceStart('TranscriptionService')
-    transcriptionService = new TranscriptionService()
+    transcriptionService = new TranscriptionService(savedShortcuts.transcribe)
     const transcriptionEnabled = await transcriptionService.initialize()
     await logServiceReady('TranscriptionService')
 

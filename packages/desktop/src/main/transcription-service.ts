@@ -36,15 +36,17 @@ try {
 export class TranscriptionService {
   private overlayWindow: BrowserWindow | null = null
   private isActive = false
-  private shortcut = process.platform === 'darwin' ? 'Command+Shift+F' : 'Control+Shift+F'
+  private shortcut: string
   private enabled = false
   private previousFocusedWindow: BrowserWindow | null = null
   private apiEndpoint: string | null = null
   private authToken: string | null = null
   private workspaceId: string | null = null
+  private languageHints: string[] = ['en']
 
-  constructor() {
-    console.log('🎙️ Initializing TranscriptionService')
+  constructor(initialShortcut?: string) {
+    this.shortcut = initialShortcut || (process.platform === 'darwin' ? 'Command+Shift+F' : 'Control+Shift+F')
+    console.log('🎙️ Initializing TranscriptionService with shortcut:', this.shortcut)
     this.setupIpcHandlers()
   }
 
@@ -139,6 +141,14 @@ export class TranscriptionService {
         text: '' // SDK manages text in renderer
       }
     })
+
+    // Handle language hints updates from renderer
+    ipcMain.on('transcription:update-language-hints', (_event, languageHints: string[]) => {
+      if (Array.isArray(languageHints) && languageHints.length > 0) {
+        this.languageHints = languageHints
+        console.log('🌐 Updated language hints:', this.languageHints)
+      }
+    })
   }
 
   private toggleTranscription() {
@@ -223,8 +233,10 @@ export class TranscriptionService {
         }, 20)
       }
 
-      // Send start signal to begin transcription
-      this.overlayWindow.webContents.send('transcription:start')
+      // Send start signal with language hints to begin transcription
+      this.overlayWindow.webContents.send('transcription:start', {
+        languageHints: this.languageHints
+      })
       return
     }
 
@@ -238,6 +250,7 @@ export class TranscriptionService {
       height: 240,
       x: Math.min(cursorPoint.x + 20, display.bounds.x + display.bounds.width - 520),
       y: Math.min(cursorPoint.y + 20, display.bounds.y + display.bounds.height - 280),
+      show: false, // Don't show immediately - will show without activation
       frame: false,
       transparent: true,
       alwaysOnTop: true,
@@ -300,6 +313,14 @@ export class TranscriptionService {
 
     this.overlayWindow.once('ready-to-show', () => {
       if (!this.overlayWindow || this.overlayWindow.isDestroyed()) return
+
+      // macOS: Explicitly show dock icon before showing overlay to prevent it from disappearing
+      if (process.platform === 'darwin') {
+        app.dock.show().catch(() => {
+          // Ignore errors if dock is already visible
+        })
+      }
+
       this.overlayWindow.showInactive()
 
       if (this.previousFocusedWindow && !this.previousFocusedWindow.isDestroyed()) {
@@ -316,10 +337,12 @@ export class TranscriptionService {
       }
     })
 
-    // Wait for page to load, then send start signal
+    // Wait for page to load, then send start signal with language hints
     this.overlayWindow.webContents.once('did-finish-load', () => {
-      console.log('✅ Overlay loaded, sending start signal')
-      this.overlayWindow?.webContents.send('transcription:start')
+      console.log('✅ Overlay loaded, sending start signal with language hints:', this.languageHints)
+      this.overlayWindow?.webContents.send('transcription:start', {
+        languageHints: this.languageHints
+      })
     })
 
     // Handle window close
@@ -489,6 +512,42 @@ export class TranscriptionService {
     this.authToken = authData.token
     this.apiEndpoint = authData.apiEndpoint
     this.workspaceId = authData.workspaceId
+  }
+
+  /**
+   * Update the keyboard shortcut for transcription
+   * Returns true if successful, false if failed
+   */
+  updateShortcut(newShortcut: string): boolean {
+    try {
+      // Unregister the old shortcut if enabled
+      if (this.enabled) {
+        globalShortcut.unregister(this.shortcut)
+        console.log(`🎙️ Unregistered old transcription shortcut: ${this.shortcut}`)
+      }
+
+      // Update the shortcut value
+      this.shortcut = newShortcut
+
+      // Register the new shortcut if we were previously enabled
+      if (this.enabled) {
+        const registered = globalShortcut.register(this.shortcut, () => {
+          this.toggleTranscription()
+        })
+
+        if (!registered) {
+          console.error(`❌ Failed to register new transcription shortcut: ${this.shortcut}`)
+          return false
+        }
+
+        console.log(`✅ Registered new transcription shortcut: ${this.shortcut}`)
+      }
+
+      return true
+    } catch (error) {
+      console.error('❌ Error updating transcription shortcut:', error)
+      return false
+    }
   }
 
   /**

@@ -11,6 +11,7 @@ const END_TOKEN = '<end>'
 
 interface UseTranscribeParameters {
   apiKey: string | (() => Promise<string>)
+  languageHints?: string[]
   translationConfig?: TranslationConfig
   onStarted?: () => void
   onFinished?: (result: { finalText: string; finalTokens: Token[] }) => void
@@ -30,6 +31,7 @@ type TranscriptionError = {
  */
 export default function useTranscribe({
   apiKey,
+  languageHints = ['en'],
   translationConfig,
   onStarted,
   onFinished
@@ -86,7 +88,7 @@ export default function useTranscribe({
 
     sonioxClient.current.start({
       model: 'stt-rt-preview',
-      languageHints: ['en'],
+      languageHints: languageHints,
       enableLanguageIdentification: true,
       enableSpeakerDiarization: false,
       enableEndpointDetection: true,
@@ -236,7 +238,7 @@ export default function useTranscribe({
         console.log('=======================================')
       }
     })
-  }, [onFinished, onStarted, translationConfig])
+  }, [languageHints, onFinished, onStarted, translationConfig])
 
   const stopTranscription = useCallback(() => {
     console.log('🛑 Stopping transcription')
