@@ -71,6 +71,25 @@ type UpdaterAPI = {
   getVersion: () => Promise<string>;
 };
 
+type ShortcutUpdatePayload = {
+  capture: string;
+  palette: string;
+  transcribe: string;
+};
+
+type ShortcutUpdateResult = {
+  success: boolean;
+  requiresRestart: boolean;
+  message?: string;
+};
+
+type ShortcutsAPI = {
+  update: (shortcuts: ShortcutUpdatePayload) => Promise<void>;
+  onUpdateResult: (
+    callback: (result: ShortcutUpdateResult) => void,
+  ) => () => void;
+};
+
 declare global {
   interface Window {
     electron: ElectronAPI;
@@ -78,5 +97,6 @@ declare global {
     desktopAuth: DesktopAuthAPI;
     transcription: TranscriptionAPI;
     desktopUpdater: UpdaterAPI;
+    shortcuts: ShortcutsAPI;
   }
 }

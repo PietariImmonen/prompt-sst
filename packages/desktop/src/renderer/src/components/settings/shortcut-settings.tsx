@@ -3,14 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useReplicache, useSubscribe } from '@/hooks/use-replicache'
 import { UserSettingsStore } from '@/data/user-settings'
-import { UserSettings } from '@prompt-saver/core/models/UserSettings'
+
 import { useShortcutSync } from '@/hooks/use-shortcut-sync'
 import { saveShortcuts } from '@/lib/shortcut-storage'
 import { ChevronDown } from 'lucide-react'
