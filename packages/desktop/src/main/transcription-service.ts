@@ -250,6 +250,7 @@ export class TranscriptionService {
       height: 240,
       x: Math.min(cursorPoint.x + 20, display.bounds.x + display.bounds.width - 520),
       y: Math.min(cursorPoint.y + 20, display.bounds.y + display.bounds.height - 280),
+      show: false, // Don't show immediately - will show without activation
       frame: false,
       transparent: true,
       alwaysOnTop: true,
@@ -312,6 +313,14 @@ export class TranscriptionService {
 
     this.overlayWindow.once('ready-to-show', () => {
       if (!this.overlayWindow || this.overlayWindow.isDestroyed()) return
+
+      // macOS: Explicitly show dock icon before showing overlay to prevent it from disappearing
+      if (process.platform === 'darwin') {
+        app.dock.show().catch(() => {
+          // Ignore errors if dock is already visible
+        })
+      }
+
       this.overlayWindow.showInactive()
 
       if (this.previousFocusedWindow && !this.previousFocusedWindow.isDestroyed()) {

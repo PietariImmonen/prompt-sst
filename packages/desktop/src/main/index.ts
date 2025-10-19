@@ -558,6 +558,12 @@ app.whenReady().then(async () => {
 
     app.setAppUserModelId('com.electron')
 
+    // macOS: Ensure dock icon stays visible even when overlay windows are shown
+    // This prevents the dock icon from disappearing when panel-type windows are active
+    if (process.platform === 'darwin') {
+      app.dock.show()
+    }
+
     app.on('browser-window-created', (_, window) => {
       rendererReadyForAuthCallbacks = false
     })
