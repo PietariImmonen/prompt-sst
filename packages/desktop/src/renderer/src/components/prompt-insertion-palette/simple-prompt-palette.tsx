@@ -75,6 +75,13 @@ export function SimplePromptPalette() {
   // Keyboard navigation
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't interfere with input typing for non-navigation keys
+      if (event.target === inputRef.current) {
+        if (!['Escape', 'Enter', 'ArrowDown', 'ArrowUp'].includes(event.key)) {
+          return
+        }
+      }
+
       switch (event.key) {
         case 'Escape':
           event.preventDefault()

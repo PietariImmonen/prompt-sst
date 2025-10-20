@@ -80,6 +80,14 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
     if (!state.isVisible) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't interfere with input typing
+      if (event.target === inputRef.current) {
+        // Only handle navigation keys when in input
+        if (!['Escape', 'Enter', 'ArrowDown', 'ArrowUp'].includes(event.key)) {
+          return
+        }
+      }
+
       if (event.key === 'Escape') {
         event.preventDefault()
         if (window.electron?.ipcRenderer) {
@@ -92,7 +100,11 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
         event.preventDefault()
         if (filteredPrompts.length > 0 && selectedIndex < filteredPrompts.length) {
           const selectedPrompt = filteredPrompts[selectedIndex]!
-          handlePromptSelect(selectedPrompt)
+          // Directly send IPC message
+          onSelectPrompt?.(selectedPrompt)
+          if (window.electron?.ipcRenderer) {
+            window.electron.ipcRenderer.send('overlay:select-prompt', selectedPrompt.content)
+          }
         }
         return
       }
@@ -112,7 +124,7 @@ export function PromptOverlay({ onSelectPrompt, onClose }: PromptOverlayProps) {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [state.isVisible, filteredPrompts, selectedIndex])
+  }, [state.isVisible, filteredPrompts, selectedIndex, onSelectPrompt])
 
   // Auto-select first prompt when filtered prompts change
   React.useEffect(() => {

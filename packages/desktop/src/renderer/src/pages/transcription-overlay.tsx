@@ -219,19 +219,29 @@ const TranscriptionOverlayPage = () => {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle keyboard shortcuts when typing in button/input elements
+      const target = e.target as HTMLElement
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.tagName === 'BUTTON') {
+        return
+      }
+
       // Enter key to insert (works in all states except improving)
       if (e.key === 'Enter' && overlayState !== 'improving') {
         e.preventDefault()
+        e.stopPropagation()
         if (overlayState === 'improved') {
           handleInsertCurrentVersion()
         } else {
           handleInsert()
         }
+        return
       }
       // Escape key to insert without improving (works in transcribing and finalized states)
       if (e.key === 'Escape' && (overlayState === 'transcribing' || overlayState === 'finalized')) {
         e.preventDefault()
+        e.stopPropagation()
         handleInsert()
+        return
       }
       // Cmd/Ctrl + B to toggle between original and improved (only in improved state)
       if (
@@ -241,7 +251,9 @@ const TranscriptionOverlayPage = () => {
         improvedText.length > 0
       ) {
         e.preventDefault()
+        e.stopPropagation()
         handleToggleVersion()
+        return
       }
     }
 

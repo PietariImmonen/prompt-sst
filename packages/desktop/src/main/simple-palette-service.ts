@@ -176,21 +176,23 @@ export class SimplePaletteService {
         if (this.window && !this.window.isDestroyed()) {
           console.log('📱 Palette window ready, showing...')
 
-          // macOS: Explicitly show dock icon before showing overlay to prevent it from disappearing
+          // macOS: Ensure dock icon stays visible
           if (process.platform === 'darwin') {
             app.dock.show().catch(() => {
               // Ignore errors if dock is already visible
             })
-            this.window.showInactive()
-          } else {
-            this.window.show()
-            // Give the window a moment to render, then focus
-            setTimeout(() => {
-              if (this.window && !this.window.isDestroyed()) {
-                this.window.focus()
-              }
-            }, 50)
           }
+
+          // Show the window and focus it so keyboard events work
+          this.window.show()
+
+          // Give the window a moment to render, then focus
+          setTimeout(() => {
+            if (this.window && !this.window.isDestroyed()) {
+              this.window.focus()
+              console.log('📱 Palette window focused')
+            }
+          }, 50)
 
           this.options.onShow?.()
           this.notifyVisibilityChange(true)

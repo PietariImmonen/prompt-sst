@@ -218,20 +218,16 @@ export class TranscriptionService {
     this.previousFocusedWindow = BrowserWindow.getFocusedWindow() ?? null
 
     if (this.overlayWindow && !this.overlayWindow.isDestroyed()) {
-      this.overlayWindow.showInactive()
-
-      if (this.previousFocusedWindow && !this.previousFocusedWindow.isDestroyed()) {
-        setTimeout(() => {
-          try {
-            const previousUrl = this.previousFocusedWindow?.webContents.getURL()
-            if (!previousUrl || !previousUrl.includes('#palette')) {
-              this.previousFocusedWindow?.focus()
-            }
-          } catch {
-            /* swallow */
-          }
-        }, 20)
+      // macOS: Ensure dock icon stays visible
+      if (process.platform === 'darwin') {
+        app.dock.show().catch(() => {
+          // Ignore errors if dock is already visible
+        })
       }
+
+      // Show and focus the overlay so keyboard events work
+      this.overlayWindow.show()
+      this.overlayWindow.focus()
 
       // Send start signal with language hints to begin transcription
       this.overlayWindow.webContents.send('transcription:start', {
@@ -314,27 +310,16 @@ export class TranscriptionService {
     this.overlayWindow.once('ready-to-show', () => {
       if (!this.overlayWindow || this.overlayWindow.isDestroyed()) return
 
-      // macOS: Explicitly show dock icon before showing overlay to prevent it from disappearing
+      // macOS: Ensure dock icon stays visible
       if (process.platform === 'darwin') {
         app.dock.show().catch(() => {
           // Ignore errors if dock is already visible
         })
       }
 
-      this.overlayWindow.showInactive()
-
-      if (this.previousFocusedWindow && !this.previousFocusedWindow.isDestroyed()) {
-        setTimeout(() => {
-          try {
-            const previousUrl = this.previousFocusedWindow?.webContents.getURL()
-            if (!previousUrl || !previousUrl.includes('#palette')) {
-              this.previousFocusedWindow?.focus()
-            }
-          } catch {
-            /* swallow */
-          }
-        }, 20)
-      }
+      // Show and focus the overlay so keyboard events work
+      this.overlayWindow.show()
+      this.overlayWindow.focus()
     })
 
     // Wait for page to load, then send start signal with language hints
