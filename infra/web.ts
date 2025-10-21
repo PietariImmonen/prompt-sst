@@ -1,6 +1,7 @@
 import { api } from "./api";
 import { auth } from "./auth";
 import { domain, useCustomDomain, zoneId } from "./dns";
+import { secret } from "./secret";
 
 // Create basic auth for non-production environments
 
@@ -29,5 +30,7 @@ export const web = new sst.aws.Nextjs("Web", {
         : "https://dummy-domain.com", // This will be replaced by the actual URL
     NEXT_PUBLIC_API_URL: api.url,
     NEXT_PUBLIC_AUTH_URL: auth.url,
+    NEXT_PUBLIC_POSTHOG_KEY: secret.PostHogApiKey.value,
+    NEXT_PUBLIC_POSTHOG_HOST: "https://eu.posthog.com",
   },
 });

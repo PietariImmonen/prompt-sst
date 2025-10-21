@@ -5,6 +5,7 @@ export const secret = {
   NeonApiKey: new sst.Secret("NeonApiKey"),
   OpenRouterApiKey: new sst.Secret("OpenRouterApiKey"),
   SonioxApiKey: new sst.Secret("SonioxApiKey"),
+  PostHogApiKey: new sst.Secret("PostHogApiKey"),
 };
 
 export const allSecrets = Object.values(secret);
