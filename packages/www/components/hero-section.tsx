@@ -219,7 +219,7 @@ export default function HeroSection() {
                 </AnimatedGroup>
               </div>
             </div>
-            {/* <AnimatedGroup
+            <AnimatedGroup
               variants={{
                 container: {
                   visible: {
@@ -234,16 +234,14 @@ export default function HeroSection() {
             >
               <div className="mask-b-from-55% relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20">
                 <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 bg-background relative mx-auto max-w-5xl overflow-hidden rounded-2xl border p-4 shadow-lg shadow-zinc-950/15 ring-1">
-                  <Image
-                    className="bg-background relative rounded-2xl"
-                    src="/CLYO_DEMO.png"
-                    alt="app screen"
-                    width="2700"
-                    height="1440"
+                  <img
+                    className="bg-background relative rounded-2xl w-full h-auto"
+                    src="/demo.png"
+                    alt="Clyo demo application interface"
                   />
                 </div>
               </div>
-            </AnimatedGroup> */}
+            </AnimatedGroup>
           </div>
         </section>
       </main>

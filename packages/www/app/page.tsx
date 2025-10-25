@@ -1,5 +1,5 @@
 import CallToAction from "@/components/call-to-action";
-import Features from "@/components/features-1";
+import Features from "@/components/features-10";
 import Footer from "@/components/footer";
 import HeroSection from "@/components/hero-section";
 
