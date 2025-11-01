@@ -99,11 +99,11 @@ export default function CallToAction() {
       <div className="mx-auto max-w-5xl px-6">
         <div className="text-center">
           <h2 className="text-balance text-4xl font-semibold lg:text-5xl">
-            Ready to Transform Your Workflow?
+            Ready to Transcribe Smarter?
           </h2>
           <p className="mt-4">
-            Join the waitlist and be the first to experience effortless LLM
-            mastery with Clyo.
+            Join the waitlist and be the first to experience superior voice-to-text
+            accuracy across all your devices with Clyo.
           </p>
 
           <form

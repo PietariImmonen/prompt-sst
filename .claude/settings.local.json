@@ -17,7 +17,10 @@
       "Bash(bun remove:*)",
       "WebFetch(domain:soniox.com)",
       "WebSearch",
-      "WebFetch(domain:sst.dev)"
+      "WebFetch(domain:sst.dev)",
+      "mcp__playwright__browser_take_screenshot",
+      "Bash(pnpm --filter @prompt-saver/www typecheck:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

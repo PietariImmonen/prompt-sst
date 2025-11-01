@@ -23,14 +23,14 @@ export default function Features() {
               />
               <CardHeading
                 icon={MapIcon}
-                title="Universal Transcription"
-                description="Capture your thoughts anywhere with voice-to-text."
+                title="Transcribe Anywhere"
+                description="Voice-to-text across Mac, iOS, and Android."
               />
               <CardDescription className="text-muted-foreground mb-3 px-6 text-xs">
                 {" "}
-                Use a simple keyboard shortcut to transcribe audio from any
-                application on your Mac. Never miss an idea again—your thoughts
-                are instantly captured and ready to save.{" "}
+                Use a simple keyboard shortcut on your Mac or mobile device to transcribe
+                audio from any application. Whether you're taking notes, writing emails,
+                or capturing ideas—transcribe seamlessly wherever you work.{" "}
               </CardDescription>
             </CardHeader>
 
@@ -53,13 +53,13 @@ export default function Features() {
               />
               <CardHeading
                 icon={Calendar}
-                title="AI-Powered Enhancement"
-                description="Improve your prompts in real-time with intelligent suggestions."
+                title="Superior Accuracy"
+                description="Better transcription than native solutions with AI enhancement."
               />
               <CardDescription className="text-muted-foreground mb-3 px-6 text-xs">
-                Let Clyo's intelligent system refine your prompts automatically.
-                Get better results with smarter wording, clearer instructions,
-                and optimized phrasing—all powered by advanced AI.
+                Advanced AI models deliver more accurate transcriptions than built-in
+                speech-to-text on Mac and mobile. Get clearer, more precise text with
+                intelligent context understanding and real-time improvements.
               </CardDescription>
             </CardHeader>
 
@@ -67,7 +67,7 @@ export default function Features() {
               <div className="border-border overflow-hidden rounded-lg border">
                 <img
                   src="/prompt-improved.png"
-                  alt="AI-powered prompt improvement interface"
+                  alt="AI-powered transcription accuracy interface"
                   className="h-auto w-full"
                 />
               </div>
@@ -82,14 +82,14 @@ export default function Features() {
               />
               <CardHeading
                 icon={Calendar}
-                title="Prompt Library Management"
-                description="Organize and search through all your saved prompts effortlessly."
+                title="Custom Vocabulary"
+                description="Train the model with your own words and terminology."
               />
               <CardDescription className="text-muted-foreground mb-3 px-6 text-xs">
                 {" "}
-                Build your personal knowledge base of prompts. Search, filter,
-                and organize by tags to instantly find the perfect prompt for
-                any task. Reuse your best work effortlessly.{" "}
+                Add custom words, technical terms, names, and industry-specific jargon
+                to your personal model. Clyo learns your vocabulary and ensures
+                accurate transcription of specialized terminology every time.{" "}
               </CardDescription>
             </CardHeader>
 
@@ -97,7 +97,7 @@ export default function Features() {
               <div className="border-border overflow-hidden rounded-lg border">
                 <img
                   src="/prompt-palette.png"
-                  alt="Prompt library and palette interface"
+                  alt="Custom vocabulary management interface"
                   className="h-auto w-full"
                 />
               </div>

@@ -6,7 +6,9 @@ import { Mail, SendHorizonal } from "lucide-react";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Button } from "@/components/ui/button";
 import { TextEffect } from "@/components/ui/text-effect";
+//import { FlowingText } from "@/components/ui/flowing-text";
 import { HeroHeader } from "./header";
+import { FlowingText } from "./ui/flowing-text";
 
 const transitionVariants = {
   item: {
@@ -140,7 +142,7 @@ export default function HeroSection() {
                   as="h1"
                   className="mt-8 max-w-2xl text-balance text-center text-5xl font-medium md:text-6xl lg:mt-16"
                 >
-                  Master Your LLM Workflow with Clyo
+                  Speak, Don't Type
                 </TextEffect>
                 <TextEffect
                   per="line"
@@ -150,12 +152,10 @@ export default function HeroSection() {
                   as="p"
                   className="mt-8 max-w-2xl text-pretty text-center text-lg"
                 >
-                  Transcribe anywhere on your Mac, automatically save your
-                  prompts, and manage all your LLM interactions from one central
-                  place. Say goodbye to scattered prompts and hello to
-                  effortless reusability.
+                  AI-powered voice-to-text that works everywhere on Mac and
+                  mobile. Better accuracy than native solutions with custom
+                  vocabulary for your words.
                 </TextEffect>
-
                 <AnimatedGroup
                   variants={
                     {
@@ -217,6 +217,10 @@ export default function HeroSection() {
                     )}
                   </form>
                 </AnimatedGroup>
+                {/* Flowing text animation */}
+                <div className="mt-12 w-full max-w-3xl">
+                  <FlowingText text="Can you check if the notes from yesterday’s meeting were sent out, or if they’re still being reviewed by the team? I just want to make sure everyone has the latest updates before we start planning for next week’s agenda, since a few action items still need confirmation and follow-up." />
+                </div>
               </div>
             </div>
             <AnimatedGroup
@@ -235,7 +239,7 @@ export default function HeroSection() {
               <div className="mask-b-from-55% relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20">
                 <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 bg-background relative mx-auto max-w-5xl overflow-hidden rounded-2xl border p-4 shadow-lg shadow-zinc-950/15 ring-1">
                   <img
-                    className="bg-background relative rounded-2xl w-full h-auto"
+                    className="bg-background relative h-auto w-full rounded-2xl"
                     src="/demo.png"
                     alt="Clyo demo application interface"
                   />
