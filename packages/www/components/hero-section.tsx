@@ -218,9 +218,22 @@ export default function HeroSection() {
                   </form>
                 </AnimatedGroup>
                 {/* Flowing text animation */}
-                <div className="mt-12 w-full max-w-3xl">
+                <AnimatedGroup
+                  variants={{
+                    container: {
+                      visible: {
+                        transition: {
+                          staggerChildren: 0.05,
+                          delayChildren: 0.75,
+                        },
+                      },
+                    },
+                    ...transitionVariants,
+                  }}
+                  className="mt-12 w-full max-w-3xl"
+                >
                   <FlowingText text="Can you check if the notes from yesterday’s meeting were sent out, or if they’re still being reviewed by the team? I just want to make sure everyone has the latest updates before we start planning for next week’s agenda, since a few action items still need confirmation and follow-up." />
-                </div>
+                </AnimatedGroup>
               </div>
             </div>
             <AnimatedGroup
