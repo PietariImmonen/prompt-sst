@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Clyo - Master Your LLM Workflow",
-  description: "Transcribe anywhere on Mac, save prompts automatically, and manage your LLM interactions with ease.",
+  title: "Clyo - Create Videos. Post Everywhere.",
+  description: "Turn your ideas into polished videos in minutes and automatically publish them across every social platform. Join the waitlist.",
 };
 
 export default function RootLayout({

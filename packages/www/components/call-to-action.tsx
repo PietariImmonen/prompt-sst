@@ -99,11 +99,10 @@ export default function CallToAction() {
       <div className="mx-auto max-w-5xl px-6">
         <div className="text-center">
           <h2 className="text-balance text-4xl font-semibold lg:text-5xl">
-            Ready to Transcribe Smarter?
+            Stop watching others go viral.
           </h2>
-          <p className="mt-4">
-            Join the waitlist and be the first to experience superior voice-to-text
-            accuracy across all your devices with Clyo.
+          <p className="mt-4 text-zinc-400 max-w-lg mx-auto">
+            Join the waitlist now. Early access members get priority onboarding, locked-in pricing, and a head start on the competition.
           </p>
 
           <form
@@ -134,8 +133,8 @@ export default function CallToAction() {
                     {status === "loading"
                       ? "Joining..."
                       : status === "success"
-                        ? "Joined!"
-                        : "Join Waitlist"}
+                        ? "You're in!"
+                        : "Get Early Access"}
                   </span>
                   <SendHorizonal
                     className="relative mx-auto size-5 md:hidden"

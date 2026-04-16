@@ -20,7 +20,8 @@
       "WebFetch(domain:sst.dev)",
       "mcp__playwright__browser_take_screenshot",
       "Bash(pnpm --filter @prompt-saver/www typecheck:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(find /Users/pietari/prompt-sst-combined/packages/www/src -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.jsx -o -name *.js -o -name *.css -o -name *.module.css \\\\\\))"
     ],
     "deny": [],
     "ask": []

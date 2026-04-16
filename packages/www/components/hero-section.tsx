@@ -6,9 +6,7 @@ import { Mail, SendHorizonal } from "lucide-react";
 import { AnimatedGroup } from "@/components/ui/animated-group";
 import { Button } from "@/components/ui/button";
 import { TextEffect } from "@/components/ui/text-effect";
-//import { FlowingText } from "@/components/ui/flowing-text";
 import { HeroHeader } from "./header";
-import { FlowingText } from "./ui/flowing-text";
 
 const transitionVariants = {
   item: {
@@ -37,7 +35,6 @@ export default function HeroSection() {
   >("idle");
   const [message, setMessage] = React.useState("");
 
-  // Check localStorage on mount
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       const alreadySubmitted = localStorage.getItem("clyo_waitlist_submitted");
@@ -55,7 +52,6 @@ export default function HeroSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check localStorage first
     if (typeof window !== "undefined") {
       const alreadySubmitted = localStorage.getItem("clyo_waitlist_submitted");
       if (alreadySubmitted === "true") {
@@ -68,7 +64,6 @@ export default function HeroSection() {
     setStatus("loading");
 
     try {
-      // Collect browser metadata and UTM parameters
       const urlParams = new URLSearchParams(window.location.search);
 
       const metadata = {
@@ -102,7 +97,7 @@ export default function HeroSection() {
 
       if (response.ok) {
         setStatus("success");
-        setMessage(data.result?.message || "Successfully joined the waitlist!");
+        setMessage(data.result?.message || "You're on the list! We'll be in touch.");
         setEmail("");
         if (typeof window !== "undefined") {
           localStorage.setItem("clyo_waitlist_submitted", "true");
@@ -134,15 +129,37 @@ export default function HeroSection() {
         <section>
           <div className="relative pt-24">
             <div className="absolute inset-0 -z-10 size-full [background:radial-gradient(125%_125%_at_50%_100%,transparent_0%,var(--color-background)_75%)]"></div>
-            <div className="mx-auto max-w-5xl px-6 pb-12">
+            <div className="mx-auto max-w-5xl px-6 pb-20">
               <div className="flex flex-col items-center justify-center sm:mx-auto lg:mr-auto lg:mt-0">
+                <AnimatedGroup
+                  variants={
+                    {
+                      container: {
+                        visible: {
+                          transition: {
+                            staggerChildren: 0.05,
+                            delayChildren: 0.2,
+                          },
+                        },
+                      },
+                      ...transitionVariants,
+                    } as unknown as never
+                  }
+                  className="mb-6 mt-8 lg:mt-16"
+                >
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-zinc-400">
+                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Early access — limited spots available
+                  </span>
+                </AnimatedGroup>
+
                 <TextEffect
                   preset="fade-in-blur"
                   speedSegment={0.3}
                   as="h1"
-                  className="mt-8 max-w-2xl text-balance text-center text-5xl font-medium md:text-6xl lg:mt-16"
+                  className="max-w-3xl text-balance text-center text-5xl font-medium md:text-6xl lg:text-7xl"
                 >
-                  Speak, Don't Type
+                  Create Videos. Post Everywhere.
                 </TextEffect>
                 <TextEffect
                   per="line"
@@ -150,12 +167,11 @@ export default function HeroSection() {
                   speedSegment={0.3}
                   delay={0.5}
                   as="p"
-                  className="mt-8 max-w-2xl text-pretty text-center text-lg"
+                  className="mt-6 max-w-xl text-pretty text-center text-lg text-zinc-400"
                 >
-                  AI-powered voice-to-text that works everywhere on Mac and
-                  mobile. Better accuracy than native solutions with custom
-                  vocabulary for your words.
+                  Describe your idea. Clyo turns it into a polished video and automatically publishes it to TikTok, Instagram, YouTube, and more — in minutes, not hours.
                 </TextEffect>
+
                 <AnimatedGroup
                   variants={
                     {
@@ -170,10 +186,10 @@ export default function HeroSection() {
                       ...transitionVariants,
                     } as unknown as never
                   }
-                  className="mt-10 flex items-center gap-2"
+                  className="mt-10 w-full flex flex-col items-center gap-4"
                 >
-                  <form onSubmit={handleSubmit} className="mx-auto max-w-sm">
-                    <div className="bg-background has-[input:focus]:ring-muted w-sm relative grid grid-cols-[1fr_auto] items-center rounded-[calc(var(--radius)+0.75rem)] border pr-3 shadow shadow-zinc-950/5 has-[input:focus]:ring-2">
+                  <form onSubmit={handleSubmit} className="mx-auto w-full max-w-sm">
+                    <div className="bg-background has-[input:focus]:ring-muted w-full relative grid grid-cols-[1fr_auto] items-center rounded-[calc(var(--radius)+0.75rem)] border pr-3 shadow shadow-zinc-950/5 has-[input:focus]:ring-2">
                       <Mail className="text-caption pointer-events-none absolute inset-y-0 left-5 my-auto size-5" />
                       <input
                         placeholder="Your email address"
@@ -184,22 +200,19 @@ export default function HeroSection() {
                         required
                         disabled={status === "loading" || status === "success"}
                       />
-
                       <div className="md:pr-1.5 lg:pr-0">
                         <Button
                           type="submit"
                           aria-label="submit"
                           className="rounded-(--radius)"
-                          disabled={
-                            status === "loading" || status === "success"
-                          }
+                          disabled={status === "loading" || status === "success"}
                         >
                           <span className="hidden md:block">
                             {status === "loading"
                               ? "Joining..."
                               : status === "success"
-                                ? "Joined!"
-                                : "Join Waitlist"}
+                                ? "You're in!"
+                                : "Get Early Access"}
                           </span>
                           <SendHorizonal
                             className="relative mx-auto size-5 md:hidden"
@@ -216,49 +229,37 @@ export default function HeroSection() {
                       </p>
                     )}
                   </form>
+                  <p className="text-xs text-zinc-500">No credit card required. Free during beta.</p>
                 </AnimatedGroup>
-                {/* Flowing text animation */}
+
+                {/* Social proof */}
                 <AnimatedGroup
                   variants={{
                     container: {
                       visible: {
                         transition: {
                           staggerChildren: 0.05,
-                          delayChildren: 0.75,
+                          delayChildren: 1.0,
                         },
                       },
                     },
                     ...transitionVariants,
                   }}
-                  className="mt-12 w-full max-w-3xl"
+                  className="mt-16 flex flex-wrap justify-center gap-8 text-center"
                 >
-                  <FlowingText text="Can you check if the notes from yesterday’s meeting were sent out, or if they’re still being reviewed by the team? I just want to make sure everyone has the latest updates before we start planning for next week’s agenda, since a few action items still need confirmation and follow-up." />
+                  {[
+                    { stat: "10 min", label: "from idea to published video" },
+                    { stat: "8+", label: "platforms supported" },
+                    { stat: "0 editing", label: "skills required" },
+                  ].map((item) => (
+                    <div key={item.stat} className="flex flex-col items-center gap-1">
+                      <span className="text-3xl font-semibold">{item.stat}</span>
+                      <span className="text-sm text-zinc-500">{item.label}</span>
+                    </div>
+                  ))}
                 </AnimatedGroup>
               </div>
             </div>
-            <AnimatedGroup
-              variants={{
-                container: {
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.05,
-                      delayChildren: 0.75,
-                    },
-                  },
-                },
-                ...transitionVariants,
-              }}
-            >
-              <div className="mask-b-from-55% relative -mr-56 mt-8 overflow-hidden px-2 sm:mr-0 sm:mt-12 md:mt-20">
-                <div className="inset-shadow-2xs ring-background dark:inset-shadow-white/20 bg-background relative mx-auto max-w-5xl overflow-hidden rounded-2xl border p-4 shadow-lg shadow-zinc-950/15 ring-1">
-                  <img
-                    className="bg-background relative h-auto w-full rounded-2xl"
-                    src="/demo.png"
-                    alt="Clyo demo application interface"
-                  />
-                </div>
-              </div>
-            </AnimatedGroup>
           </div>
         </section>
       </main>

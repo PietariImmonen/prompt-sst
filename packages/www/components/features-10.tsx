@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
-import { Calendar, LucideIcon, MapIcon } from "lucide-react";
-import Image from "next/image";
+import { Sparkles, Share2, Zap, LucideIcon } from "lucide-react";
 
 import {
   Card,
@@ -14,7 +13,11 @@ export default function Features() {
   return (
     <section className="bg-zinc-50 py-16 md:py-32 dark:bg-transparent">
       <div className="mx-auto max-w-2xl px-6 lg:max-w-5xl">
-        <div className="mx-auto grid gap-4 lg:grid-cols-2">
+        <div className="mb-12 text-center">
+          <h2 className="text-3xl font-semibold md:text-4xl">Everything handled for you</h2>
+          <p className="mt-4 text-zinc-400">No editing software. No scheduling tools. No juggling platforms. Just results.</p>
+        </div>
+        <div className="mx-auto grid gap-4 lg:grid-cols-3">
           <FeatureCard>
             <CardHeader className="pb-3">
               <div
@@ -22,25 +25,28 @@ export default function Features() {
                 className="pointer-events-none absolute inset-0 top-0 h-32 rounded-lg [background:radial-gradient(ellipse_80%_40%_at_50%_0%,rgba(59,130,246,0.1)_0%,transparent_70%)]"
               />
               <CardHeading
-                icon={MapIcon}
-                title="Transcribe Anywhere"
-                description="Voice-to-text across Mac, iOS, and Android."
+                icon={Sparkles}
+                title="AI Video Creation"
+                description="Your idea becomes a video in minutes."
               />
-              <CardDescription className="text-muted-foreground mb-3 px-6 text-xs">
-                {" "}
-                Use a simple keyboard shortcut on your Mac or mobile device to transcribe
-                audio from any application. Whether you're taking notes, writing emails,
-                or capturing ideas—transcribe seamlessly wherever you work.{" "}
+              <CardDescription className="text-muted-foreground mb-3 px-6 text-sm">
+                Type a prompt or paste a script. Clyo's AI writes, designs, voices, and assembles a polished short-form video — no timeline, no keyframes, no experience needed.
               </CardDescription>
             </CardHeader>
-
             <CardContent>
-              <div className="border-border overflow-hidden rounded-lg border">
-                <img
-                  src="/transcription-example.png"
-                  alt="Universal transcription interface"
-                  className="h-auto w-full"
-                />
+              <div className="rounded-lg border border-white/10 bg-white/5 p-6 space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 size-2 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="text-sm text-zinc-300">Script written automatically</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 size-2 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="text-sm text-zinc-300">Voiceover generated with natural AI voice</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 size-2 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="text-sm text-zinc-300">Visuals, captions & music added</span>
+                </div>
               </div>
             </CardContent>
           </FeatureCard>
@@ -49,27 +55,25 @@ export default function Features() {
             <CardHeader className="pb-3">
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 top-0 h-32 rounded-lg [background:radial-gradient(ellipse_80%_40%_at_50%_0%,rgba(59,130,246,0.1)_0%,transparent_70%)]"
+                className="pointer-events-none absolute inset-0 top-0 h-32 rounded-lg [background:radial-gradient(ellipse_80%_40%_at_50%_0%,rgba(139,92,246,0.1)_0%,transparent_70%)]"
               />
               <CardHeading
-                icon={Calendar}
-                title="Superior Accuracy"
-                description="Better transcription than native solutions with AI enhancement."
+                icon={Share2}
+                title="Auto-Post Everywhere"
+                description="One click. Every platform. Done."
               />
-              <CardDescription className="text-muted-foreground mb-3 px-6 text-xs">
-                Advanced AI models deliver more accurate transcriptions than built-in
-                speech-to-text on Mac and mobile. Get clearer, more precise text with
-                intelligent context understanding and real-time improvements.
+              <CardDescription className="text-muted-foreground mb-3 px-6 text-sm">
+                Connect your accounts once and Clyo publishes your videos across TikTok, Instagram Reels, YouTube Shorts, X, LinkedIn, and more — automatically, at the best time.
               </CardDescription>
             </CardHeader>
-
             <CardContent>
-              <div className="border-border overflow-hidden rounded-lg border">
-                <img
-                  src="/prompt-improved.png"
-                  alt="AI-powered transcription accuracy interface"
-                  className="h-auto w-full"
-                />
+              <div className="rounded-lg border border-white/10 bg-white/5 p-6 space-y-3">
+                {["TikTok", "Instagram Reels", "YouTube Shorts", "LinkedIn", "X / Twitter"].map((platform) => (
+                  <div key={platform} className="flex items-center justify-between">
+                    <span className="text-sm text-zinc-300">{platform}</span>
+                    <span className="text-xs rounded-full bg-emerald-400/10 text-emerald-400 px-2 py-0.5">Connected</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </FeatureCard>
@@ -78,28 +82,31 @@ export default function Features() {
             <CardHeader className="pb-3">
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 top-0 h-32 rounded-lg [background:radial-gradient(ellipse_80%_40%_at_50%_0%,rgba(59,130,246,0.1)_0%,transparent_70%)]"
+                className="pointer-events-none absolute inset-0 top-0 h-32 rounded-lg [background:radial-gradient(ellipse_80%_40%_at_50%_0%,rgba(234,179,8,0.08)_0%,transparent_70%)]"
               />
               <CardHeading
-                icon={Calendar}
-                title="Custom Vocabulary"
-                description="Train the model with your own words and terminology."
+                icon={Zap}
+                title="Built for Volume"
+                description="Stay consistent without burning out."
               />
-              <CardDescription className="text-muted-foreground mb-3 px-6 text-xs">
-                {" "}
-                Add custom words, technical terms, names, and industry-specific jargon
-                to your personal model. Clyo learns your vocabulary and ensures
-                accurate transcription of specialized terminology every time.{" "}
+              <CardDescription className="text-muted-foreground mb-3 px-6 text-sm">
+                The creators who win post daily. Clyo makes that effortless — batch-create a week of content in an afternoon, schedule it all, and let the algorithm do the rest.
               </CardDescription>
             </CardHeader>
-
             <CardContent>
-              <div className="border-border overflow-hidden rounded-lg border">
-                <img
-                  src="/prompt-palette.png"
-                  alt="Custom vocabulary management interface"
-                  className="h-auto w-full"
-                />
+              <div className="rounded-lg border border-white/10 bg-white/5 p-6 space-y-3">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 size-2 rounded-full bg-yellow-400 shrink-0" />
+                  <span className="text-sm text-zinc-300">Batch create 7 videos at once</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 size-2 rounded-full bg-yellow-400 shrink-0" />
+                  <span className="text-sm text-zinc-300">Smart scheduling for peak engagement</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 size-2 rounded-full bg-yellow-400 shrink-0" />
+                  <span className="text-sm text-zinc-300">Analytics across all platforms in one place</span>
+                </div>
               </div>
             </CardContent>
           </FeatureCard>
@@ -145,76 +152,5 @@ const CardHeading = ({ icon: Icon, title, description }: CardHeadingProps) => (
       {title}
     </span>
     <p className="mt-2 text-lg font-semibold">{description}</p>
-  </div>
-);
-
-interface DualModeImageProps {
-  darkSrc: string;
-  lightSrc: string;
-  alt: string;
-  width: number;
-  height: number;
-  className?: string;
-}
-
-const DualModeImage = ({
-  darkSrc,
-  lightSrc,
-  alt,
-  width,
-  height,
-  className,
-}: DualModeImageProps) => (
-  <>
-    <Image
-      src={darkSrc}
-      className={cn("hidden dark:block", className)}
-      alt={`${alt} dark`}
-      width={width}
-      height={height}
-    />
-    <Image
-      src={lightSrc}
-      className={cn("shadow dark:hidden", className)}
-      alt={`${alt} light`}
-      width={width}
-      height={height}
-    />
-  </>
-);
-
-interface CircleConfig {
-  pattern: "none" | "border" | "primary" | "blue";
-}
-
-interface CircularUIProps {
-  label: string;
-  circles: CircleConfig[];
-  className?: string;
-}
-
-const CircularUI = ({ label, circles, className }: CircularUIProps) => (
-  <div className={className}>
-    <div className="bg-linear-to-b from-border size-fit rounded-2xl to-transparent p-px">
-      <div className="bg-linear-to-b from-background to-muted/25 relative flex aspect-square w-fit items-center -space-x-4 rounded-[15px] p-4">
-        {circles.map((circle, i) => (
-          <div
-            key={i}
-            className={cn("size-7 rounded-full border sm:size-8", {
-              "border-primary": circle.pattern === "none",
-              "border-primary bg-[repeating-linear-gradient(-45deg,var(--color-border),var(--color-border)_1px,transparent_1px,transparent_4px)]":
-                circle.pattern === "border",
-              "border-primary bg-background bg-[repeating-linear-gradient(-45deg,var(--color-primary),var(--color-primary)_1px,transparent_1px,transparent_4px)]":
-                circle.pattern === "primary",
-              "bg-background z-1 border-blue-500 bg-[repeating-linear-gradient(-45deg,var(--color-blue-500),var(--color-blue-500)_1px,transparent_1px,transparent_4px)]":
-                circle.pattern === "blue",
-            })}
-          ></div>
-        ))}
-      </div>
-    </div>
-    <span className="text-muted-foreground mt-1.5 block text-center text-sm">
-      {label}
-    </span>
   </div>
 );
